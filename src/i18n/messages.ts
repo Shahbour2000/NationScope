@@ -3,6 +3,7 @@ export const en = {
   brand: "NationScope",
   nav: {
     label: "Main navigation",
+    explore: "Explore",
     overview: "Overview",
     world: "World",
     countries: "Countries",
@@ -145,6 +146,7 @@ export const ar: Messages = {
   brand: "NationScope",
   nav: {
     label: "التنقل الرئيسي",
+    explore: "استكشف",
     overview: "نظرة عامة",
     world: "العالم",
     countries: "الدول",
