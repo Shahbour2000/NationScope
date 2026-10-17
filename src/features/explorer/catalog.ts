@@ -16,19 +16,34 @@ export interface SectionDef {
 /** Single registry of the documented endpoints the generic pages render. Add a section here to add a page. */
 export const SECTIONS: Record<string, SectionDef> = {
   countries: {
-    slug: "countries", list: () => endpoints.countries(), detail: endpoints.country,
+    slug: "countries", list: () => endpoints.countries(),
+    // Overview tab = the documented one-call summary (profile, government, wars, battles, laws, elections, announcements, embassies).
+    detail: endpoints.countrySummary,
     subs: [
-      { slug: "citizens", paged: true, endpoint: (id, p) => endpoints.citizens(id, p) },
+      { slug: "profile", endpoint: endpoints.country },
+      { slug: "members", endpoint: endpoints.governmentMembers },
       { slug: "government", endpoint: endpoints.government },
       { slug: "government-history", endpoint: (id) => endpoints.governmentHistory(id, { limit: 100 }) },
+      { slug: "citizens", paged: true, endpoint: (id, p) => endpoints.citizens(id, p) },
       { slug: "elections", endpoint: endpoints.countryElections },
       { slug: "parties", endpoint: endpoints.countryParties },
       { slug: "laws", paged: true, endpoint: (id, p) => endpoints.countryLaws(id, { filter: "all", ...p }) },
+      { slug: "announcements", endpoint: endpoints.announcements },
+      { slug: "embassies", endpoint: endpoints.embassies },
       { slug: "bank", endpoint: endpoints.bank },
+      { slug: "companies", paged: true, endpoint: (id, p) => endpoints.countryCompanies(id, p) },
+      { slug: "company-stats", endpoint: endpoints.countryCompanyStats },
+      { slug: "units", endpoint: endpoints.countryUnits },
+      { slug: "wars", endpoint: (id) => endpoints.countryWars(id) },
+      { slug: "battles", endpoint: (id) => endpoints.countryBattles(id, { limit: 100 }) },
+      { slug: "events", endpoint: (id) => endpoints.countryHistory(id) },
       { slug: "revolution", endpoint: endpoints.revolution },
     ],
   },
-  alliances: { slug: "alliances", list: () => endpoints.alliances(), detail: endpoints.alliance },
+  alliances: {
+    slug: "alliances", list: () => endpoints.alliances(), detail: endpoints.alliance,
+    subs: [{ slug: "laws", paged: true, endpoint: (id, p) => endpoints.allianceLaws(id, { filter: "all", ...p }) }],
+  },
   regions: {
     slug: "regions", list: () => endpoints.regions(), detail: endpoints.region,
     subs: [{ slug: "companies", endpoint: endpoints.regionCompanies }, { slug: "campaign", endpoint: endpoints.regionCampaign }],
@@ -50,17 +65,28 @@ export const SECTIONS: Record<string, SectionDef> = {
   },
   equipment: { slug: "equipment", list: (p) => endpoints.equipment(p), paged: true, pageSize: 24 },
   "equipment-floor": { slug: "equipment-floor", list: () => endpoints.equipmentFloor() },
+  companies: { slug: "companies", list: (p) => endpoints.companies(p), paged: true, detail: endpoints.company },
+  "company-stats": { slug: "company-stats", list: () => endpoints.companyStats() },
   jobs: { slug: "jobs", list: () => endpoints.jobs() },
   history: { slug: "history", list: () => endpoints.history() },
   articles: { slug: "articles", list: () => endpoints.articles(), detail: endpoints.article },
   tournaments: { slug: "tournaments", list: () => endpoints.tournaments(), detail: endpoints.tournament },
-  players: { slug: "players", detail: endpoints.player },
+  game: { slug: "game", list: () => endpoints.game() },
+  laws: { slug: "laws", list: () => endpoints.lawsCatalog(), detail: endpoints.law },
+  players: {
+    slug: "players", detail: endpoints.player,
+    subs: [
+      { slug: "stats", endpoint: endpoints.playerStats },
+      { slug: "companies", paged: true, endpoint: (id, p) => endpoints.playerCompanies(id, p) },
+    ],
+  },
   parties: { slug: "parties", detail: endpoints.party },
   elections: { slug: "elections", detail: endpoints.election },
-  laws: { slug: "laws", detail: endpoints.law },
-  companies: { slug: "companies", detail: endpoints.company },
   newspapers: { slug: "newspapers", detail: endpoints.newspaper },
-  rankings: { slug: "rankings", detail: (b) => endpoints.ranking(b) },
+  rankings: {
+    slug: "rankings", detail: (b) => endpoints.ranking(b, { limit: 100 }),
+    subs: [{ slug: "archive", endpoint: endpoints.rankingArchive }],
+  },
 };
 
 export const DEFAULT_PAGE_SIZE = 50;

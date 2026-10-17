@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { StateMessage } from "@/components/StateMessage";
-import { CountTile, RecentEvents, TileSkeleton, TopUnits, UnitsTile } from "@/features/overview/tiles";
+import { CountTile, Leaderboard, RecentEvents, TileSkeleton, TopUnits, UnitsTile } from "@/features/overview/tiles";
 import { getLocale, getMessages, numberLocale } from "@/i18n";
 import { ConfigError, getConfig } from "@/lib/config/env";
 import { endpoints } from "@/lib/api/endpoints";
@@ -40,6 +40,9 @@ export default async function OverviewPage() {
 
       <div className="section-head"><h2>{m.overview.topUnits}</h2><Link href="/units">{m.overview.viewAll}</Link></div>
       <Suspense fallback={<div className="skeleton" style={{ blockSize: "8rem" }} />}><TopUnits ctx={ctx} /></Suspense>
+
+      <div className="section-head"><h2>{m.overview.leaderboard}</h2><Link href="/rankings/playerDamage">{m.overview.viewAll}</Link></div>
+      <Suspense fallback={<div className="skeleton" style={{ blockSize: "8rem" }} />}><Leaderboard ctx={ctx} /></Suspense>
 
       <div className="section-head"><h2>{m.overview.recentEvents}</h2><Link href="/history">{m.overview.viewAll}</Link></div>
       <Suspense fallback={<div className="skeleton" style={{ blockSize: "8rem" }} />}><RecentEvents ctx={ctx} /></Suspense>

@@ -132,6 +132,7 @@ describe("ApiClient", () => {
     const { client } = make([]);
     await expect(client.get("/api/v1/units", { schema: unverifiedPayload })).rejects.toMatchObject({ kind: "invalid_request" });
     await expect(client.get("/../secret", { schema: unverifiedPayload })).rejects.toMatchObject({ kind: "invalid_request" });
+    await expect(client.get("/players/by-name/a%2Fb", { schema: unverifiedPayload })).rejects.toMatchObject({ kind: "invalid_request" });
     await expect(client.get("//evil.test/x", { schema: unverifiedPayload })).rejects.toMatchObject({ kind: "invalid_request" });
   });
 });

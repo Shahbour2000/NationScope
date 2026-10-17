@@ -53,6 +53,10 @@ Documented endpoints are not assumed to exist on Main. With `NATIONSCOPE_DIAGNOS
 
 See `docs/data-audit.md` for what is verified versus generic. Desktop has a collapsible sidebar; below 48rem the sidebar becomes a drawer and tables become stacked cards. Responsive behaviour was written to CSS rules but **not visually tested** (no browser in the build environment); please check on a phone.
 
+Country pages use the documented one-call `/countries/{id}/summary` as the Overview tab and add tabs for profile, government members, government, citizens, elections, parties, laws, announcements, embassies, bank, companies, company statistics, units, wars, battles, world events and revolution. Alliances have a laws tab; players have stats and companies tabs. Economy pages: market (order book, history, trades), equipment offers, equipment floor, companies, company statistics, jobs.
+
+Planner engine: `skills.ts`, `equipment.ts`, `evidence.ts` and `damage.ts` (the developer-confirmed stage order; each stage must supply a sourced rule, otherwise the result is `incomplete`). See `docs/combat-sources.md`.
+
 ## Add a feature
 1. Add the endpoint builder to `src/lib/api/endpoints.ts` (validated ids/query bounds).
 2. For a generic page, add a section to `src/features/explorer/catalog.ts` and (optionally) a nav item in `src/app/layout.tsx` plus labels in `src/i18n/messages.ts` (EN and AR).

@@ -23,10 +23,26 @@ describe("endpoints", () => {
     expect(() => endpoints.battles({ status: "bogus" as never })).toThrow(ApiError);
     expect(() => endpoints.equipment({ limit: 61 })).toThrow(ApiError);
   });
+  it("builds the production-spec additions with documented bounds", () => {
+    expect(endpoints.countrySummary("pl").path).toBe("/countries/pl/summary");
+    expect(endpoints.governmentMembers("pl").path).toBe("/countries/pl/government/members");
+    expect(endpoints.companies({ countryId: "pl", sort: "workers", limit: 100 }).query).toMatchObject({ countryId: "pl", sort: "workers", limit: 100 });
+    expect(() => endpoints.companies({ limit: 101 })).toThrow(ApiError);
+    expect(() => endpoints.companies({ sort: "bogus" as never })).toThrow(ApiError);
+    expect(endpoints.players(["a", "b"]).query).toEqual({ ids: "a,b" });
+    expect(() => endpoints.players([])).toThrow(ApiError);
+    expect(() => endpoints.players(Array.from({ length: 26 }, (_, i) => `u${i}`))).toThrow(ApiError);
+    expect(endpoints.playerByName("Bloody Valentine").path).toBe("/players/by-name/Bloody%20Valentine");
+    expect(() => endpoints.playerByName("")).toThrow(ApiError);
+    expect(() => endpoints.playerByName("x".repeat(41))).toThrow(ApiError);
+    expect(endpoints.lawsCatalog().path).toBe("/laws");
+  });
   it("knows the spec's path templates and rejects others", () => {
-    expect(PATH_TEMPLATES).toHaveLength(47);
+    expect(PATH_TEMPLATES).toHaveLength(65);
     expect(isKnownPath("/units")).toBe(true);
     expect(isKnownPath("/countries/EG_1/government/history")).toBe(true);
+    expect(isKnownPath("/players/by-name/Bloody%20Valentine")).toBe(true);
+    expect(isKnownPath("/players/by-name/a/b")).toBe(false);
     expect(isKnownPath("/admin")).toBe(false);
     expect(isKnownPath("/countries/../x")).toBe(false);
     expect(PROBE_ENDPOINTS.every((e) => isKnownPath(e.path))).toBe(true);

@@ -49,7 +49,9 @@ interface Entry {
   storedAt: number;
 }
 
-const SAFE_PATH = /^\/[A-Za-z0-9/_-]*$/;
+const SAFE_PATH = /^\/[A-Za-z0-9/_%.-]*$/;
+/** Percent-encoding is allowed (usernames), but never an encoded separator, traversal, or a control byte. */
+const isSafePath = (p: string): boolean => SAFE_PATH.test(p) && !p.includes("..") && !p.includes("//") && !/%(2f|5c|00)/i.test(p);
 const MAX_BODY_CHARS = 5_000_000;
 
 export function parseRetryAfter(value: string | null, now: number): number | undefined {
@@ -111,7 +113,7 @@ export class ApiClient {
   }
 
   private buildUrl(path: string, query?: GetOptions<unknown>["query"]): string {
-    if (!SAFE_PATH.test(path) || path === this.o.pathPrefix || path.startsWith(`${this.o.pathPrefix}/`)) {
+    if (!isSafePath(path) || path === this.o.pathPrefix || path.startsWith(`${this.o.pathPrefix}/`)) {
       throw new ApiError("invalid_request", "Invalid API path.");
     }
     const params = new URLSearchParams();

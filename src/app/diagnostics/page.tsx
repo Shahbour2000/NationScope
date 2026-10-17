@@ -4,6 +4,7 @@ import { tryGetConfig } from "@/lib/config/env";
 import { ENVIRONMENTS } from "@/lib/config/environments";
 import { StateMessage } from "@/components/StateMessage";
 import { diagnosticsEnabled, parseExplorerInput, probe, probeAll } from "@/lib/diagnostics/probe";
+import { PROBE_ENDPOINTS } from "@/lib/api/endpoints";
 import { headline, renderShape } from "@/lib/diagnostics/shape";
 
 export const dynamic = "force-dynamic";
@@ -82,7 +83,7 @@ export default async function DiagnosticsPage({
           </table>
         ) : (
           <>
-            <p className="note">Probes 16 endpoints that need no parameters (about 16 requests).</p>
+            <p className="note">Probes {PROBE_ENDPOINTS.length} endpoints that need no parameters (one request each).</p>
             <Link className="btn" href="/diagnostics?all=1" style={{ display: "inline-block", textDecoration: "none" }}>Run availability check</Link>
           </>
         )}

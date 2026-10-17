@@ -35,12 +35,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       { href: "/market", label: n.market, icon: "chart" },
       { href: "/equipment", label: n.equipment, icon: "box" },
       { href: "/equipment-floor", label: n.equipmentFloor, icon: "box" },
+      { href: "/companies", label: n.companies, icon: "briefcase" },
+      { href: "/company-stats", label: n.companyStats, icon: "chart" },
       { href: "/jobs", label: n.jobs, icon: "briefcase" },
     ] },
     { title: n.records, items: [
       { href: "/history", label: n.history, icon: "clock" },
       { href: "/articles", label: n.articles, icon: "news" },
+      { href: "/rankings/playerDamage", label: n.rankingDamage, icon: "trophy" },
       { href: "/tournaments", label: n.tournaments, icon: "trophy" },
+      { href: "/laws", label: n.laws, icon: "contract" },
+      { href: "/game", label: n.game, icon: "tool" },
     ] },
     { title: n.tools, items: [
       { href: "/tools/build-planner", label: n.planner, icon: "tool" },

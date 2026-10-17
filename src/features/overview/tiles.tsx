@@ -118,3 +118,16 @@ export async function RecentEvents({ ctx }: { ctx: Ctx }) {
     return <p className="banner" role="alert">{ctx.m.overview.unavailable}: {describeError(error).title}</p>;
   }
 }
+
+/** GET /rankings/playerDamage (board id given as the example in the production spec). Generic table: fields as returned. */
+export async function Leaderboard({ ctx }: { ctx: Ctx }) {
+  try {
+    const { data } = await fetchEndpoint(endpoints.ranking("playerDamage", { limit: 10 }));
+    const list = listOf(data);
+    const rows = list ? objectRows(list.rows) : null;
+    if (!rows) return <p className="note">{ctx.m.overview.unrecognized}</p>;
+    return <GenericTable rows={rows} columns={pickColumns(rows, 5)} section={null} labels={ctx.m.explorer} />;
+  } catch (error) {
+    return <p className="banner" role="alert">{ctx.m.overview.unavailable}: {describeError(error).title}</p>;
+  }
+}

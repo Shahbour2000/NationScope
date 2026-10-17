@@ -39,6 +39,18 @@ function optId(name: string, v: string | undefined): string | undefined {
 }
 const ep = (path: string, query?: Query): Endpoint => ({ path, ...(query ? { query } : {}) });
 
+const HISTORY_TYPES = ["ownership", "treaty", "battle", "election", "law", "tournament"] as const;
+type HistoryType = (typeof HISTORY_TYPES)[number];
+interface CompanyQuery { itemCode?: string; sort?: "invested" | "workers" | "level" | "newest"; limit?: number; offset?: number }
+function companyQuery(o: CompanyQuery): Query {
+  return {
+    itemCode: text("itemCode", o.itemCode, 30),
+    sort: oneOf("sort", o.sort, ["invested", "workers", "level", "newest"] as const),
+    limit: int("limit", o.limit, 1, 100),
+    offset: int("offset", o.offset, 0, 10000),
+  };
+}
+
 export const endpoints = {
   game: () => ep("/game"),
   search: (q: string) => ep("/search", { q: text("q", q.trim(), 60, 2) }),
@@ -128,6 +140,39 @@ export const endpoints = {
     }),
   tournaments: () => ep("/tournaments"),
   tournament: (editionId: string) => ep(`/tournaments/${id(editionId, "edition id")}`),
+
+  // ---- Added from the production OpenAPI spec (https://app.ageofnations.world/api/docs/json) ----
+  countrySummary: (countryId: string) => ep(`/countries/${id(countryId, "country id")}/summary`),
+  governmentMembers: (countryId: string) => ep(`/countries/${id(countryId, "country id")}/government/members`),
+  announcements: (countryId: string) => ep(`/countries/${id(countryId, "country id")}/announcements`),
+  embassies: (countryId: string) => ep(`/countries/${id(countryId, "country id")}/embassies`),
+  countryWars: (countryId: string, o: { status?: "active" | "ended" } = {}) =>
+    ep(`/countries/${id(countryId, "country id")}/wars`, { status: oneOf("status", o.status, ["active", "ended"] as const) }),
+  countryBattles: (countryId: string, o: { status?: "active" | "finished"; limit?: number } = {}) =>
+    ep(`/countries/${id(countryId, "country id")}/battles`, { status: oneOf("status", o.status, ["active", "finished"] as const), limit: int("limit", o.limit, 1, 100) }),
+  countryUnits: (countryId: string) => ep(`/countries/${id(countryId, "country id")}/units`),
+  countryHistory: (countryId: string, o: { type?: HistoryType; cursor?: string } = {}) =>
+    ep(`/countries/${id(countryId, "country id")}/history`, { type: oneOf("type", o.type, HISTORY_TYPES), cursor: text("cursor", o.cursor, 120) }),
+  countryCompanies: (countryId: string, o: CompanyQuery = {}) => ep(`/countries/${id(countryId, "country id")}/companies`, companyQuery(o)),
+  countryCompanyStats: (countryId: string) => ep(`/countries/${id(countryId, "country id")}/companies/stats`),
+  companies: (o: CompanyQuery & { countryId?: string; regionId?: string; ownerId?: string } = {}) =>
+    ep("/companies", { countryId: optId("countryId", o.countryId), regionId: optId("regionId", o.regionId), ownerId: optId("ownerId", o.ownerId), ...companyQuery(o) }),
+  companyStats: (o: { countryId?: string } = {}) => ep("/companies/stats", { countryId: optId("countryId", o.countryId) }),
+  playerStats: (userId: string) => ep(`/players/${id(userId, "player id")}/stats`),
+  playerCompanies: (userId: string, o: CompanyQuery = {}) => ep(`/players/${id(userId, "player id")}/companies`, companyQuery(o)),
+  /** Case, spaces, dots and dashes are ignored by the API; the name is URL-encoded here. */
+  playerByName: (username: string) => ep(`/players/by-name/${encodeURIComponent(text("username", username.trim(), 40, 1)!)}`),
+  /** Up to 25 comma-separated ids; unknown ids are omitted by the API. */
+  players: (ids: readonly string[]) => {
+    if (ids.length < 1 || ids.length > 25) throw new ApiError("invalid_request", "ids must contain 1 to 25 entries.");
+    return ep("/players", { ids: ids.map((x) => id(x, "player id")).join(",") });
+  },
+  allianceLaws: (allianceId: string, o: { filter?: "open" | "closed" | "all"; limit?: number; offset?: number } = {}) =>
+    ep(`/alliances/${id(allianceId, "alliance id")}/laws`, {
+      filter: oneOf("filter", o.filter, ["open", "closed", "all"] as const), limit: int("limit", o.limit, 1, 100), offset: int("offset", o.offset, 0, 10000),
+    }),
+  /** Catalog of every law code with its parameters and voting rules. */
+  lawsCatalog: () => ep("/laws"),
 } as const;
 
 /** Path templates from the spec (for the diagnostics explorer's allowlist). */
@@ -140,10 +185,15 @@ export const PATH_TEMPLATES: readonly string[] = [
   "/contracts/auctions/{id}", "/market", "/market/{id}/orders", "/market/{id}/history", "/market/{id}/trades",
   "/market/trades", "/equipment", "/equipment/floor", "/units", "/units/{id}", "/players/{id}", "/rankings/{id}",
   "/rankings/{id}/archive", "/articles", "/articles/{id}", "/newspapers/{id}", "/history", "/tournaments", "/tournaments/{id}",
+  // production spec additions
+  "/countries/{id}/summary", "/countries/{id}/government/members", "/countries/{id}/announcements", "/countries/{id}/embassies",
+  "/countries/{id}/wars", "/countries/{id}/battles", "/countries/{id}/units", "/countries/{id}/history", "/countries/{id}/companies",
+  "/countries/{id}/companies/stats", "/alliances/{id}/laws", "/laws", "/companies", "/companies/stats", "/players",
+  "/players/by-name/{name}", "/players/{id}/stats", "/players/{id}/companies",
 ];
 
 const TEMPLATE_REGEXES = PATH_TEMPLATES.map(
-  (t) => new RegExp(`^${t.replace(/\{id\}/g, "[A-Za-z0-9_-]{1,80}")}$`),
+  (t) => new RegExp(`^${t.replace(/\{id\}/g, "[A-Za-z0-9_-]{1,80}").replace(/\{name\}/g, "[^/]{1,120}")}$`),
 );
 
 export function isKnownPath(path: string): boolean {
@@ -155,5 +205,5 @@ export const PROBE_ENDPOINTS: readonly Endpoint[] = [
   endpoints.game(), endpoints.countries(), endpoints.alliances(), endpoints.regions(), endpoints.jobs(),
   endpoints.battles({ limit: 20 }), endpoints.wars(), endpoints.contracts(), endpoints.market(), endpoints.allTrades({ limit: 20 }),
   endpoints.equipment({ limit: 10 }), endpoints.equipmentFloor(), endpoints.units(), endpoints.tournaments(),
-  endpoints.history(), endpoints.articles(),
+  endpoints.history(), endpoints.articles(), endpoints.companyStats(), endpoints.lawsCatalog(),
 ];
