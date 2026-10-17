@@ -41,14 +41,22 @@ Documented endpoints are not assumed to exist on Main. With `NATIONSCOPE_DIAGNOS
 
 ## Pages
 
-| Route | State |
+| Route | What it shows |
 |---|---|
-| `/` | Foundation status (API connection check). |
-| `/units` | **Real data** from Main `/units`: sortable, filterable directory with exact totals. |
-| `/tools/build-planner` | Honest status page; the optimizer engine exists but needs verified game rules (see `docs/game-data-audit.md`). |
-| `/diagnostics` | API explorer (needs `NATIONSCOPE_DIAGNOSTICS=true`). |
+| `/` | Overview: independent tiles (counts from list responses; real units totals), top units, latest world events. |
+| `/units` | **Verified real data** from Main `/units`: sortable, filterable directory. |
+| `/countries`, `/alliances`, `/regions`, `/battles`, `/wars`, `/contracts`, `/market`, `/equipment`, `/equipment-floor`, `/jobs`, `/history`, `/articles`, `/tournaments` | Generic list pages (real data, fields as returned). |
+| `/{section}/{id}` and `/{section}/{id}/{tab}` | Generic detail and sub-pages (country government, citizens, parties, laws, bank...; battle contracts; market order book/history/trades). Includes `players`, `parties`, `elections`, `laws`, `companies`, `units`. |
+| `/search?q=` | Global search (top bar form). |
+| `/tools/build-planner` | Planner status and engine (no game formulas verified). |
+| `/diagnostics` | API explorer, only with `NATIONSCOPE_DIAGNOSTICS=true`. |
 
-Language: English and Arabic (RTL) via a cookie and the header switch; dictionaries in `src/i18n/messages.ts` (Arabic keys are type-checked against English). Localized so far: shell, navigation, Units, Build Planner. API error texts and the home status panel are English only. Data digits stay Latin.
+See `docs/data-audit.md` for what is verified versus generic. Desktop has a collapsible sidebar; below 48rem the sidebar becomes a drawer and tables become stacked cards. Responsive behaviour was written to CSS rules but **not visually tested** (no browser in the build environment); please check on a phone.
+
+## Add a feature
+1. Add the endpoint builder to `src/lib/api/endpoints.ts` (validated ids/query bounds).
+2. For a generic page, add a section to `src/features/explorer/catalog.ts` and (optionally) a nav item in `src/app/layout.tsx` plus labels in `src/i18n/messages.ts` (EN and AR).
+3. For a typed page: add a zod model in `src/lib/domain/`, a function in `src/lib/data/`, a feature folder under `src/features/`, and a route in `src/app/`; put a real response in `tests/fixtures/main/` and test the parsing.
 
 ## Layout
 
@@ -60,6 +68,8 @@ src/lib/api/              client (timeout, retry+jitter, Retry-After, TTL cache,
 src/lib/data/             data-access layer: the ONLY place UI code gets API data
 src/lib/money.ts          exact BigInt money (1/10,000 gold)
 src/lib/domain/           validated domain models (units)
+src/features/explorer/    generic JSON views, section catalog, link inference (pure logic tested)
+src/features/overview/    overview tiles
 src/features/units/       table logic (pure) + client table
 src/features/planner/     skills.ts, equipment.ts (pure optimizer engine, game formulas are inputs) and evidence.ts (gate that decides whether a formula is verified, estimate or unsupported)
 src/i18n/                 EN/AR dictionaries and locale helpers
