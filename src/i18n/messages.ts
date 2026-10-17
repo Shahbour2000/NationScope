@@ -33,6 +33,7 @@ export const en = {
     rankingDamage: "Player damage ranking",
     planner: "Build Planner",
     diagnostics: "Diagnostics",
+    soon: "Coming soon",
   },
   common: {
     language: "Language",
@@ -178,6 +179,7 @@ export const ar: Messages = {
     rankingDamage: "تصنيف ضرر اللاعبين",
     planner: "مخطط البناء",
     diagnostics: "التشخيص",
+    soon: "قريبًا",
   },
   common: {
     language: "اللغة",
