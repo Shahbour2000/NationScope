@@ -1,51 +1,59 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { Icon } from "@/components/Icon";
 import { StateMessage } from "@/components/StateMessage";
-import { CountTile, Leaderboard, RecentEvents, TileSkeleton, TopUnits, UnitsTile } from "@/features/overview/tiles";
-import { getLocale, getMessages, numberLocale } from "@/i18n";
+import { getDisplay } from "@/features/entities/display.server";
+import { DevelopmentLeaders, OverviewTile, RecentEvents, TileSkeleton, TopPlayers, TopUnits } from "@/features/overview/tiles";
+import { getLocale, getMessages } from "@/i18n";
 import { ConfigError, getConfig } from "@/lib/config/env";
-import { endpoints } from "@/lib/api/endpoints";
 
 export const dynamic = "force-dynamic";
+const Block = () => <div className="skeleton" style={{ blockSize: "8rem" }} />;
 
 export default async function OverviewPage() {
-  const locale = await getLocale();
-  const m = getMessages(locale);
+  const m = getMessages(await getLocale());
   try {
     getConfig();
   } catch (error) {
     if (error instanceof ConfigError) return <StateMessage tone="error" title="Configuration problem" detail={error.message} />;
     throw error;
   }
-  const ctx = { m, locale: numberLocale(locale) };
-  const t = m.overview.tiles;
-  const fallback = <TileSkeleton />;
+  const d = await getDisplay();
+  const ctx = { m, d };
+  const o = m.overview;
+  const kinds = ["countries", "alliances", "units", "wars", "battles", "companies", "market", "jobs"] as const;
   return (
     <>
-      <h1>{m.overview.title}</h1>
-      <p className="note">{m.overview.intro}</p>
-
+      <div className="page-head"><h1><Icon name="globe" size={26} />{o.title}</h1></div>
+      <p className="note">{o.intro}</p>
       <div className="tiles">
-        <Suspense fallback={fallback}><CountTile title={t.countries} href="/countries" endpoint={endpoints.countries()} ctx={ctx} /></Suspense>
-        <Suspense fallback={fallback}><CountTile title={t.alliances} href="/alliances" endpoint={endpoints.alliances()} ctx={ctx} /></Suspense>
-        <Suspense fallback={fallback}><CountTile title={t.regions} href="/regions" endpoint={endpoints.regions()} ctx={ctx} /></Suspense>
-        <Suspense fallback={fallback}><UnitsTile ctx={ctx} /></Suspense>
-        <Suspense fallback={fallback}><CountTile title={t.activeWars} href="/wars" endpoint={endpoints.wars({ status: "active" })} ctx={ctx} /></Suspense>
-        <Suspense fallback={fallback}><CountTile title={t.activeBattles} href="/battles" endpoint={endpoints.battles({ status: "active", limit: 100 })} capAt={100} ctx={ctx} /></Suspense>
-        <Suspense fallback={fallback}><CountTile title={t.marketItems} href="/market" endpoint={endpoints.market()} ctx={ctx} /></Suspense>
-        <Suspense fallback={fallback}><CountTile title={t.jobs} href="/jobs" endpoint={endpoints.jobs()} ctx={ctx} /></Suspense>
-        <Suspense fallback={fallback}><CountTile title={t.tournaments} href="/tournaments" endpoint={endpoints.tournaments()} ctx={ctx} /></Suspense>
+        {kinds.map((k) => <Suspense key={k} fallback={<TileSkeleton />}><OverviewTile kind={k} ctx={ctx} /></Suspense>)}
       </div>
-      <p className="note">{m.overview.note}</p>
+      <p className="hint">{o.note}</p>
 
-      <div className="section-head"><h2>{m.overview.topUnits}</h2><Link href="/units">{m.overview.viewAll}</Link></div>
-      <Suspense fallback={<div className="skeleton" style={{ blockSize: "8rem" }} />}><TopUnits ctx={ctx} /></Suspense>
-
-      <div className="section-head"><h2>{m.overview.leaderboard}</h2><Link href="/rankings/playerDamage">{m.overview.viewAll}</Link></div>
-      <Suspense fallback={<div className="skeleton" style={{ blockSize: "8rem" }} />}><Leaderboard ctx={ctx} /></Suspense>
-
-      <div className="section-head"><h2>{m.overview.recentEvents}</h2><Link href="/history">{m.overview.viewAll}</Link></div>
-      <Suspense fallback={<div className="skeleton" style={{ blockSize: "8rem" }} />}><RecentEvents ctx={ctx} /></Suspense>
+      <div className="cols">
+        <section className="card">
+          <h2><Icon name="trend" size={18} />{o.developmentLeaders}</h2>
+          <Suspense fallback={<Block />}><DevelopmentLeaders ctx={ctx} /></Suspense>
+          <p className="hint"><Link href="/countries">{o.viewAll}</Link></p>
+        </section>
+        <section className="card">
+          <h2><Icon name="trophy" size={18} />{o.topPlayers}</h2>
+          <Suspense fallback={<Block />}><TopPlayers ctx={ctx} /></Suspense>
+          <p className="hint"><Link href="/rankings/playerDamage">{o.viewAll}</Link></p>
+        </section>
+        <section className="card">
+          <h2><Icon name="unit" size={18} />{o.topUnits}</h2>
+          <Suspense fallback={<Block />}><TopUnits ctx={ctx} /></Suspense>
+          <p className="hint"><Link href="/units">{o.viewAll}</Link></p>
+        </section>
+        <section className="card">
+          <h2><Icon name="clock" size={18} />{o.recentEvents}</h2>
+          <Suspense fallback={<Block />}><RecentEvents ctx={ctx} /></Suspense>
+          <p className="hint"><Link href="/history">{o.viewAll}</Link></p>
+        </section>
+      </div>
+      <p className="hint"><Link href="/economy">{m.economyPage.economyHub}</Link></p>
     </>
   );
 }

@@ -32,6 +32,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       { href: "/contracts", label: n.contracts, icon: "contract" },
     ] },
     { title: n.economy, items: [
+      { href: "/economy", label: n.economyOverview, icon: "trend" },
       { href: "/market", label: n.market, icon: "chart" },
       { href: "/equipment", label: n.equipment, icon: "box" },
       { href: "/equipment-floor", label: n.equipmentFloor, icon: "box" },

@@ -25,10 +25,14 @@ describe("listOf / countItems", () => {
 describe("pickColumns", () => {
   it("uses scalar fields only, name/title/id first, capped", () => {
     const rows = [{ z: 1, id: "a", nested: { x: 1 }, name: "N", list: [1] }, { y: 2, extra: null }];
-    expect(pickColumns(rows)).toEqual(["name", "id", "z", "y", "extra"]);
+    expect(pickColumns(rows)).toEqual(["name", "z", "y"]); // id and extra are technical and hidden
     const wide = [Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`k${i}`, i]))];
     expect(pickColumns(wide, 5)).toHaveLength(5);
     expect(pickColumns([{ a: { b: 1 } }])).toEqual([]);
+    // technical-only rows still show something rather than an empty table
+    expect(pickColumns([{ id: "x", scheme: "red" }])).toEqual(["id", "scheme"]);
+    // entity references stay visible; plain *Id plumbing is hidden
+    expect(pickColumns([{ name: "n", countryId: "eg", ownerId: "usr_1", regionId: "eg-center" }])).toEqual(["name", "countryId", "regionId"]);
   });
 });
 

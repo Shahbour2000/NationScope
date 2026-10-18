@@ -24,3 +24,13 @@ export function buildApiUrl(origin: string, prefix: string, path: string): strin
   }
   return `${origin.replace(/\/+$/, "")}${prefix}${path}`;
 }
+
+/**
+ * Official image sources.
+ * - Item icons: https://ageofnations.world/items/{itemCode}.webp (observed on the game's public site for tank, steel, case2,
+ *   helmet4, rifle, oil, bread, grain, concrete, jet, chest4, sniper). Other item codes are assumed to follow the same pattern;
+ *   a missing file falls back to an icon in the UI.
+ * - Player, unit, party and company-owner images: relative "/media/..." paths returned by the API, served from the API origin.
+ * No country-flag asset has been found in the API or on the public site.
+ */
+export const ITEM_ICON_BASE = "https://ageofnations.world/items";

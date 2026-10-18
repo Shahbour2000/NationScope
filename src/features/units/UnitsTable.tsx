@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
+import { CountryBadge, PlayerChip, RegionLink } from "@/features/entities/entities";
+import type { Display } from "@/features/entities/display";
 import type { Messages } from "@/i18n/messages";
 import type { UnitRow } from "@/lib/domain/units";
 import { filterUnits, sortUnits, summarize, type SortDir, type SortKey } from "./logic";
 
-interface Props { rows: UnitRow[]; m: Messages["units"]; noneLabel: string; allLabel: string; numberLocale: string }
+interface Props { rows: UnitRow[]; m: Messages["units"]; noneLabel: string; allLabel: string; numberLocale: string; d: Display }
 
 const COLS: { key: SortKey; label: keyof Messages["units"]["columns"]; numeric?: boolean }[] = [
   { key: "name", label: "unit" }, { key: "country", label: "country" }, { key: "owner", label: "owner" },
@@ -13,7 +16,7 @@ const COLS: { key: SortKey; label: keyof Messages["units"]["columns"]; numeric?:
   { key: "damage", label: "damage", numeric: true }, { key: "policy", label: "policy" },
 ];
 
-export function UnitsTable({ rows, m, noneLabel, allLabel, numberLocale }: Props) {
+export function UnitsTable({ rows, m, noneLabel, allLabel, numberLocale, d }: Props) {
   const [query, setQuery] = useState("");
   const [policy, setPolicy] = useState("all");
   const [country, setCountry] = useState("all");
@@ -43,7 +46,7 @@ export function UnitsTable({ rows, m, noneLabel, allLabel, numberLocale }: Props
         </select>
         <select className="field" value={country} onChange={(e) => setCountry(e.target.value)} aria-label={m.country}>
           <option value="all">{m.country}: {allLabel}</option>
-          {countries.map((c) => <option key={c} value={c}>{c.toUpperCase()}</option>)}
+          {countries.map((c) => <option key={c} value={c}>{d.dir.countries[c]?.name ?? c.toUpperCase()}</option>)}
         </select>
       </div>
 
@@ -71,11 +74,11 @@ export function UnitsTable({ rows, m, noneLabel, allLabel, numberLocale }: Props
                     ) : (
                       <span className="logo-fallback" aria-hidden="true">{r.name.slice(0, 1).toUpperCase()}</span>
                     )}
-                    {r.name}
+                    <span><Link href={`/units/${encodeURIComponent(r.id)}`}><b>{r.name}</b></Link>{r.regionId ? <span className="hint" style={{ display: "block" }}><RegionLink id={r.regionId} d={d} /></span> : null}</span>
                   </span>
                 </td>
-                <td>{r.countryId ? r.countryId.toUpperCase() : noneLabel}</td>
-                <td>{r.ownerName ?? noneLabel}</td>
+                <td>{r.countryId ? <CountryBadge id={r.countryId} d={d} /> : noneLabel}</td>
+                <td>{r.ownerName ? <PlayerChip id={r.ownerId} name={r.ownerName} d={d} /> : noneLabel}</td>
                 <td className="num">{r.members === null ? "-" : `${fmt.format(r.members)}${r.capacity === null ? "" : ` / ${fmt.format(r.capacity)}`}`}</td>
                 <td className="num">{r.hqLevel === null ? "-" : `${m.hqLevel} ${fmt.format(r.hqLevel)}`}{r.hqStatus ? ` · ${r.hqStatus}` : ""}</td>
                 <td className="num">{r.damage === null ? "-" : fmt.format(BigInt(r.damage))}</td>

@@ -41,21 +41,11 @@ Documented endpoints are not assumed to exist on Main. With `NATIONSCOPE_DIAGNOS
 
 ## Pages
 
-| Route | What it shows |
-|---|---|
-| `/` | Overview: independent tiles (counts from list responses; real units totals), top units, latest world events. |
-| `/units` | **Verified real data** from Main `/units`: sortable, filterable directory. |
-| `/countries`, `/alliances`, `/regions`, `/battles`, `/wars`, `/contracts`, `/market`, `/equipment`, `/equipment-floor`, `/jobs`, `/history`, `/articles`, `/tournaments` | Generic list pages (real data, fields as returned). |
-| `/{section}/{id}` and `/{section}/{id}/{tab}` | Generic detail and sub-pages (country government, citizens, parties, laws, bank...; battle contracts; market order book/history/trades). Includes `players`, `parties`, `elections`, `laws`, `companies`, `units`. |
-| `/search?q=` | Global search (top bar form). |
-| `/tools/build-planner` | Planner status and engine (no game formulas verified). |
-| `/diagnostics` | API explorer, only with `NATIONSCOPE_DIAGNOSTICS=true`. |
+Typed pages (real fields, tested against real fixtures): Overview, Countries, Country profile and Citizens, Wars, Battles, Alliances (+ detail), Companies, Company statistics, Economy overview, Market, Equipment, Equipment floor, Jobs, Rankings, World events, Articles, Units. Everything else (player/party/election/law/unit/battle details, market item sub-pages, other country tabs, contracts, tournaments, laws, game rules) uses the generic viewer, which hides technical fields and resolves countries, regions and items to names and icons. Search is the top-bar form. Planner and diagnostics pages are unchanged. See `docs/data-audit.md` for the endpoint-by-endpoint status.
 
-See `docs/data-audit.md` for what is verified versus generic. Desktop has a collapsible sidebar; below 48rem the sidebar becomes a drawer and tables become stacked cards. Responsive behaviour was written to CSS rules but **not visually tested** (no browser in the build environment); please check on a phone.
+Design: desktop collapsible sidebar and a mobile drawer; tables become stacked cards below 48rem; icons from `lucide-react`; charts are dependency-free SVG. Entities: `src/features/entities` (country tokens, item icons, player chips, badges, money, dates), `src/features/charts`, `src/features/economy/analytics.ts` (pure calculations). Layouts were verified by markup and CSS review only; **no browser or device testing was done**.
 
-Country pages use the documented one-call `/countries/{id}/summary` as the Overview tab and add tabs for profile, government members, government, citizens, elections, parties, laws, announcements, embassies, bank, companies, company statistics, units, wars, battles, world events and revolution. Alliances have a laws tab; players have stats and companies tabs. Economy pages: market (order book, history, trades), equipment offers, equipment floor, companies, company statistics, jobs.
-
-Planner engine: `skills.ts`, `equipment.ts`, `evidence.ts` and `damage.ts` (the developer-confirmed stage order; each stage must supply a sourced rule, otherwise the result is `incomplete`). See `docs/combat-sources.md`.
+Localization: English and Arabic dictionaries in `src/i18n/messages.ts` are type-checked against each other, so a missing key fails `tsc` and the Vercel build. Item names, statuses, rarities, slots and stats are in the dictionaries; unknown codes fall back to a humanized code.
 
 ## Add a feature
 1. Add the endpoint builder to `src/lib/api/endpoints.ts` (validated ids/query bounds).

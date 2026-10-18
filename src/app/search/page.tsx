@@ -1,6 +1,7 @@
 import { ApiErrorState } from "@/components/ApiErrorState";
 import { Provenance } from "@/components/Provenance";
 import { StateMessage } from "@/components/StateMessage";
+import { getDisplay } from "@/features/entities/display.server";
 import { DataView } from "@/features/explorer/DataView";
 import { getLocale, getMessages } from "@/i18n";
 import { searchEntities } from "@/lib/data/search";
@@ -19,11 +20,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   } catch (error) {
     return (<><h1>{m.explorer.searchTitle}</h1><ApiErrorState error={error} retryLabel={m.common.retry} /></>);
   }
+  const d = await getDisplay();
   return (
     <>
       <h1>{m.explorer.searchTitle}</h1>
       <p className="note">{m.explorer.searchFor} “{q}”. {m.explorer.genericNote}</p>
-      <DataView data={result.data} section={null} detailLinks={false} labels={m.explorer} />
+      <DataView data={result.data} section={null} detailLinks={false} labels={m.explorer} d={d} />
       <Provenance meta={result.meta} m={m} />
     </>
   );

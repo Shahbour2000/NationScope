@@ -1,48 +1,43 @@
-# Data audit: endpoints, pages and verification status
+# Data audit (real production samples, captured 2026-10-17)
 
-Source of truth: the production OpenAPI spec (`https://app.ageofnations.world/api/docs/json`, read 2026-10-17; 65 paths, all response bodies typed only as a generic JSON object). Base: `https://app.ageofnations.world/api/v1` (configured in `src/lib/config/environments.ts`). Status as of this milestone.
+Source of truth: 38 real responses from `https://app.ageofnations.world/api/v1`, stored in `tests/fixtures/real/` (arrays truncated to 60 rows) and parsed by the models in `src/lib/domain/`. Endpoints that returned bad requests were omitted by the project owner and are not assumed unavailable.
 
-**Verified** = a real Main response was read and a schema/test was written from it. **Generic** = the page renders whatever JSON comes back (fields shown as received, nothing assumed); the response shape has NOT been inspected by the build environment, so no field is relied on. Link targets in generic pages are heuristics (ID prefixes `usr_`, `mu_` were observed on Main; key-name suffixes such as `countryId` are guesses).
+**Typed** = a page built from the real fields with tests. **Generic** = no real sample yet, rendered by the generic viewer (technical fields hidden, entity ids resolved to names).
 
-| Endpoint | Page(s) | Status | Known gaps |
-|---|---|---|---|
-| `GET /units` | `/units`, Overview tile + top-5 table | **Verified** (`src/lib/domain/units.ts`, `tests/fixtures/main/units.sample.json`) | No `/units/{muId}` shape yet; `countryId` is a code, names need `/countries`. |
-| `GET /units/{muId}` | `/units/{id}` | Generic | Members, treasury, damage history unknown. |
-| `GET /countries`, `/countries/{id}` | `/countries`, `/countries/{id}` | Generic | Field names unknown (population, development, treasury...). |
-| `/countries/{id}/citizens` (limit<=100, offset<=10000), `/government`, `/government/history`, `/elections`, `/parties`, `/laws`, `/bank`, `/revolution` | tabs on `/countries/{id}/...` | Generic | Congress seats, vote counts unknown. |
-| `/alliances`, `/alliances/{id}` | `/alliances`, `/alliances/{id}` | Generic | Member list field unknown. |
-| `/regions`, `/regions/{id}`, `/regions/{id}/companies`, `/regions/{id}/campaign` | `/regions...` | Generic | |
-| `/battles` (limit<=100), `/battles/{id}`, `/battles/{id}/contracts` | `/battles...` | Generic | Overview counts active battles, capped at 100 (shown as `100+`). |
-| `/wars` | `/wars`, Overview tile | Generic | |
-| `/contracts` | `/contracts` | Generic | `/contracts/auctions/{id}` has no page yet. |
-| `/market`, `/market/{item}/orders`, `/history` (168h), `/trades` (50) | `/market`, `/market/{item}/...` | Generic | Rows link to `/market/{id|code|itemCode}`; item-code field name unverified. Money (1/10,000 gold strings) is shown raw, not yet formatted. |
-| `/equipment` (limit<=60, offset), `/equipment/floor` | `/equipment`, `/equipment-floor` | Generic | Stats fields unknown. |
-| `/jobs`, `/history`, `/articles`, `/articles/{id}`, `/tournaments`, `/tournaments/{id}` | matching routes, Overview tiles/events | Generic | `/history` cursor paging not wired. |
-| `/players/{id}`, `/parties/{id}`, `/elections/{id}`, `/laws/{id}`, `/companies/{id}`, `/newspapers/{id}`, `/rankings/{board}` | `/players/{id}` etc. | Generic | No list pages exist for these (no list endpoints); reached via links or search. Ranking board ids come from `/game`, which has no page yet. |
-| `/search` | `/search?q=` (top-bar form) | Generic | No live dropdown; needs a verified result shape. |
-| `/game` | `/api/health` only | Used for health | Rules content not shown. |
+| Endpoint (sample) | Page | Status | Fields used | Missing / unknown |
+|---|---|---|---|---|
+| `/countries` | `/countries`, directory for every flag/name | Typed | name, scheme (colour), regions, coreRegions, coreHeld, capitalRegionId, capitalHeld, development, citizens, activeCitizens, alliance, enemyCountryId, specializedItem, incomeTax, marketTax | **No flag image field.** Countries use their in-game colour token. |
+| `/countries/{id}/summary` | `/countries/{id}` | Typed | profile (regions with names, taxes, treasury, government holders, ruling party + effects, wars, alliance, pacts, enemy, developmentHistory), battles, embassies, elections.finished | Open laws/announcements shown only as links to tabs. |
+| `/countries/{id}/citizens` | `/countries/{id}/citizens` | Typed | username, avatarUrl, level, homeRegionId, regionId, lastActiveAt, active | |
+| `/countries/{id}/government`, `/government/members`, `/government/history`, `/elections`, `/parties`, `/laws`, `/bank`, `/revolution`, `/embassies`, `/wars`, `/battles`, `/units`, `/history` | country tabs | Generic (samples exist) | shown as returned | Typed views not written yet. |
+| `/wars` | `/wars` | Typed | countryA/B, declaredBy, status, declaredAt, endedAt, proposalId (link only), activeBattles, finishedBattles | duration is calculated |
+| `/battles` | `/battles` | Typed | type, status, regionId, attacker/defender country, rounds, round points/damage, bounty, startedAt, nextTickAt | `/game` battleRules.pointsToWinRound used for progress bars |
+| `/alliances` | `/alliances`, `/alliances/{id}` | Typed (detail built from list + countries + wars) | name, scheme, status, leaderCountryId, members, development, sharePercent, damageBonusPercent, createdAt | `/alliances/{id}` shape not captured |
+| `/regions` | region labels only | Typed ids | id, countryId | **No region names in this endpoint.** Names come from country profiles; otherwise the id suffix is humanized ("iq-mosul" -> "Mosul"). |
+| `/units` | `/units` (+ overview) | Typed | all fields | `/units/{id}` not captured (generic) |
+| `/market` | `/market`, `/economy` | Typed | bestAsk, askQty, bestBid, bidQty, last | spread and ask-vs-last are calculated; **quantities are for the best price level only** |
+| `/market/trades` | `/economy` | Typed | itemCode, price, qty, createdAt | volume-weighted average is calculated over the sample returned |
+| `/market/{item}/orders|history|trades` | `/market/{item}` | Generic | | no samples, so no price-history chart yet |
+| `/equipment` | `/equipment` | Typed | itemCode, slot, rarity, stats, durability, price, sellerName, createdAt | no ownership data |
+| `/equipment/floor` | `/equipment-floor`, `/economy` | Typed | slot, rarity, low, offers | |
+| `/companies`, `/companies/stats`, `/countries/{id}/companies/stats` | `/companies`, `/company-stats`, `/economy` | Typed | name, owner, itemCode, regionId, countryId, levels, workers, investedSteel, level; totals, byItem | profit/production/wages are not exposed here |
+| `/jobs` | `/jobs`, `/economy` | Typed | itemCode, company, location, slots, minLevel, incomeTax, gross/net/taxPerPoint, allowedWage, energyCost | |
+| `/rankings/{board}` | `/rankings/{board}` | Typed | rank, name, subject type/id, country, avatar, value | only `playerDamage` captured; money-valued boards unverified |
+| `/game` | rankings tabs, battle rules | Partly typed | leaderboards[].id/label, battleRules.pointsToWinRound | other rules not displayed yet |
+| `/history`, `/articles` | `/history`, `/articles` | Typed | type, at, summary, countryIds; title, excerpt, author, newspaper | |
+| `/laws` (catalog), `/contracts`, `/tournaments` | `/laws`, `/contracts`, `/tournaments` | Generic (samples exist) | | |
+| `/players/{id}` (+stats/companies), `/parties/{id}`, `/elections/{id}`, `/laws/{id}`, `/companies/{id}`, `/articles/{id}`, `/battles/{id}`, `/units/{id}`, `/regions/{id}`, `/alliances/{id}`, market item endpoints | detail pages | Generic | | no samples supplied |
 
-Overview tile counts use `listOf()`: a top-level array, or an object with exactly one array property. Otherwise the tile says "Response shape not recognised yet" rather than guessing. Counts are list lengths, not official statistics.
+## Images
+- **Players, units, parties, company owners:** relative `/media/...` paths from the API, joined to the API origin (`src/lib/media.ts`, only `/media/` paths accepted).
+- **Items:** `https://ageofnations.world/items/{itemCode}.webp`, a pattern observed on the game's public site for tank, steel, case2, helmet4, rifle, oil, bread, grain, concrete, jet, chest4, sniper (`ITEM_ICON_BASE` in `src/lib/config/environments.ts`). It is assumed for other codes; a missing file falls back to a generic icon.
+- **Countries:** no flag asset exists in the API or on the public site; a colour token (the country's `scheme`) with its code is used.
+- Companies have no logo field in the samples.
 
-## Next verification step
-Capture real responses for the generic endpoints (paste full URLs into chat so the assistant can fetch them, or set `NATIONSCOPE_DIAGNOSTICS=true` on the deployment and open `/diagnostics?all=1`), then replace each generic page with a typed view built from the real fields, one section at a time.
+## Calculations (never presented as API facts)
+Marked in the UI with Calculated / Estimate badges: market spread, ask-vs-last, volume-weighted trade price, median/average net pay, company shares, alliance totals, war duration, core control percent, round damage split. All money stays BigInt (1/10,000 gold). See `src/features/economy/analytics.ts` and `tests/real-data.test.ts`.
 
-
-## Production spec update (2026-10-17)
-
-Endpoints added to the registry and pages from the production spec (all **Generic** unless noted):
-
-| Endpoint | Page | Documented content (from spec text only) |
-|---|---|---|
-| `/countries/{id}/summary` | Country overview tab | Profile, government members, active wars and battles, open laws, elections, announcements, embassies in one call. |
-| `/countries/{id}/government/members` | `members` tab | Documented example shape: `{ members: [{ label, username, ... }] }`; description adds role label, level, party, since. Only `members`, `label`, `username` are named by the spec. |
-| `/countries/{id}/announcements`, `/embassies` (`mutual` flag), `/wars`, `/battles`, `/units`, `/history` | tabs (`events` = history) | |
-| `/countries/{id}/companies`, `/companies/stats`, `/companies`, `/companies/stats` | tabs, `/companies`, `/company-stats` | Companies richest first: money and steel invested, upgrade levels, workers, owner. Filters countryId/regionId/ownerId/itemCode, sort invested/workers/level/newest, limit<=100, offset<=10000. Stats: companies, invested, workers, owners per product. |
-| `/players/{id}/stats`, `/players/{id}/companies`, `/players/by-name/{username}`, `/players?ids=` (<=25) | player tabs; builders ready | Stats: level, rank, damage/work/trade (all time, today, week, month), company worth; wallets are private. |
-| `/alliances/{id}/laws`, `/laws` (catalog) | alliance tab, `/laws` | Catalog: each law code with parameters and voting rules. |
-| `/rankings/{board}` (+`/archive`) | `/rankings/playerDamage`, overview block | Board ids are listed in `/game` `leaderboards[].id`; `playerDamage` is the spec's own example. |
-| `/game` | `/game` | Server time, ruleset version, battle and contract rules, leaderboards, history event types. Contents not yet read by the build environment. |
-
-Spec facts used: money is a string in 1/10,000 gold; times are ISO 8601 UTC; CORS allows any origin; 60 req/min/IP; 30 s cache. Which fields carry money is not stated, so values are shown raw (formatting needs field names from real responses).
-
-Still not read by the build environment (no network route from the sandbox and no sample pasted): every response except `/units`.
+## Not available / not built
+- **Price history charts:** `/market/{item}/history` was not sampled; NationScope stores no history. A snapshot collector (Supabase or similar) would be needed for long-term trends and is not built.
+- **Production, profit, wages formulas:** need the Wiki rules (URLs not provided).
+- Player, unit and battle detail pages remain generic until their responses are captured.

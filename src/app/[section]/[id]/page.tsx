@@ -3,7 +3,9 @@ import { ApiErrorState } from "@/components/ApiErrorState";
 import { Provenance } from "@/components/Provenance";
 import { Tabs } from "@/components/Tabs";
 import { SECTIONS } from "@/features/explorer/catalog";
+import { getDisplay } from "@/features/entities/display.server";
 import { DataView } from "@/features/explorer/DataView";
+import { entityTitle } from "@/features/explorer/shape";
 import { getLocale, getMessages } from "@/i18n";
 import { fetchEndpoint } from "@/lib/data/explore";
 
@@ -31,12 +33,14 @@ export default async function DetailPage({ params }: { params: Promise<{ section
   } catch (error) {
     return (<><h1>{title}</h1><ApiErrorState error={error} retryLabel={m.common.retry} /></>);
   }
+  const d = await getDisplay();
+  const heading = entityTitle(result.data) ?? (m.explorer.sections as Record<string, string>)[section] ?? section;
   return (
     <>
-      <h1>{title}</h1>
+      <h1>{heading}</h1>
       {tabs.length > 1 && <Tabs items={tabs} label={title} />}
       <p className="note">{m.explorer.genericNote} {m.explorer.linksNote}</p>
-      <DataView data={result.data} section={null} detailLinks={false} labels={m.explorer} />
+      <DataView data={result.data} section={null} detailLinks={false} labels={m.explorer} d={d} />
       <Provenance meta={result.meta} m={m} />
     </>
   );

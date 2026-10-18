@@ -1,0 +1,1 @@
+Real responses captured from https://app.ageofnations.world/api/v1 on 2026-10-17 (supplied by the project owner). Arrays longer than 60 rows were truncated to the first 60 real rows. Source of truth for typed models in src/lib/domain.

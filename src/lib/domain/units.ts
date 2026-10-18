@@ -6,6 +6,7 @@ const rowSchema = z
     id: z.string().min(1),
     name: z.string().min(1),
     countryId: z.string().nullish(),
+    regionId: z.string().nullish(),
     joinPolicy: z.string().nullish(),
     logoUrl: z.string().nullish(),
     hqLevel: z.number().int().nullish(),
@@ -24,6 +25,7 @@ export interface UnitRow {
   id: string;
   name: string;
   countryId: string | null;
+  regionId: string | null;
   joinPolicy: string | null;
   logoSrc: string | null;
   hqLevel: number | null;
@@ -52,6 +54,7 @@ export function parseUnits(raw: readonly unknown[], origin: string): { units: Un
       id: v.id,
       name: v.name,
       countryId: v.countryId ?? null,
+      regionId: v.regionId ?? null,
       joinPolicy: v.joinPolicy ?? null,
       logoSrc: v.logoUrl && safeMedia(v.logoUrl) ? `${origin}${v.logoUrl}` : null,
       hqLevel: v.hqLevel ?? null,

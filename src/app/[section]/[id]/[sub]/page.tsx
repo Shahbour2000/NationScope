@@ -4,6 +4,7 @@ import { Pager } from "@/components/Pager";
 import { Provenance } from "@/components/Provenance";
 import { Tabs } from "@/components/Tabs";
 import { DEFAULT_PAGE_SIZE, SECTIONS, parseOffset } from "@/features/explorer/catalog";
+import { getDisplay } from "@/features/entities/display.server";
 import { DataView } from "@/features/explorer/DataView";
 import { listOf } from "@/features/explorer/shape";
 import { getLocale, getMessages } from "@/i18n";
@@ -32,13 +33,14 @@ export default async function SubPage({ params, searchParams }: { params: Promis
   } catch (error) {
     return (<><h1>{title}</h1><Tabs items={tabs} label={title} /><ApiErrorState error={error} retryLabel={m.common.retry} /></>);
   }
+  const d = await getDisplay();
   const rowCount = listOf(result.data)?.rows.length ?? 0;
   return (
     <>
       <h1>{title}</h1>
       <Tabs items={tabs} label={title} />
       <p className="note">{m.explorer.genericNote} {m.explorer.linksNote}</p>
-      <DataView data={result.data} section={null} detailLinks={false} labels={m.explorer} />
+      <DataView data={result.data} section={null} detailLinks={false} labels={m.explorer} d={d} />
       {subDef.paged && <Pager basePath={`${base}/${sub}`} offset={offset} pageSize={pageSize} rowCount={rowCount} prev={m.explorer.prev} next={m.explorer.next} />}
       <Provenance meta={result.meta} m={m} />
     </>

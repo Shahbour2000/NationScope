@@ -4,6 +4,7 @@ import { Pager } from "@/components/Pager";
 import { Provenance } from "@/components/Provenance";
 import { StateMessage } from "@/components/StateMessage";
 import { DEFAULT_PAGE_SIZE, SECTIONS, parseOffset } from "@/features/explorer/catalog";
+import { getDisplay } from "@/features/entities/display.server";
 import { DataView } from "@/features/explorer/DataView";
 import { listOf } from "@/features/explorer/shape";
 import { getLocale, getMessages } from "@/i18n";
@@ -28,12 +29,13 @@ export default async function SectionPage({ params, searchParams }: { params: Pr
   } catch (error) {
     return (<><h1>{title}</h1><ApiErrorState error={error} retryLabel={m.common.retry} /></>);
   }
+  const d = await getDisplay();
   const rowCount = listOf(result.data)?.rows.length ?? 0;
   return (
     <>
       <h1>{title}</h1>
       <p className="note">{m.explorer.genericNote} {m.explorer.linksNote}</p>
-      <DataView data={result.data} section={section} detailLinks={!!def.detail || !!def.linkRows} labels={m.explorer} />
+      <DataView data={result.data} section={section} detailLinks={!!def.detail || !!def.linkRows} labels={m.explorer} d={d} />
       {def.paged && <Pager basePath={`/${section}`} offset={offset} pageSize={pageSize} rowCount={rowCount} prev={m.explorer.prev} next={m.explorer.next} />}
       <Provenance meta={result.meta} m={m} />
     </>

@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Messages } from "@/i18n/messages";
+import type { Display } from "@/features/entities/display";
 import { Cell } from "./Cell";
 import { rowHref } from "./links";
 import type { Row } from "./shape";
 import { sortRows } from "./sort";
 
-interface Props { rows: Row[]; columns: string[]; section: string | null; labels: Messages["explorer"] }
+interface Props { rows: Row[]; columns: string[]; section: string | null; labels: Messages["explorer"]; d?: Display }
 const RENDER_CAP = 200;
 
 /** Sortable, filterable table over arbitrary rows. Columns come from the data, never from assumed field names. */
-export function GenericTable({ rows, columns, section, labels }: Props) {
+export function GenericTable({ rows, columns, section, labels, d }: Props) {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
 
@@ -49,7 +50,7 @@ export function GenericTable({ rows, columns, section, labels }: Props) {
                 <tr key={i}>
                   {columns.map((c, ci) => (
                     <td key={c} data-label={c}>
-                      {ci === 0 && href ? <Link href={href}><Cell k={c} v={r[c]} labels={labels} /></Link> : <Cell k={c} v={r[c]} labels={labels} />}
+                      {ci === 0 && href ? <Link href={href}><Cell k={c} v={r[c]} labels={labels} d={d} /></Link> : <Cell k={c} v={r[c]} labels={labels} d={d} />}
                     </td>
                   ))}
                 </tr>

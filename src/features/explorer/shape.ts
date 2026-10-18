@@ -26,3 +26,13 @@ export const countItems = (payload: unknown): number | null => listOf(payload)?.
 export function objectRows(rows: readonly unknown[]): Row[] | null {
   return rows.length > 0 && rows.every(isRecord) ? (rows as Row[]) : null;
 }
+
+/** A human title for an entity response (name / username / title / label), or null. Avoids showing raw ids in headings. */
+export function entityTitle(payload: unknown): string | null {
+  if (!isRecord(payload)) return null;
+  for (const k of ["name", "username", "title", "label"]) {
+    const v = payload[k];
+    if (typeof v === "string" && v.trim()) return v;
+  }
+  return null;
+}
