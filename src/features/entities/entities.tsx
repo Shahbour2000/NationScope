@@ -3,19 +3,25 @@ import type { ReactNode } from "react";
 import { Icon, type IconName } from "@/components/Icon";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { regionName } from "@/lib/domain/directory";
+import { flagSrc } from "@/lib/flags";
 import { itemIconSrc, mediaSrc } from "@/lib/media";
 import { countryName, itemName, schemeColor, term, type Display } from "./display";
 import { RemoteImage } from "./RemoteImage";
 
 const idOk = (id: string) => /^[A-Za-z0-9_-]{1,80}$/.test(id);
 
-/** The API has no flag asset; a country is shown as a token in its in-game colour with its code. */
+/** Country flag from the bundled flag set (the API provides none). Falls back to a colour token if the file is missing. */
+export function Flag({ id, d }: { id: string; d: Display }) {
+  const token = <span className="cflag" style={{ background: schemeColor(d.dir.countries[id]?.scheme) }} aria-hidden="true">{id.slice(0, 2).toUpperCase()}</span>;
+  const src = flagSrc(id);
+  return src ? <RemoteImage src={src} size={27} fallback={token} alt="" cls="cflag-img" /> : token;
+}
+
 export function CountryBadge({ id, d, link = true }: { id: string | null | undefined; d: Display; link?: boolean }) {
   if (!id) return <span className="chip">{d.m.ui.none}</span>;
-  const c = d.dir.countries[id];
   const inner = (
     <>
-      <span className="cflag" style={{ background: schemeColor(c?.scheme) }} aria-hidden="true">{id.slice(0, 2).toUpperCase()}</span>
+      <Flag id={id} d={d} />
       <span className="cname">{countryName(id, d.dir)}</span>
     </>
   );

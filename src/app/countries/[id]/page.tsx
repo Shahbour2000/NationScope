@@ -6,13 +6,15 @@ import { Provenance } from "@/components/Provenance";
 import { Tabs } from "@/components/Tabs";
 import { ApiError } from "@/lib/api/errors";
 import { LineChart } from "@/features/charts/charts";
-import { SECTIONS } from "@/features/explorer/catalog";
+import { PinButton } from "@/features/pins/PinButton";
+import { flagSrc } from "@/lib/flags";
+import { countryTabs } from "@/features/countries/tabs";
 import { warDurationMs } from "@/features/economy/analytics";
 import { CountryBadge, Dt, ItemChip, Metric, Money, PlayerChip, RegionLink, Source, StatusBadge } from "@/features/entities/entities";
 import { term } from "@/features/entities/display";
 import { getDisplay } from "@/features/entities/display.server";
 import { getLocale, getMessages } from "@/i18n";
-import { getCountrySummary } from "@/lib/data/world";
+import { getCountryCounts, getCountrySummary } from "@/lib/data/world";
 import { parseRows } from "@/lib/domain/parse";
 import { battleSchema } from "@/lib/domain/world";
 import { formatDuration, humanizeCode, percent } from "@/lib/format";
@@ -45,15 +47,16 @@ export default async function CountryPage({ params }: { params: Promise<{ id: st
   const congress = (p.government?.holders ?? []).filter((h) => h.role === "congress").length;
   const battles = parseRows(summary.battles, battleSchema).rows;
   const hist = (p.developmentHistory ?? []).map((h) => ({ label: h.dayKey, value: h.development }));
-  const subs = SECTIONS.countries!.subs ?? [];
   const base = `/countries/${encodeURIComponent(id)}`;
-  const tabs = [{ href: base, label: c.overview, current: true }, ...subs.map((s) => ({ href: `${base}/${s.slug}`, label: (m.explorer.subs as Record<string, string>)[s.slug] ?? s.slug, current: false }))];
+  const counts = await getCountryCounts(id);
+  const tabs = countryTabs(id, m, "overview", { citizens: p.citizens?.total ?? null, wars: (p.wars ?? []).length, battles: battles.length, companies: counts.companies, units: counts.units });
   const pc = (k: string) => (d.m.t.effect as Record<string, string>)[k] ?? humanizeCode(k);
 
   return (
     <>
       <div className="page-head">
         <h1><CountryBadge id={p.id} d={d} link={false} /></h1>
+        <PinButton labels={m.pins} target={{ type: "country", id: p.id, name: p.name, image: flagSrc(p.id), href: `/countries/${encodeURIComponent(p.id)}` }} />
         {p.alliance && <Link className="badge" data-tone="neutral" href={`/alliances/${encodeURIComponent(p.alliance.allianceId)}`}><Icon name="shield" size={13} /> {p.alliance.name}</Link>}
         {p.enemy && <span className="badge" data-tone="bad">{c.enemyCountry}: <CountryBadge id={p.enemy.countryId} d={d} /></span>}
         {p.discordUrl && /^https:\/\/discord\.(gg|com)\//.test(p.discordUrl) && <a className="badge" href={p.discordUrl} target="_blank" rel="noopener noreferrer">{c.discord}</a>}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ApiErrorState } from "@/components/ApiErrorState";
 import { Icon } from "@/components/Icon";
+import { Info } from "@/components/Info";
 import { Provenance } from "@/components/Provenance";
 import { Source } from "@/features/entities/entities";
 import { getDisplay } from "@/features/entities/display.server";
@@ -20,6 +21,7 @@ export default async function MarketPage() {
     <>
       <div className="page-head"><h1><Icon name="chart" size={26} />{e.marketTitle}</h1><Source kind="api" d={d} /></div>
       <p className="note">{e.marketHint} <Link href="/economy">{e.economyHub}</Link></p>
+      <Info title={m.economyPage.howTitle}><ul>{m.economyPage.how.map((t) => <li key={t}>{t}</li>)}</ul><p>{m.economyPage.howLimits}</p></Info>
       <MarketTable rows={res.rows} d={d} m={e} />
       <p className="hint">{e.widestNote}</p>
       <Provenance meta={res.meta} m={m} note={m.ui.iconNote} />

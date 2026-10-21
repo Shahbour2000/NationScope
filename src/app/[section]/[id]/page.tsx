@@ -5,7 +5,9 @@ import { Tabs } from "@/components/Tabs";
 import { SECTIONS } from "@/features/explorer/catalog";
 import { getDisplay } from "@/features/entities/display.server";
 import { DataView } from "@/features/explorer/DataView";
-import { entityTitle } from "@/features/explorer/shape";
+import { entityTitle, isRecord } from "@/features/explorer/shape";
+import { PinButton } from "@/features/pins/PinButton";
+import { mediaSrc } from "@/lib/media";
 import { getLocale, getMessages } from "@/i18n";
 import { fetchEndpoint } from "@/lib/data/explore";
 
@@ -35,9 +37,12 @@ export default async function DetailPage({ params }: { params: Promise<{ section
   }
   const d = await getDisplay();
   const heading = entityTitle(result.data) ?? (m.explorer.sections as Record<string, string>)[section] ?? section;
+  const pinType = ({ players: "player", parties: "party", units: "unit" } as const)[section as "players" | "parties" | "units"];
+  const rec = isRecord(result.data) ? result.data : {};
+  const img = mediaSrc(typeof rec.avatarUrl === "string" ? rec.avatarUrl : typeof rec.logoUrl === "string" ? rec.logoUrl : null, d.mediaOrigin);
   return (
     <>
-      <h1>{heading}</h1>
+      <div className="page-head"><h1>{heading}</h1>{pinType && <PinButton labels={m.pins} target={{ type: pinType, id, name: heading, image: img, href: `/${section}/${encodeURIComponent(id)}` }} />}</div>
       {tabs.length > 1 && <Tabs items={tabs} label={title} />}
       <p className="note">{m.explorer.genericNote} {m.explorer.linksNote}</p>
       <DataView data={result.data} section={null} detailLinks={false} labels={m.explorer} d={d} />

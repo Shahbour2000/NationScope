@@ -4,7 +4,7 @@ import { getApiClient } from "@/lib/api/instance";
 import { anyJson } from "@/lib/api/schemas";
 import type { Directory } from "@/lib/domain/directory";
 import { asRecord, parseRows } from "@/lib/domain/parse";
-import { allianceSchema, articleSchema, battleSchema, citizenSchema, countrySchema, historyItemSchema, leaderboardSchema, rankingRowSchema, summarySchema, warSchema } from "@/lib/domain/world";
+import { governmentSchema, memberSchema, allianceSchema, articleSchema, battleSchema, citizenSchema, countrySchema, historyItemSchema, leaderboardSchema, rankingRowSchema, summarySchema, warSchema } from "@/lib/domain/world";
 import type { Endpoint } from "@/lib/api/endpoints";
 
 const get = (e: Endpoint) => getApiClient().get(e.path, { schema: anyJson, query: e.query });
@@ -70,6 +70,21 @@ export async function getHistory() {
 export async function getArticles() {
   const { data, meta } = await get(endpoints.articles());
   return { ...parseRows(asRecord(data).items, articleSchema), meta };
+}
+
+export async function getGovernment(countryId: string) {
+  const [gov, mem] = await Promise.all([get(endpoints.government(countryId)), get(endpoints.governmentMembers(countryId))]);
+  const parsed = governmentSchema.safeParse(gov.data);
+  const rec = asRecord(mem.data);
+  return { government: parsed.success ? parsed.data : null, ...parseRows(rec.members, memberSchema), countryName: typeof rec.countryName === "string" ? rec.countryName : null, meta: mem.meta };
+}
+
+/** Optional tab counts for the country header: companies and military units (two cached requests; failures just omit the count). */
+export async function getCountryCounts(countryId: string) {
+  const [co, un] = await Promise.allSettled([get(endpoints.countryCompanyStats(countryId)), get(endpoints.countryUnits(countryId))]);
+  const companies = co.status === "fulfilled" ? (typeof asRecord(asRecord(co.value.data).totals).companies === "number" ? (asRecord(asRecord(co.value.data).totals).companies as number) : null) : null;
+  const list = un.status === "fulfilled" ? (Array.isArray(un.value.data) ? un.value.data : asRecord(un.value.data).units) : null;
+  return { companies, units: Array.isArray(list) ? list.length : null };
 }
 
 export async function getBattleRules() {

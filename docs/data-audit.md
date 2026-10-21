@@ -9,7 +9,8 @@ Source of truth: 38 real responses from `https://app.ageofnations.world/api/v1`,
 | `/countries` | `/countries`, directory for every flag/name | Typed | name, scheme (colour), regions, coreRegions, coreHeld, capitalRegionId, capitalHeld, development, citizens, activeCitizens, alliance, enemyCountryId, specializedItem, incomeTax, marketTax | **No flag image field.** Countries use their in-game colour token. |
 | `/countries/{id}/summary` | `/countries/{id}` | Typed | profile (regions with names, taxes, treasury, government holders, ruling party + effects, wars, alliance, pacts, enemy, developmentHistory), battles, embassies, elections.finished | Open laws/announcements shown only as links to tabs. |
 | `/countries/{id}/citizens` | `/countries/{id}/citizens` | Typed | username, avatarUrl, level, homeRegionId, regionId, lastActiveAt, active | |
-| `/countries/{id}/government`, `/government/members`, `/government/history`, `/elections`, `/parties`, `/laws`, `/bank`, `/revolution`, `/embassies`, `/wars`, `/battles`, `/units`, `/history` | country tabs | Generic (samples exist) | shown as returned | Typed views not written yet. |
+| `/countries/{id}/government` + `/government/members` | `/countries/{id}/government` | Typed | members: role, userId, username, avatarUrl, level, party, startedAt; government: congressSeats, rulingParty, active.choices | **No seat numbers**: the hemicycle is a visual arrangement grouped by party; vacant seats = congressSeats - members |
+| `/countries/{id}/government/history`, `/elections`, `/parties`, `/laws`, `/bank`, `/revolution`, `/embassies`, `/wars`, `/battles`, `/units`, `/history` | country tabs | Generic (samples exist) | shown as returned | Typed views not written yet. |
 | `/wars` | `/wars` | Typed | countryA/B, declaredBy, status, declaredAt, endedAt, proposalId (link only), activeBattles, finishedBattles | duration is calculated |
 | `/battles` | `/battles` | Typed | type, status, regionId, attacker/defender country, rounds, round points/damage, bounty, startedAt, nextTickAt | `/game` battleRules.pointsToWinRound used for progress bars |
 | `/alliances` | `/alliances`, `/alliances/{id}` | Typed (detail built from list + countries + wars) | name, scheme, status, leaderCountryId, members, development, sharePercent, damageBonusPercent, createdAt | `/alliances/{id}` shape not captured |
@@ -31,7 +32,7 @@ Source of truth: 38 real responses from `https://app.ageofnations.world/api/v1`,
 ## Images
 - **Players, units, parties, company owners:** relative `/media/...` paths from the API, joined to the API origin (`src/lib/media.ts`, only `/media/` paths accepted).
 - **Items:** `https://ageofnations.world/items/{itemCode}.webp`, a pattern observed on the game's public site for tank, steel, case2, helmet4, rifle, oil, bread, grain, concrete, jet, chest4, sniper (`ITEM_ICON_BASE` in `src/lib/config/environments.ts`). It is assumed for other codes; a missing file falls back to a generic icon.
-- **Countries:** no flag asset exists in the API or on the public site; a colour token (the country's `scheme`) with its code is used.
+- **Countries:** the API and the public site provide no flag asset, so NationScope bundles standard national flags (MIT `flag-icons`, `public/flags`, game id `uk` -> `gb`). A missing flag falls back to a colour token (the country's `scheme`) with its code.
 - Companies have no logo field in the samples.
 
 ## Calculations (never presented as API facts)

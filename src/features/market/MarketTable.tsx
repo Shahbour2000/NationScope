@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { MobileSort } from "@/components/MobileSort";
 import { marketView, type MarketView } from "@/features/economy/analytics";
 import { ItemIcon, Money } from "@/features/entities/entities";
 import { itemName, type Display } from "@/features/entities/display";
@@ -47,6 +48,8 @@ export function MarketTable({ rows, d, m }: { rows: MarketRow[]; d: Display; m: 
   return (
     <>
       <div className="filterbar"><label>{d.m.ui.search}<input className="field" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={m.item} /></label></div>
+      <MobileSort label={d.m.ui.sortBy} value={sort.key} dir={sort.dir === 1 ? "asc" : "desc"} onKey={(k) => setSort((s) => ({ ...s, key: k as Key }))} onDir={() => setSort((s) => ({ ...s, dir: s.dir === 1 ? -1 : 1 }))}
+        options={[{ key: "item", label: m.item }, { key: "ask", label: m.bestAsk }, { key: "bid", label: m.bestBid }, { key: "last", label: m.last }, { key: "spread", label: m.spread }, { key: "askQty", label: m.askQty }]} />
       <div className="tablewrap">
         <table className="table">
           <thead><tr>{th("item", m.item)}{th("ask", m.bestAsk, true)}{th("bid", m.bestBid, true)}{th("last", m.last, true)}{th("spread", m.spread, true)}{th("askQty", m.askQty, true)}<th scope="col" className="num">{m.bidQty}</th></tr></thead>

@@ -22,7 +22,7 @@ export default async function FloorPage() {
     <>
       <div className="page-head"><h1><Icon name="box" size={26} />{e.floorTitle}</h1><Source kind="api" d={d} /></div>
       <p className="note">{e.floorNote} <Link href="/equipment">{e.cheapestOffers}</Link></p>
-      <div className="tablewrap">
+      <div className="heatwrap">
         <table className="heat">
           <thead><tr><th scope="col">{e.slot}</th>{mx.rarities.map((r) => <th key={r} scope="col">{term("rarity", r, d)}</th>)}</tr></thead>
           <tbody>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Messages } from "@/i18n/messages";
+import { MobileSort } from "@/components/MobileSort";
 import type { Display } from "@/features/entities/display";
 import { Cell } from "./Cell";
 import { rowHref } from "./links";
@@ -30,6 +31,8 @@ export function GenericTable({ rows, columns, section, labels, d }: Props) {
         <input className="field" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={labels.filter} aria-label={labels.filter} />
       </div>
       <p className="note">{labels.showing} {visible.length} {labels.of} {rows.length} {labels.rows}</p>
+      <MobileSort label={d?.m.ui.sortBy ?? "Sort by"} value={sort?.key ?? columns[0] ?? ""} dir={sort?.dir ?? "asc"} onKey={(k) => setSort((s) => ({ key: k, dir: s?.dir ?? "asc" }))} onDir={() => setSort((s) => ({ key: s?.key ?? columns[0] ?? "", dir: s?.dir === "asc" ? "desc" : "asc" }))}
+        options={columns.map((c) => ({ key: c, label: c }))} />
       <div className="tablewrap">
         <table className="table">
           <thead>

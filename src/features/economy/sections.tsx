@@ -98,7 +98,7 @@ export async function FloorSection({ d, m }: P) {
     return (
       <section className="card">
         <h2><Icon name="box" size={18} />{t.floorTitle} <Source kind="api" d={d} /></h2>
-        <div className="tablewrap">
+        <div className="heatwrap">
           <table className="heat">
             <thead><tr><th scope="col">{t.slot}</th>{mx.rarities.map((r) => <th key={r} scope="col">{term("rarity", r, d)}</th>)}</tr></thead>
             <tbody>

@@ -1,0 +1,1 @@
+Country flags: the MIT-licensed `flag-icons` package v7.6.0 (https://github.com/lipis/flag-icons), 4x3 SVGs for ISO 3166-1 alpha-2 codes. The game's id `uk` is served from `gb.svg` (see src/lib/flags.ts). No flag asset is provided by the Age of Nations API, so these are standard national flags.

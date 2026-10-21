@@ -39,6 +39,15 @@ Documented endpoints are not assumed to exist on Main. With `NATIONSCOPE_DIAGNOS
 3. Optionally add `NATIONSCOPE_DIAGNOSTICS=true` temporarily to inspect the API, then remove it.
 4. Open `/api/health` on the deployed site; it should report `"ok": true` and environment `main`.
 
+## Brand, design system, pins, flags, market analysis
+
+- **Brand/design tokens:** `docs/design-system.md` (logo from the supplied artwork; purple -> blue -> cyan gradient; navy surfaces).
+- **Pins:** pin button on country, alliance, player, party and unit pages; top-bar pin menu (dropdown on desktop, bottom sheet on phones), grouped by type, unpin in place. Saved in **this browser only** (`localStorage` key `ns.pins.v1`); read through `useSyncExternalStore` so there is no hydration mismatch; no account or backend.
+- **Flags:** bundled MIT `flag-icons` (`public/flags`, licence included) because the API has none; `uk` maps to `gb`; fallback token if a file is missing.
+- **Government and Congress:** `/countries/{id}/government`: leadership cards and a party-grouped hemicycle (hover/tap/keyboard) with a full member list for phones.
+- **Market analysis:** `/economy`, `/market`: spreads, ask-vs-last, volume-weighted trade price, jobs pay, company shares, each labelled API / Calculated / Estimate, with a tap-friendly "How these numbers are calculated" panel. No price history is shown because none is stored or sampled; long-term trends would need a snapshot collector.
+- **Testing:** `npm test` (unit), `docs/ui-testing.md` (real-browser audit and interaction scripts), `docs/architecture.md` (folders and how to add a page).
+
 ## Pages
 
 Typed pages (real fields, tested against real fixtures): Overview, Countries, Country profile and Citizens, Wars, Battles, Alliances (+ detail), Companies, Company statistics, Economy overview, Market, Equipment, Equipment floor, Jobs, Rankings, World events, Articles, Units. Everything else (player/party/election/law/unit/battle details, market item sub-pages, other country tabs, contracts, tournaments, laws, game rules) uses the generic viewer, which hides technical fields and resolves countries, regions and items to names and icons. Search is the top-bar form. Planner and diagnostics pages are unchanged. See `docs/data-audit.md` for the endpoint-by-endpoint status.

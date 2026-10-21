@@ -4,6 +4,7 @@ import { AppShell, type NavGroup } from "@/components/AppShell";
 import { EnvBadge } from "@/components/EnvBadge";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { Logo } from "@/components/Logo";
+import { PinMenu } from "@/features/pins/PinMenu";
 import { dirOf, getLocale, getMessages } from "@/i18n";
 import { diagnosticsEnabled } from "@/lib/diagnostics/probe";
 import "./globals.css";
@@ -61,8 +62,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           labels={m.shell}
           navLabel={n.label}
           brand={<Link href="/" className="brand" aria-label={m.brand}><Logo /></Link>}
+          foot={<EnvBadge labels={m.common.environment} />}
           tools={
             <>
+              <PinMenu labels={m.pins} />
               <LocaleSwitcher current={locale} label={m.common.language} otherLabel={m.common.otherLanguage} />
               <EnvBadge labels={m.common.environment} />
             </>

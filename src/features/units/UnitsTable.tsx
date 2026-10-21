@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { MobileSort } from "@/components/MobileSort";
+import { RemoteImage } from "@/features/entities/RemoteImage";
 import { CountryBadge, PlayerChip, RegionLink } from "@/features/entities/entities";
 import type { Display } from "@/features/entities/display";
 import type { Messages } from "@/i18n/messages";
@@ -50,6 +52,8 @@ export function UnitsTable({ rows, m, noneLabel, allLabel, numberLocale, d }: Pr
         </select>
       </div>
 
+      <MobileSort label={d.m.ui.sortBy} value={sort.key} dir={sort.dir} onKey={(k) => setSort((s) => ({ ...s, key: k as SortKey }))} onDir={() => setSort((s) => ({ ...s, dir: s.dir === "asc" ? "desc" : "asc" }))}
+        options={COLS.map((c) => ({ key: c.key, label: m.columns[c.label] }))} />
       <div className="tablewrap">
         <table className="table">
           <thead>
@@ -68,12 +72,7 @@ export function UnitsTable({ rows, m, noneLabel, allLabel, numberLocale, d }: Pr
               <tr key={r.id}>
                 <td>
                   <span className="unitcell">
-                    {r.logoSrc ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img className="logo" src={r.logoSrc} alt="" loading="lazy" referrerPolicy="no-referrer" width={32} height={32} />
-                    ) : (
-                      <span className="logo-fallback" aria-hidden="true">{r.name.slice(0, 1).toUpperCase()}</span>
-                    )}
+                    <RemoteImage src={r.logoSrc} size={32} cls="logo" fallback={<span className="logo-fallback" aria-hidden="true">{r.name.slice(0, 1).toUpperCase()}</span>} />
                     <span><Link href={`/units/${encodeURIComponent(r.id)}`}><b>{r.name}</b></Link>{r.regionId ? <span className="hint" style={{ display: "block" }}><RegionLink id={r.regionId} d={d} /></span> : null}</span>
                   </span>
                 </td>

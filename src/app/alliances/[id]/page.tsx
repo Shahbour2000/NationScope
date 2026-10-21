@@ -4,6 +4,7 @@ import { ApiErrorState } from "@/components/ApiErrorState";
 import { Icon } from "@/components/Icon";
 import { Provenance } from "@/components/Provenance";
 import { Tabs } from "@/components/Tabs";
+import { PinButton } from "@/features/pins/PinButton";
 import { allianceAggregate } from "@/features/economy/analytics";
 import { CountryBadge, Dt, Metric, Source, StatusBadge } from "@/features/entities/entities";
 import { getDisplay } from "@/features/entities/display.server";
@@ -28,7 +29,7 @@ export default async function AllianceDetail({ params }: { params: Promise<{ id:
   const tabs = [{ href: base, label: m.explorer.overviewTab, current: true }, { href: `${base}/laws`, label: a.laws, current: false }];
   return (
     <>
-      <div className="page-head"><h1><Icon name="shield" size={26} /><span dir="auto">{alliance.name}</span></h1><StatusBadge value={alliance.status} d={d} /></div>
+      <div className="page-head"><h1><Icon name="shield" size={26} /><span dir="auto">{alliance.name}</span></h1><StatusBadge value={alliance.status} d={d} /><PinButton labels={m.pins} target={{ type: "alliance", id: alliance.id, name: alliance.name, image: null, href: `/alliances/${encodeURIComponent(alliance.id)}` }} /></div>
       <Tabs items={tabs} label={alliance.name} />
       <dl className="metrics">
         <Metric icon="landmark" label={a.leader} value={<CountryBadge id={alliance.leaderCountryId} d={d} />} />

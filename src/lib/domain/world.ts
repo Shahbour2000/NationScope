@@ -97,3 +97,18 @@ export const summarySchema = z.object({
   announcements: z.array(z.unknown()).nullish(),
 }).passthrough();
 export type CountrySummary = z.infer<typeof summarySchema>;
+
+export const memberSchema = z.object({
+  role: s, userId: s.nullish(), username: s.nullish(), avatarUrl: s.nullish(), level: n.nullish(), startedAt: s.nullish(), label: s.nullish(),
+  party: z.object({ id: s, name: s }).passthrough().nullish(),
+}).passthrough();
+export type GovMember = z.infer<typeof memberSchema>;
+
+export const governmentSchema = z.object({
+  rulingParty: z.object({ id: s, name: s }).passthrough().nullish(),
+  congressSeats: n.nullish(),
+  active: z.object({
+    choices: z.array(z.object({ axis: s, code: s, level: n.nullish(), fanatic: z.boolean().nullish(), effects: z.record(s, n).nullish() }).passthrough()).nullish(),
+  }).passthrough().nullish(),
+}).passthrough();
+export type Government = z.infer<typeof governmentSchema>;

@@ -15,6 +15,7 @@ interface Props {
   navLabel: string;
   brand: ReactNode;
   tools: ReactNode;
+  foot?: ReactNode;
   children: ReactNode;
 }
 
@@ -23,7 +24,7 @@ export function isActive(path: string, href: string): boolean {
 }
 
 /** Desktop: collapsible sidebar. Mobile (<= 48rem): off-canvas drawer opened from the top bar. */
-export function AppShell({ groups, labels, navLabel, brand, tools, children }: Props) {
+export function AppShell({ groups, labels, navLabel, brand, tools, foot, children }: Props) {
   const path = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [open, setOpen] = useState(false);
@@ -77,6 +78,7 @@ export function AppShell({ groups, labels, navLabel, brand, tools, children }: P
             </div>
           ))}
         </nav>
+        {foot ? <div className="side-foot">{foot}</div> : null}
       </aside>
       <div className="scrim" onClick={() => setOpen(false)} aria-hidden="true" />
       <div className="shell-main">

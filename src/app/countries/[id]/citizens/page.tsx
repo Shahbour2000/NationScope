@@ -3,7 +3,8 @@ import { ApiErrorState } from "@/components/ApiErrorState";
 import { Pager } from "@/components/Pager";
 import { Provenance } from "@/components/Provenance";
 import { Tabs } from "@/components/Tabs";
-import { SECTIONS, parseOffset } from "@/features/explorer/catalog";
+import { countryTabs } from "@/features/countries/tabs";
+import { parseOffset } from "@/features/explorer/catalog";
 import { Avatar, CountryBadge, Dt, RegionLink } from "@/features/entities/entities";
 import { getDisplay } from "@/features/entities/display.server";
 import { getLocale, getMessages } from "@/i18n";
@@ -18,14 +19,14 @@ export default async function CitizensPage({ params, searchParams }: { params: P
   const m = getMessages(await getLocale());
   const c = m.countryProfile;
   const base = `/countries/${encodeURIComponent(id)}`;
-  const tabs = [{ href: base, label: c.overview, current: false }, ...(SECTIONS.countries!.subs ?? []).map((s) => ({ href: `${base}/${s.slug}`, label: (m.explorer.subs as Record<string, string>)[s.slug] ?? s.slug, current: s.slug === "citizens" }))];
+  const tabs = countryTabs(id, m, "citizens");
   let res;
   try { res = await getCitizens(id, { offset, limit: PAGE }); } catch (e) { return <><h1>{c.citizensTab}</h1><Tabs items={tabs} label={c.citizensTab} /><ApiErrorState error={e} retryLabel={m.common.retry} /></>; }
   const d = await getDisplay();
   const nf = new Intl.NumberFormat(d.nl);
   return (
     <>
-      <div className="page-head"><h1><CountryBadge id={id} d={d} link={false} /> · {c.citizensTab}</h1></div>
+      <div className="page-head"><h1><CountryBadge id={id} d={d} link={false} /> <span className="h1-sub">· {c.citizensTab}</span></h1></div>
       <Tabs items={tabs} label={c.citizensTab} />
       {res.total != null && <p className="note">{nf.format(res.total)} {m.ui.total}</p>}
       <div className="tablewrap">

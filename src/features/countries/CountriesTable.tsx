@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
+import { MobileSort } from "@/components/MobileSort";
 import { Progress } from "@/features/charts/charts";
 import { CountryBadge, ItemChip, RegionLink } from "@/features/entities/entities";
 import type { Display } from "@/features/entities/display";
@@ -63,6 +64,8 @@ export function CountriesTable({ rows, d, m }: { rows: Country[]; d: Display; m:
         <label className="check"><span><input type="checkbox" checked={allied} onChange={(e) => setAllied(e.target.checked)} /> {m.onlyAllied}</span></label>
         <label className="check"><span><input type="checkbox" checked={lost} onChange={(e) => setLost(e.target.checked)} /> {m.capitalLost}</span></label>
       </div>
+      <MobileSort label={d.m.ui.sortBy} value={sort.key} dir={sort.dir} onKey={(k) => setSort((s) => ({ ...s, key: k as SortKey }))} onDir={() => setSort((s) => ({ ...s, dir: s.dir === "asc" ? "desc" : "asc" }))}
+        options={[{ key: "name", label: m.country }, { key: "regions", label: m.regions }, { key: "core", label: m.core }, { key: "development", label: m.development }, { key: "citizens", label: m.citizens }]} />
       <div className="tablewrap">
         <table className="table">
           <thead>
