@@ -1,0 +1,226 @@
+{
+ "id": "mu_xk3dx9x6bhf6s47c",
+ "name": "Arthur Reign",
+ "description": "To serve Britania, and its ally.",
+ "status": "active",
+ "countryId": "uk",
+ "regionId": "uk-london",
+ "joinPolicy": "application",
+ "hqLevel": 1,
+ "hqStatus": "active",
+ "hqAttackBonus": 5,
+ "dormLevel": 2,
+ "capacity": 10,
+ "moveCost": 50000,
+ "currency": "money",
+ "nationalityChangeAt": null,
+ "helpCooldownHours": 12,
+ "healthPerHelp": 2,
+ "treasury": null,
+ "upkeep": null,
+ "viewer": null,
+ "createdAt": "2026-10-12T08:52:38.477Z",
+ "logoUrl": "/media/11e4a37efca14ff251af24f9.webp",
+ "ownerId": "usr_w6np9esu52k84j3j",
+ "revision": 5,
+ "members": [
+  {
+   "userId": "usr_w6np9esu52k84j3j",
+   "role": "owner",
+   "joinedAt": "2026-10-12T08:52:38.477Z",
+   "username": "Bloody Valentine",
+   "avatarUrl": "/media/a3a6ad4bb19946dd62998670.webp",
+   "level": 22,
+   "countryId": "uk",
+   "totalDamage": "2462596",
+   "lastActiveAt": "2026-10-22T07:38:09.210Z",
+   "weeklyDamage": "816302",
+   "presence": {
+    "lastActiveAt": "2026-10-22T07:38:09.210Z",
+    "online": false
+   }
+  },
+  {
+   "userId": "usr_6yppgpf7149fbtjq",
+   "role": "commander",
+   "joinedAt": "2026-10-12T08:57:52.847Z",
+   "username": "Kiral",
+   "avatarUrl": "/media/b92962c8d329ee5381a5e666.webp",
+   "level": 23,
+   "countryId": "uk",
+   "totalDamage": "3690362",
+   "lastActiveAt": "2026-10-22T08:20:09.742Z",
+   "weeklyDamage": "914168",
+   "presence": {
+    "lastActiveAt": "2026-10-22T08:20:09.742Z",
+    "online": true
+   }
+  },
+  {
+   "userId": "usr_wjwfr4w42kt55iep",
+   "role": "member",
+   "joinedAt": "2026-10-19T18:39:20.232Z",
+   "username": "ER_CHE_GUEVARA",
+   "avatarUrl": "/media/7fb2782693235cdde5bedd04.webp",
+   "level": 16,
+   "countryId": "ma",
+   "totalDamage": "314957",
+   "lastActiveAt": "2026-10-21T23:01:31.139Z",
+   "weeklyDamage": "140312",
+   "presence": {
+    "lastActiveAt": "2026-10-21T23:01:31.139Z",
+    "online": false
+   }
+  },
+  {
+   "userId": "usr_im8chgzsg45y3uha",
+   "role": "member",
+   "joinedAt": "2026-10-20T05:57:42.608Z",
+   "username": "Prince Adel",
+   "avatarUrl": "/media/c0e91abcfd74cbe539b1c076.webp",
+   "level": 15,
+   "countryId": "fr",
+   "totalDamage": "296865",
+   "lastActiveAt": "2026-10-22T08:01:59.152Z",
+   "weeklyDamage": "93361",
+   "presence": {
+    "lastActiveAt": "2026-10-22T08:01:59.152Z",
+    "online": false
+   }
+  },
+  {
+   "userId": "usr_w56ee8igdqfvd488",
+   "role": "member",
+   "joinedAt": "2026-10-21T01:42:21.642Z",
+   "username": "ANGEL_TST",
+   "avatarUrl": "/media/4cd283d9f0ff1b604e1b7ea7.webp",
+   "level": 11,
+   "countryId": "uk",
+   "totalDamage": "277909",
+   "lastActiveAt": "2026-10-21T22:54:27.680Z",
+   "weeklyDamage": "190481",
+   "presence": {
+    "lastActiveAt": "2026-10-21T22:54:27.680Z",
+    "online": false
+   }
+  },
+  {
+   "userId": "usr_67zdwkzssfhr2dxw",
+   "role": "member",
+   "joinedAt": "2026-10-14T09:43:03.265Z",
+   "username": "Zoki",
+   "avatarUrl": "/media/7f3204ff9f273b270c84c478.webp",
+   "level": 19,
+   "countryId": "rs",
+   "totalDamage": "170812",
+   "lastActiveAt": "2026-10-21T23:27:27.304Z",
+   "weeklyDamage": "23779",
+   "presence": {
+    "lastActiveAt": "2026-10-21T23:27:27.304Z",
+    "online": false
+   }
+  },
+  {
+   "userId": "usr_v670f6fwegckedsn",
+   "role": "member",
+   "joinedAt": "2026-10-15T03:19:52.330Z",
+   "username": "TriglaV",
+   "avatarUrl": "/media/ef790c937104f0133c43e7d2.jpg",
+   "level": 17,
+   "countryId": "rs",
+   "totalDamage": "147904",
+   "lastActiveAt": "2026-10-21T22:41:56.103Z",
+   "weeklyDamage": "24716",
+   "presence": {
+    "lastActiveAt": "2026-10-21T22:41:56.103Z",
+    "online": false
+   }
+  },
+  {
+   "userId": "usr_gnqz8kb5dgc2w01s",
+   "role": "member",
+   "joinedAt": "2026-10-21T15:53:18.924Z",
+   "username": "mg42",
+   "avatarUrl": "/media/3b1c843d8b424a75236883c8.webp",
+   "level": 17,
+   "countryId": "kp",
+   "totalDamage": "81458",
+   "lastActiveAt": "2026-10-22T08:15:25.325Z",
+   "weeklyDamage": "42668",
+   "presence": {
+    "lastActiveAt": "2026-10-22T08:15:25.325Z",
+    "online": false
+   }
+  }
+ ],
+ "stats": {
+  "totalDamage": "6435341",
+  "weeklyDamage": "2027018",
+  "tournamentWins": 0
+ },
+ "tournaments": [
+  {
+   "id": "ted_0vgwd0q40gg7ap64",
+   "name": "Unit Tournament 2026-W42",
+   "status": "finished",
+   "startsAt": "2026-10-16T18:00:00.000Z",
+   "winnerId": "mu_wn6dmwp2fegfstw3",
+   "runnerUpId": "mu_bsgmbfr8vj8j930g",
+   "seed": 4,
+   "withdrawnAt": null,
+   "result": "eliminated"
+  }
+ ],
+ "upgrades": {
+  "headquarters": {
+   "code": "headquarters",
+   "level": 1,
+   "maxLevel": 4,
+   "maintenanceCost": 10000,
+   "stats": {
+    "attackBonus": 5
+   },
+   "next": {
+    "level": 2,
+    "steelCost": 200,
+    "maintenanceCost": 20000,
+    "stats": {
+     "attackBonus": 10
+    }
+   },
+   "downgrade": {
+    "level": 0,
+    "steelRefund": 80,
+    "blocked": null
+   }
+  },
+  "dormitories": {
+   "code": "dormitories",
+   "level": 2,
+   "maxLevel": 5,
+   "maintenanceCost": 0,
+   "stats": {
+    "members": 10
+   },
+   "next": {
+    "level": 3,
+    "steelCost": 300,
+    "maintenanceCost": 0,
+    "stats": {
+     "members": 15
+    }
+   },
+   "downgrade": {
+    "level": 1,
+    "steelRefund": 160,
+    "blocked": "Level 1 houses 5 members; the unit has 8"
+   }
+  }
+ },
+ "dissolutionRefund": {
+  "money": 2400000,
+  "steel": 240,
+  "percent": 80
+ },
+ "applications": []
+}

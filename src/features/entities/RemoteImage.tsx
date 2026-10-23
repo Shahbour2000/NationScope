@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /** <img> that swaps to a fallback node if the file is missing, so a broken image never shows. */
 export function RemoteImage({ src, size, round, fallback, alt = "", cls }: { src: string | null; size: number; round?: boolean; fallback: ReactNode; alt?: string; cls?: string }) {
   const [failed, setFailed] = useState(false);
-  // A server-rendered <img> can fail before React attaches onError; check the element as soon as it mounts.
-  const ref = useCallback((img: HTMLImageElement | null) => { if (img && img.complete && img.naturalWidth === 0) setFailed(true); }, []);
+  const ref = useRef<HTMLImageElement>(null);
+  // A server-rendered <img> can fail before React attaches onError. Check after hydration (an effect, not a ref callback, so hydration is never disturbed).
+  useEffect(() => { const img = ref.current; if (img && img.complete && img.naturalWidth === 0) setFailed(true); }, []);
   if (!src || failed) return <>{fallback}</>;
   return (
     // eslint-disable-next-line @next/next/no-img-element

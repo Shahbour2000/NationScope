@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "tests", "fixtures", "real");
 const port = Number(process.argv[2] ?? 4060);
 const routes = [
+  ["/units/mu_xk3dx9x6bhf6s47c", "unit-detail"],
   ["/countries/eg/summary", "country-eg-summary"], ["/countries/eg/citizens", "citizens-eg"], ["/countries/eg/government/members", "government-members-eg"],
   ["/countries/eg/government/history", "government-history-eg"], ["/countries/eg/government", "government-eg"], ["/countries/eg/embassies", "embassies-eg"],
   ["/countries/eg/wars", "wars-eg"], ["/countries/eg/battles", "battles-eg"], ["/countries/eg/units", "units-eg"], ["/countries/eg/history", "history-eg"],

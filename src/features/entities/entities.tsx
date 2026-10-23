@@ -22,7 +22,7 @@ export function CountryBadge({ id, d, link = true }: { id: string | null | undef
   const inner = (
     <>
       <Flag id={id} d={d} />
-      <span className="cname">{countryName(id, d.dir)}</span>
+      <span className="cname" title={countryName(id, d.dir)}>{countryName(id, d.dir)}</span>
     </>
   );
   return link && idOk(id) ? <Link className="cbadge" href={`/countries/${encodeURIComponent(id)}`}>{inner}</Link> : <span className="cbadge">{inner}</span>;
