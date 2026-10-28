@@ -1,0 +1,170 @@
+{
+ "id": "btl_k6beibh5n4s42y81",
+ "type": "territorial",
+ "status": "active",
+ "warId": "war_r9v68wwyrfa2nf91",
+ "regionId": "nl-gelderland-brabant",
+ "sourceRegionId": "de-rhine",
+ "attackerCountryId": "de",
+ "defenderCountryId": "uk",
+ "attackerRounds": 1,
+ "defenderRounds": 0,
+ "currentRound": 2,
+ "winner": null,
+ "tickSeconds": 120,
+ "startedAt": "2026-10-21T03:26:37.428Z",
+ "endedAt": null,
+ "outcome": null,
+ "rounds": [
+  {
+   "id": "rnd_6cnce4zyprxng6ti",
+   "number": 1,
+   "status": "finished",
+   "attackerDamage": "218260",
+   "defenderDamage": "0",
+   "attackerPoints": 252,
+   "defenderPoints": 0,
+   "ticks": 152,
+   "nextTickAt": "2026-10-21T08:35:08.494Z",
+   "winner": "attacker",
+   "startedAt": "2026-10-21T03:26:37.428Z",
+   "endedAt": "2026-10-21T08:35:08.686Z"
+  },
+  {
+   "id": "rnd_8udxdhcgbtbc9kt7",
+   "number": 2,
+   "status": "active",
+   "attackerDamage": "9077",
+   "defenderDamage": "0",
+   "attackerPoints": 30,
+   "defenderPoints": 0,
+   "ticks": 30,
+   "nextTickAt": "2026-10-21T09:38:01.478Z",
+   "winner": null,
+   "startedAt": "2026-10-21T08:35:08.686Z",
+   "endedAt": null
+  }
+ ],
+ "totals": {
+  "attacker": {
+   "damage": "227337",
+   "fighters": 10
+  },
+  "defender": {
+   "damage": "0",
+   "fighters": 0
+  }
+ },
+ "leaderboards": {
+  "attacker": [
+   {
+    "userId": "usr_19y53kwkw5a8nn9p",
+    "username": "ETHEREAL",
+    "avatarUrl": "/media/67a8ea6163f55b2d6b9fa016.webp",
+    "countryId": "eg",
+    "damage": "78315",
+    "hits": 71,
+    "nameStyle": null
+   },
+   {
+    "userId": "usr_ummuuxjkb91g0wsk",
+    "username": "AHMEDER",
+    "avatarUrl": "/media/35a7c98c6a19435a53f985c5.gif",
+    "countryId": "eg",
+    "damage": "34908",
+    "hits": 42,
+    "nameStyle": null
+   },
+   {
+    "userId": "usr_r9s8exrd8arivqrq",
+    "username": "AbuDujana",
+    "avatarUrl": "/media/8d126155650a12155d333ec5.gif",
+    "countryId": "eg",
+    "damage": "33891",
+    "hits": 31,
+    "nameStyle": null
+   },
+   {
+    "userId": "usr_cg1sbkfwzgdyw32m",
+    "username": "Graff",
+    "avatarUrl": null,
+    "countryId": "de",
+    "damage": "24331",
+    "hits": 53,
+    "nameStyle": null
+   },
+   {
+    "userId": "usr_6wbj53xupmx6kpn7",
+    "username": "OMAR2xd",
+    "avatarUrl": "/media/cbfd2e15bbc20c523b5550f9.webp",
+    "countryId": "eg",
+    "damage": "23549",
+    "hits": 38,
+    "nameStyle": null
+   },
+   {
+    "userId": "usr_y10ac8vgj5xenhjd",
+    "username": "Mr.AboZein",
+    "avatarUrl": "/media/42e6c7e8a5a0b4d35c8f0931.webp",
+    "countryId": "de",
+    "damage": "11755",
+    "hits": 30,
+    "nameStyle": null
+   },
+   {
+    "userId": "usr_2fxif4skbv6s0i8s",
+    "username": "Deutsches Reich",
+    "avatarUrl": "/media/c8cc6077a5c6c63d28e0d6eb.webp",
+    "countryId": "de",
+    "damage": "10550",
+    "hits": 36,
+    "nameStyle": null
+   },
+   {
+    "userId": "usr_c3c5bmy6v24xvv3c",
+    "username": "Molto",
+    "avatarUrl": "/media/4761f315a87c3ad614308254.webp",
+    "countryId": "de",
+    "damage": "9086",
+    "hits": 13,
+    "nameStyle": null
+   },
+   {
+    "userId": "usr_wvscyheqn1b6i8z0",
+    "username": "Eyad65",
+    "avatarUrl": null,
+    "countryId": "eg",
+    "damage": "904",
+    "hits": 11,
+    "nameStyle": null
+   },
+   {
+    "userId": "usr_nhkqbjxzi3tgqibr",
+    "username": "Azaroth",
+    "avatarUrl": "/media/357b28026eb2156633a23a8a.webp",
+    "countryId": "is",
+    "damage": "48",
+    "hits": 1,
+    "nameStyle": null
+   }
+  ],
+  "defender": []
+ },
+ "rules": {
+  "roundsToWin": 2,
+  "pointsToWinRound": 250,
+  "tickPoints": {
+   "1": 1,
+   "80": 2,
+   "160": 3,
+   "240": 4,
+   "320": 5,
+   "400": 6
+  },
+  "healthCost": 10,
+  "maxHitsPerBatch": 10,
+  "durabilityLossPerHit": 1,
+  "battleCooldownHours": 1
+ },
+ "note": "Captured 2026-10-21; recentHits and per-tick history omitted from this fixture"
+}

@@ -20,8 +20,6 @@ export const SECTIONS: Record<string, SectionDef> = {
     // Overview tab = the documented one-call summary (profile, government, wars, battles, laws, elections, announcements, embassies).
     detail: endpoints.countrySummary,
     subs: [
-      { slug: "profile", endpoint: endpoints.country },
-      { slug: "members", endpoint: endpoints.governmentMembers },
       { slug: "government", endpoint: endpoints.government },
       { slug: "government-history", endpoint: (id) => endpoints.governmentHistory(id, { limit: 100 }) },
       { slug: "citizens", paged: true, endpoint: (id, p) => endpoints.citizens(id, p) },

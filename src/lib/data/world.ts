@@ -1,9 +1,11 @@
+import { getConfig } from "@/lib/config/env";
 import { z } from "zod";
 import { endpoints } from "@/lib/api/endpoints";
 import { getApiClient } from "@/lib/api/instance";
 import { anyJson } from "@/lib/api/schemas";
 import type { Directory } from "@/lib/domain/directory";
 import { asRecord, parseRows } from "@/lib/domain/parse";
+import { parseBattleDetail } from "@/lib/domain/battle-detail";
 import { governmentSchema, memberSchema, allianceSchema, articleSchema, battleSchema, citizenSchema, countrySchema, historyItemSchema, leaderboardSchema, rankingRowSchema, summarySchema, warSchema } from "@/lib/domain/world";
 import type { Endpoint } from "@/lib/api/endpoints";
 
@@ -95,3 +97,16 @@ export async function getBattleRules() {
 }
 
 export const _z = z; // keep zod import explicit for schema re-exports
+
+/** GET /search?q=: groups players/countries/units/parties/alliances (player rows verified: id, username, avatarUrl, countryId, level; other groups parsed defensively: id + name). */
+export async function searchUpstream(q: string) {
+  const e = endpoints.search(q);
+  const { data } = await get(e);
+  return asRecord(data);
+}
+
+/** GET /battles/{id} (shape verified, see src/lib/domain/battle-detail.ts). battle = null when the body is not a battle object. */
+export async function getBattleDetail(id: string) {
+  const { data, meta } = await get(endpoints.battle(id));
+  return { battle: parseBattleDetail(data, getConfig().origin), meta };
+}

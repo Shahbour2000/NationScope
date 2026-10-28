@@ -15,6 +15,7 @@ interface Props {
   navLabel: string;
   brand: ReactNode;
   tools: ReactNode;
+  search: ReactNode;
   foot?: ReactNode;
   children: ReactNode;
 }
@@ -24,7 +25,7 @@ export function isActive(path: string, href: string): boolean {
 }
 
 /** Desktop: collapsible sidebar. Mobile (<= 48rem): off-canvas drawer opened from the top bar. */
-export function AppShell({ groups, labels, navLabel, brand, tools, foot, children }: Props) {
+export function AppShell({ groups, labels, navLabel, brand, tools, search, foot, children }: Props) {
   const path = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [open, setOpen] = useState(false);
@@ -86,10 +87,7 @@ export function AppShell({ groups, labels, navLabel, brand, tools, foot, childre
           <button type="button" className="icon-btn menu-btn" onClick={() => setOpen(true)} aria-label={labels.openMenu} aria-controls="sidebar" aria-expanded={open}>
             <Icon name="menu" />
           </button>
-          <form action="/search" method="get" role="search" className="searchbox">
-            <Icon name="search" size={18} />
-            <input name="q" type="search" minLength={2} maxLength={60} placeholder={labels.searchPlaceholder} aria-label={labels.searchLabel} autoComplete="off" />
-          </form>
+          {search}
           <div className="topbar-tools">{tools}</div>
         </header>
         <main id="content">{children}</main>

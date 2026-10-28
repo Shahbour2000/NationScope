@@ -4,6 +4,8 @@ import { ApiErrorState } from "@/components/ApiErrorState";
 import { Icon } from "@/components/Icon";
 import { Provenance } from "@/components/Provenance";
 import { Tabs } from "@/components/Tabs";
+import { Suspense } from "react";
+import { OrgBuildsPanel } from "@/features/builds/BuildViews";
 import { PinButton } from "@/features/pins/PinButton";
 import { allianceAggregate } from "@/features/economy/analytics";
 import { CountryBadge, Dt, Metric, Source, StatusBadge } from "@/features/entities/entities";
@@ -31,6 +33,7 @@ export default async function AllianceDetail({ params }: { params: Promise<{ id:
     <>
       <div className="page-head"><h1><Icon name="shield" size={26} /><span dir="auto">{alliance.name}</span></h1><StatusBadge value={alliance.status} d={d} /><PinButton labels={m.pins} target={{ type: "alliance", id: alliance.id, name: alliance.name, image: null, href: `/alliances/${encodeURIComponent(alliance.id)}` }} /></div>
       <Tabs items={tabs} label={alliance.name} />
+      <div style={{ marginBlockEnd: "1rem" }}><Suspense fallback={<div className="skeleton" style={{ blockSize: "7rem" }} />}><OrgBuildsPanel countryIds={agg.members.map((c) => c.id)} m={m.builds} nl={d.nl} title={`${m.builds.title} · ${m.overview.activeCitizens}`} /></Suspense></div>
       <dl className="metrics">
         <Metric icon="landmark" label={a.leader} value={<CountryBadge id={alliance.leaderCountryId} d={d} />} />
         <Metric icon="trend" label={a.development} value={alliance.development == null ? d.m.ui.missing : nf.format(alliance.development)} hint={alliance.sharePercent == null ? undefined : `${alliance.sharePercent}% ${a.share}`} />

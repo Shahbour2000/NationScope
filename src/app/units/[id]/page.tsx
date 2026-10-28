@@ -1,23 +1,46 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { ApiErrorState } from "@/components/ApiErrorState";
 import { Icon } from "@/components/Icon";
 import { Info } from "@/components/Info";
 import { ProfileHeader } from "@/components/ProfileHeader";
 import { Provenance } from "@/components/Provenance";
+import { RankList } from "@/components/RankList";
 import { StateMessage } from "@/components/StateMessage";
-import { BarList } from "@/features/charts/charts";
-import { CountryBadge, RegionLink, Source, StatusBadge } from "@/features/entities/entities";
+import { BuildsSummaryView } from "@/features/builds/BuildViews";
+import { summarizeBuilds } from "@/features/builds/classify";
+import { CountryBadge, Flag, RegionLink, StatusBadge } from "@/features/entities/entities";
 import { getDisplay } from "@/features/entities/display.server";
+import type { Display } from "@/features/entities/display";
 import { RemoteImage } from "@/features/entities/RemoteImage";
 import { PinButton } from "@/features/pins/PinButton";
-import { maxWeekly, summarizeMembers } from "@/features/units/profile";
+import { summarizeMembers } from "@/features/units/profile";
 import { UnitMembers, type MemberRow } from "@/features/units/UnitMembers";
 import { getLocale, getMessages } from "@/i18n";
+import type { Messages } from "@/i18n/messages";
+import { loadBuilds, type BuildLoad } from "@/lib/data/players";
 import { getUnitDetail } from "@/lib/data/units";
+import type { UnitProfile } from "@/lib/domain/unit-detail";
 import { formatDuration } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-const unit_id_hint = (id: string): string => id;
+const skeleton = (h: string) => <div className="skeleton" style={{ blockSize: h }} />;
+
+/** Build mix; awaits the shared (cached, capped) census promise so each profile is requested once per render. */
+async function UnitBuilds({ unit, load, m, d }: { unit: UnitProfile; load: Promise<BuildLoad>; m: Messages; d: Display }) {
+  const l = await load;
+  return <BuildsSummaryView counts={summarizeBuilds(unit.members.map((x) => x.id), l.results)} load={l} m={m.builds} nl={d.nl} />;
+}
+
+async function UnitMembersSection({ unit, load, m, d }: { unit: UnitProfile; load: Promise<BuildLoad>; m: Messages; d: Display }) {
+  const l = await load;
+  const now = Date.now();
+  const rows: MemberRow[] = unit.members.map((x) => {
+    const ms = x.lastActiveAt ? now - Date.parse(x.lastActiveAt) : NaN;
+    return { ...x, build: l.results.get(x.id)?.kind ?? null, agoText: Number.isFinite(ms) ? (ms < 60_000 ? m.unitPage.justNow : m.unitPage.ago.replace("{t}", formatDuration(ms, d.m.time))) : null };
+  });
+  return rows.length === 0 ? <p className="empty-mini">{m.unitPage.noMembers}</p> : <UnitMembers rows={rows} d={d} m={m.unitPage} b={m.builds} />;
+}
 
 export default async function UnitProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,98 +48,66 @@ export default async function UnitProfilePage({ params }: { params: Promise<{ id
   const u = m.unitPage;
   let res;
   try { res = await getUnitDetail(id); } catch (e) { return <><h1>{m.nav.units}</h1><ApiErrorState error={e} retryLabel={m.common.retry} /></>; }
-  if (!res.unit) return <StateMessage tone="empty" title={u.notFound} detail={unit_id_hint(id)} />;
+  if (!res.unit) return <StateMessage tone="empty" title={u.notFound} detail={id} />;
   const unit = res.unit;
   const d = await getDisplay();
   const nf = new Intl.NumberFormat(d.nl);
-  const big = (v: string | null) => (v === null ? "—" : nf.format(BigInt(v)));
-
-  const now = Date.now();
-  const rows: MemberRow[] = unit.members.map((x) => {
-    const ms = x.lastActiveAt ? now - Date.parse(x.lastActiveAt) : NaN;
-    return { ...x, agoText: Number.isFinite(ms) ? (ms < 60_000 ? u.justNow : u.ago.replace("{t}", formatDuration(ms, d.m.time))) : null };
-  });
+  const compact = new Intl.NumberFormat(d.nl, { notation: "compact", maximumFractionDigits: 1 });
   const s = summarizeMembers(unit.members);
-  const max = maxWeekly(unit.members);
   const owner = unit.members.find((x) => x.id === unit.ownerId);
-  const top = [...unit.members].filter((x) => x.weeklyDamage !== null).sort((a, b) => (BigInt(b.weeklyDamage!) > BigInt(a.weeklyDamage!) ? 1 : -1)).slice(0, 6);
-
-  const stats = [
-    { label: u.members, value: <>{s.count}{unit.capacity !== null ? <small> / {unit.capacity}</small> : null}</> },
-    { label: u.online, value: s.onlineKnown > 0 ? s.online : "—", hint: s.onlineKnown > 0 ? <Source kind="api" d={d} /> : u.notProvided },
-    { label: u.unitDamage, value: big(unit.stats?.totalDamage ?? null), hint: <Source kind="api" d={d} /> },
-    { label: u.weekly, value: big(unit.stats?.weeklyDamage ?? null), hint: <Source kind="api" d={d} /> },
-    ...(unit.stats?.tournamentWins != null ? [{ label: u.wins, value: unit.stats.tournamentWins }] : []),
-  ];
+  const load = loadBuilds(unit.members.map((x) => x.id), { maxFetch: 30 });
+  const top = [...unit.members].filter((x) => x.weeklyDamage !== null).sort((a, b) => (BigInt(b.weeklyDamage!) > BigInt(a.weeklyDamage!) ? 1 : -1)).slice(0, 5);
 
   return (
     <>
       <ProfileHeader
         image={<RemoteImage src={unit.logoSrc} size={88} cls="phead-logo" fallback={<span className="phead-fallback" aria-hidden="true"><Icon name="unit" size={36} /></span>} />}
-        kicker={<>{unit.countryId ? <CountryBadge id={unit.countryId} d={d} /> : null}{unit.regionId ? <RegionLink id={unit.regionId} d={d} /> : null}</>}
+        kicker={<>{unit.countryId ? <CountryBadge id={unit.countryId} d={d} /> : null}{unit.regionId ? <RegionLink id={unit.regionId} d={d} /> : null}{owner ? <Link href={`/players/${encodeURIComponent(owner.id)}`} className="nm-link" title={owner.name}><Icon name="user" size={14} /> {owner.name}</Link> : null}</>}
         title={unit.name}
         description={unit.description}
         badges={<>{unit.status ? <StatusBadge value={unit.status} d={d} /> : null}{unit.joinPolicy ? <span className="badge" data-tone="neutral">{(u.join as Record<string, string>)[unit.joinPolicy] ?? unit.joinPolicy}</span> : null}</>}
         actions={<PinButton labels={m.pins} target={{ type: "unit", id: unit.id, name: unit.name, image: unit.logoSrc, href: `/units/${encodeURIComponent(unit.id)}` }} />}
-        stats={stats}
         statsLabel={u.overview}
+        stats={[
+          { label: u.members, value: <>{s.count}{unit.capacity !== null ? <small> / {unit.capacity}</small> : null}</> },
+          { label: u.weekly, value: unit.stats?.weeklyDamage ? compact.format(Number(unit.stats.weeklyDamage)) : "—", hint: unit.stats?.weeklyDamage ? nf.format(BigInt(unit.stats.weeklyDamage)) : undefined },
+          { label: u.unitDamage, value: unit.stats?.totalDamage ? compact.format(Number(unit.stats.totalDamage)) : "—", hint: unit.stats?.totalDamage ? nf.format(BigInt(unit.stats.totalDamage)) : undefined },
+          ...(s.onlineKnown > 0 ? [{ label: u.online, value: s.online }] : []),
+        ]}
       />
-      {owner ? <p className="note">{(u.role as Record<string, string>).owner}: <Link href={`/players/${encodeURIComponent(owner.id)}`} dir="auto">{owner.name}</Link></p> : null}
 
       <div className="cols">
-        <section className="card">
-          <h2><Icon name="shield" size={18} />{u.hq} <Source kind="api" d={d} /></h2>
-          <dl className="kvlist">
-            <div><dt>{u.level}</dt><dd>{unit.hq.level ?? "—"}{unit.hq.max !== null ? <small> / {unit.hq.max} {u.maxLevel}</small> : null}</dd></div>
-            <div><dt>{u.attackBonus}</dt><dd>{unit.hq.attackBonus ?? "—"}{unit.hq.nextAttackBonus !== null ? <small> → {unit.hq.nextAttackBonus} ({u.nextLevel})</small> : null}</dd></div>
-          </dl>
-          <h3 className="sub-h"><Icon name="users" size={16} />{u.dorm} <Source kind="api" d={d} /></h3>
-          <dl className="kvlist">
-            <div><dt>{u.level}</dt><dd>{unit.dorm.level ?? "—"}{unit.dorm.max !== null ? <small> / {unit.dorm.max} {u.maxLevel}</small> : null}</dd></div>
-            <div><dt>{u.capacity}</dt><dd>{unit.dorm.capacity ?? "—"}{unit.dorm.nextCapacity !== null ? <small> → {unit.dorm.nextCapacity} ({u.nextLevel})</small> : null}</dd></div>
-          </dl>
-        </section>
-
-        <section className="card">
-          <h2><Icon name="flag" size={18} />{u.byCountry} <Source kind="calc" d={d} /></h2>
-          {s.byCountry.length === 0 ? <p className="empty-mini">{u.noMembers}</p> : (
-            <BarList ariaLabel={u.byCountry} rows={s.byCountry.map((c) => ({ key: c.countryId, label: <CountryBadge id={c.countryId} d={d} />, value: c.count, display: nf.format(c.count) }))} />
-          )}
-          <p className="hint">{u.calc}</p>
-        </section>
-
-        <section className="card">
-          <h2><Icon name="trend" size={18} />{u.topWeekly} <Source kind="api" d={d} /></h2>
+        <section className="panel">
+          <header><h2><Icon name="trophy" size={18} /> {u.topWeekly}</h2></header>
           {top.length === 0 ? <p className="empty-mini">{u.notProvided}</p> : (
-            <BarList ariaLabel={u.topWeekly} rows={top.map((x) => ({ key: x.id, label: <span className="nm" title={x.name} dir="auto">{x.name}</span>, value: Number((BigInt(x.weeklyDamage!) * 1000n) / (max > 0n ? max : 1n)) / 10, display: nf.format(BigInt(x.weeklyDamage!)) }))} />
+            <RankList label={u.topWeekly} icon={<Icon name="flame" size={14} />}
+              items={top.map((x, i) => ({ key: x.id, rank: i + 1, href: `/players/${encodeURIComponent(x.id)}`, name: x.name, value: compact.format(Number(x.weeklyDamage)), valueTitle: nf.format(BigInt(x.weeklyDamage!)),
+                lead: <RemoteImage src={x.avatar} size={28} round fallback={<span className="seat-fallback" aria-hidden="true">{x.name.slice(0, 2).toUpperCase()}</span>} />,
+                tail: x.countryId ? <span className="rk-flag"><Flag id={x.countryId} d={d} /></span> : null }))} />
           )}
         </section>
+        <Suspense fallback={skeleton("10rem")}><UnitBuilds unit={unit} load={load} m={m} d={d} /></Suspense>
       </div>
 
-      <section className="card" style={{ marginBlockStart: "1rem" }} aria-labelledby="members-h">
-        <h2 id="members-h"><Icon name="users" size={18} />{u.members} <span className="chip">{s.count}</span></h2>
-        {rows.length === 0 ? <p className="empty-mini">{u.noMembers}</p> : <UnitMembers rows={rows} d={d} m={u} />}
+      <section className="panel" style={{ marginBlockStart: "1rem" }} aria-labelledby="members-h">
+        <header><h2 id="members-h"><Icon name="users" size={18} /> {u.members} <span className="chip">{s.count}</span></h2></header>
+        <Suspense fallback={skeleton("14rem")}><UnitMembersSection unit={unit} load={load} m={m} d={d} /></Suspense>
         <p className="hint">{u.totalsNote}</p>
       </section>
 
-      {unit.tournaments.length > 0 && (
-        <section className="card" style={{ marginBlockStart: "1rem" }}>
-          <h2><Icon name="trophy" size={18} />{u.tournaments}</h2>
-          <ul className="list">
-            {unit.tournaments.map((t) => (
-              <li key={t.id}>
-                <span dir="auto">{t.name ?? u.tournament}</span>
-                <span className="kv">
-                  {t.status ? <StatusBadge value={t.status} d={d} /> : null}
-                  {t.won ? <span className="badge" data-tone="ok">{u.winner}</span> : t.runnerUp ? <span className="badge" data-tone="neutral">{u.runnerUp}</span> : t.result ? <span>{u.result}: {t.result}</span> : null}
-                  {t.seed !== null ? <span>{u.seed} {t.seed}</span> : null}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
+      <details className="info more">
+        <summary>{u.details}</summary>
+        <div>
+          <dl className="kvlist">
+            <div><dt>{u.hq}</dt><dd>{unit.hq.level ?? "—"}{unit.hq.max !== null ? <small> / {unit.hq.max}</small> : null}{unit.hq.attackBonus !== null ? <small> · {u.attackBonus} {unit.hq.attackBonus}</small> : null}</dd></div>
+            <div><dt>{u.dorm}</dt><dd>{unit.dorm.level ?? "—"}{unit.dorm.max !== null ? <small> / {unit.dorm.max}</small> : null}{unit.dorm.capacity !== null ? <small> · {u.capacity} {unit.dorm.capacity}</small> : null}</dd></div>
+            {unit.stats?.tournamentWins != null ? <div><dt>{u.wins}</dt><dd>{unit.stats.tournamentWins}</dd></div> : null}
+          </dl>
+          {unit.tournaments.length > 0 ? (
+            <ul className="list">{unit.tournaments.map((t) => <li key={t.id}><span dir="auto">{t.name ?? u.tournament}</span><span className="kv">{t.won ? <span className="badge" data-tone="ok">{u.winner}</span> : t.runnerUp ? <span className="badge" data-tone="neutral">{u.runnerUp}</span> : t.result ? <span>{u.result}: {t.result}</span> : null}</span></li>)}</ul>
+          ) : null}
+        </div>
+      </details>
       <Info title={u.availTitle}>
         <p>{u.availIntro}</p>
         <ul>{Object.values(u.avail).map((label) => <li key={label}>{label}: <b>{u.notProvided}</b></li>)}</ul>

@@ -7,18 +7,20 @@ import { CountryBadge } from "@/features/entities/entities";
 import type { Display } from "@/features/entities/display";
 import { RemoteImage } from "@/features/entities/RemoteImage";
 import type { Messages } from "@/i18n/messages";
+import { BuildBadge } from "@/features/builds/BuildBadge";
+import type { BuildKind } from "@/features/builds/classify";
 import type { UnitMember } from "@/lib/domain/unit-detail";
 import { barPercent, maxWeekly, sortMembers, type MemberSortKey } from "./profile";
 
-export interface MemberRow extends UnitMember { agoText: string | null }
+export interface MemberRow extends UnitMember { agoText: string | null; build: BuildKind | null }
 
 const COLS: { key: MemberSortKey; label: keyof Messages["unitPage"] }[] = [
   { key: "name", label: "player" }, { key: "country", label: "country" }, { key: "weekly", label: "weekly" },
-  { key: "lifetime", label: "lifetime" }, { key: "active", label: "lastActive" }, { key: "joined", label: "joined" },
+  { key: "lifetime", label: "lifetime" }, { key: "active", label: "lastActive" },
 ];
 
 /** Verified columns only (role, level, country, weekly + lifetime damage, presence, joined). Unavailable data shows an explicit dash, never 0. */
-export function UnitMembers({ rows, d, m }: { rows: MemberRow[]; d: Display; m: Messages["unitPage"] }) {
+export function UnitMembers({ rows, d, m, b }: { rows: MemberRow[]; d: Display; m: Messages["unitPage"]; b: Messages["builds"] }) {
   const [sort, setSort] = useState<{ key: MemberSortKey; dir: 1 | -1 }>({ key: "weekly", dir: -1 });
   const nf = useMemo(() => new Intl.NumberFormat(d.nl), [d.nl]);
   const sorted = useMemo(() => sortMembers(rows, sort.key, sort.dir) as MemberRow[], [rows, sort]);
@@ -38,7 +40,7 @@ export function UnitMembers({ rows, d, m }: { rows: MemberRow[]; d: Display; m: 
         <table className="table members-table">
           <thead>
             <tr>
-              {head("name", m.player)}{head("country", m.country)}{head("weekly", m.weekly, "num")}{head("lifetime", m.lifetime, "num")}{head("active", m.lastActive)}{head("joined", m.joined)}
+              {head("name", m.player)}<th scope="col">{b.column}</th>{head("country", m.country)}{head("weekly", m.weekly, "num")}{head("lifetime", m.lifetime, "num")}{head("active", m.lastActive)}
             </tr>
           </thead>
           <tbody>
@@ -56,6 +58,7 @@ export function UnitMembers({ rows, d, m }: { rows: MemberRow[]; d: Display; m: 
                       </div>
                     </div>
                   </td>
+                  <td data-label={b.column}><BuildBadge kind={r.build} m={b} /></td>
                   <td data-label={m.country}>{r.countryId ? <CountryBadge id={r.countryId} d={d} /> : <span className="muted" title={m.notProvided}>—</span>}</td>
                   <td data-label={m.weekly} className="num">
                     <div className="dmgcell">
@@ -71,7 +74,6 @@ export function UnitMembers({ rows, d, m }: { rows: MemberRow[]; d: Display; m: 
                       {r.lastActiveAt ? <time dateTime={r.lastActiveAt} title={r.lastActiveAt}>{r.online ? m.onlineNow : r.agoText ?? "—"}</time> : <span className="muted" title={m.notProvided}>—</span>}
                     </span>
                   </td>
-                  <td data-label={m.joined}>{r.joinedAt ? <time dateTime={r.joinedAt}>{new Date(r.joinedAt).toLocaleDateString(d.nl, { timeZone: "UTC", year: "numeric", month: "short", day: "numeric" })}</time> : <span className="muted" title={m.notProvided}>—</span>}</td>
                 </tr>
               );
             })}

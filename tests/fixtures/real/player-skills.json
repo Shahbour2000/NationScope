@@ -1,0 +1,80 @@
+{
+ "note": "NOT a verbatim API response: skill levels hand-transcribed from one real level-22 player profile viewed on 2026-10-22; every maxLevel here is ASSUMED to be 10 (stamina 0, as reported). Replace with a captured /players/{id} response when available.",
+ "skills": [
+  {
+   "code": "energy",
+   "level": 1,
+   "maxLevel": 10
+  },
+  {
+   "code": "stamina",
+   "level": 0,
+   "maxLevel": 0
+  },
+  {
+   "code": "health",
+   "level": 4,
+   "maxLevel": 10
+  },
+  {
+   "code": "hunger",
+   "level": 3,
+   "maxLevel": 10
+  },
+  {
+   "code": "attack",
+   "level": 5,
+   "maxLevel": 10
+  },
+  {
+   "code": "companies",
+   "level": 0,
+   "maxLevel": 10
+  },
+  {
+   "code": "entrepreneurship",
+   "level": 1,
+   "maxLevel": 10
+  },
+  {
+   "code": "production",
+   "level": 4,
+   "maxLevel": 10
+  },
+  {
+   "code": "criticalChance",
+   "level": 5,
+   "maxLevel": 10
+  },
+  {
+   "code": "criticalDamages",
+   "level": 4,
+   "maxLevel": 10
+  },
+  {
+   "code": "armor",
+   "level": 5,
+   "maxLevel": 10
+  },
+  {
+   "code": "precision",
+   "level": 4,
+   "maxLevel": 10
+  },
+  {
+   "code": "dodge",
+   "level": 5,
+   "maxLevel": 10
+  },
+  {
+   "code": "lootChance",
+   "level": 4,
+   "maxLevel": 10
+  },
+  {
+   "code": "management",
+   "level": 0,
+   "maxLevel": 10
+  }
+ ]
+}

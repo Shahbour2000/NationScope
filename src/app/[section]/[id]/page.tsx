@@ -6,6 +6,8 @@ import { SECTIONS } from "@/features/explorer/catalog";
 import { getDisplay } from "@/features/entities/display.server";
 import { DataView } from "@/features/explorer/DataView";
 import { entityTitle, isRecord } from "@/features/explorer/shape";
+import { Suspense } from "react";
+import { BuildsPanel } from "@/features/builds/BuildViews";
 import { PinButton } from "@/features/pins/PinButton";
 import { mediaSrc } from "@/lib/media";
 import { getLocale, getMessages } from "@/i18n";
@@ -40,9 +42,11 @@ export default async function DetailPage({ params }: { params: Promise<{ section
   const pinType = ({ players: "player", parties: "party", units: "unit" } as const)[section as "players" | "parties" | "units"];
   const rec = isRecord(result.data) ? result.data : {};
   const img = mediaSrc(typeof rec.avatarUrl === "string" ? rec.avatarUrl : typeof rec.logoUrl === "string" ? rec.logoUrl : null, d.mediaOrigin);
+  const memberIds = section === "parties" && Array.isArray(rec.members) ? rec.members.flatMap((x) => (isRecord(x) && typeof x.userId === "string" ? [x.userId] : [])) : [];
   return (
     <>
       <div className="page-head"><h1>{heading}</h1>{pinType && <PinButton labels={m.pins} target={{ type: pinType, id, name: heading, image: img, href: `/${section}/${encodeURIComponent(id)}` }} />}</div>
+      {memberIds.length > 0 ? <div style={{ marginBlockEnd: "1rem" }}><Suspense fallback={<div className="skeleton" style={{ blockSize: "7rem" }} />}><BuildsPanel ids={memberIds} m={m.builds} nl={d.nl} /></Suspense></div> : null}
       {tabs.length > 1 && <Tabs items={tabs} label={title} />}
       <p className="note">{m.explorer.genericNote} {m.explorer.linksNote}</p>
       <DataView data={result.data} section={null} detailLinks={false} labels={m.explorer} d={d} />

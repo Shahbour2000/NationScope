@@ -1,5 +1,17 @@
 # Changelog
 
+## Redesign pass (reference image), search, battles, builds
+- Visual direction from the reference: panels with soft gradients, KPI tiles with tinted icon squares, ranked rows (rank chip, identity, flame value), event list, hero with a generated globe (`public/brand/hero-globe.svg`), segmented-style header. Applied through shared CSS, `RankList`, `ProfileHeader` and the new Overview.
+- Overview rebuilt: hero + 4 KPIs (countries, active wars, alliances, active citizens), top countries / top players by damage, latest events, world at a glance. Long names use one-line truncation with the full name in `title`.
+- Search: live suggestions (`/api/suggest`, `SearchBox`): partial / middle-of-name / Arabic-folded matching, exact match first, ambiguous names kept, keyboard (arrows, Enter, Escape), outside click, loading / empty / error / partial states, stale-response protection, phone-safe panel. Countries, alliances and units are matched locally from cached lists; players and parties come from `/search`.
+- Country tabs: removed "Government Members" and the duplicate "Profile" tab (redirect pages keep old links working).
+- Battles: new `/battles/{id}` (sides, round score, current/final round points toward the target, damage split, totals, rounds, top damage dealers per side). Verified against a real response; no fabricated progress.
+- Unit profile rethought: header + KPIs, top weekly contributors, build mix, member table with a Build column, collapsed unit details. Joined column removed (low value).
+- Players: typed `/players/{id}` (header, daily/weekly/lifetime damage, build badge, War/Eco score bars, strongest skills).
+- Build classification (provisional) and organisation build mix on unit, country, alliance and party pages. See `docs/build-classification.md`.
+- Re-delivered `globals.css` profile-header/member-table block and the `RemoteImage` hydration gating that were missing from the merged project.
+- Known open items: rare React hydration warning #418 (about 1 in 18 loads) under heavy image failures in the sandbox; the `countryDamage` ranking board has no fixture so its panel was only tested in its error state; Eco/War thresholds need your decision (see doc).
+
 ## Military unit profile
 - New typed `/units/{id}` page built from the verified response: shared `ProfileHeader`, KPI row (members/capacity, online now, unit and weekly damage, tournament wins), HQ and dormitory panel, members by country, weekly damage by member, sortable member table (phone sort control + stacked cards), tournaments, and a "Data not provided by the API" panel. Pin button included.
 - Eco/War build, buff/debuff, health, hunger, daily damage, skill-reset and damage-by-target-country are NOT shown: the API response has none of these fields (see `docs/unit-data-coverage.md`).
