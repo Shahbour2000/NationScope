@@ -8,6 +8,7 @@ import { warDurationMs } from "@/features/economy/analytics";
 import { formatDuration } from "@/lib/format";
 import type { Messages } from "@/i18n/messages";
 import type { War } from "@/lib/domain/world";
+import { isWarOngoing } from "@/features/wars/state";
 
 export function WarsTable({ rows, d, m, nowMs }: { rows: War[]; d: Display; m: Messages["warsPage"]; nowMs: number }) {
   const [q, setQ] = useState("");
@@ -18,7 +19,7 @@ export function WarsTable({ rows, d, m, nowMs }: { rows: War[]; d: Display; m: M
       .filter((w) => (status === "all" || w.status === status) && (!needle || [w.countryA, w.countryB].some((c) => countryName(c, d.dir).toLowerCase().includes(needle))))
       .sort((a, b) => (b.declaredAt ?? "").localeCompare(a.declaredAt ?? ""));
   }, [rows, q, status, d.dir]);
-  const active = rows.filter((w) => w.status === "active").length;
+  const active = rows.filter(isWarOngoing).length;
   const ended = rows.filter((w) => w.status === "ended").length;
   const nf = new Intl.NumberFormat(d.nl);
 

@@ -30,7 +30,7 @@ describe("loadBuilds", () => {
     const first = await loadBuilds(ids, { maxFetch: 2 }, f);
     expect(calls).toBe(2);
     expect([first.fetched, first.pending, first.failed]).toEqual([2, 2, 0]);
-    expect(first.results.size).toBe(2);
+    expect(first.results.size).toBe(2); // the 2 skipped ids are absent (= pending)
     const second = await loadBuilds(ids, { maxFetch: 2 }, f); // a,b cached; c,d fetched
     expect(calls).toBe(4);
     expect(second.results.size).toBe(4);
@@ -40,7 +40,9 @@ describe("loadBuilds", () => {
     const f = async (id: string) => { if (id === "x") throw new Error("boom"); return profile(id, id === "n" ? null : warSkills); };
     const r = await loadBuilds(["x", "n", "ok"], {}, f);
     expect(r.failed).toBe(2);
-    expect([...r.results.keys()]).toEqual(["ok"]);
+    expect(r.results.get("ok")?.kind).toBe("war");
+    expect(r.results.get("x")).toBeNull(); // failed -> unavailable, not pending
+    expect(r.results.get("n")).toBeNull();
     const again = await loadBuilds(["x"], {}, async () => { throw new Error("should be cached"); });
     expect(again.failed).toBe(1); // failure cached briefly, no re-request
   });

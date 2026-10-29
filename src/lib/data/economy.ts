@@ -35,6 +35,13 @@ export async function getCompanies(o: { countryId?: string; itemCode?: string; s
   return { ...parseRows(rec.companies, companySchema), total: typeof rec.total === "number" ? rec.total : null, meta };
 }
 
+/** Companies owned by a player (GET /players/{id}/companies; same company shape as the other company lists). Callers must tolerate failure. */
+export async function getPlayerCompanies(playerId: string, o: { limit?: number } = {}) {
+  const { data, meta } = await get(endpoints.playerCompanies(playerId, { sort: "level", limit: o.limit ?? 8 }));
+  const rec = asRecord(data);
+  return { ...parseRows(rec.companies, companySchema), total: typeof rec.total === "number" ? rec.total : null, meta };
+}
+
 export async function getCompanyStats(countryId?: string) {
   const { data, meta } = await get(endpoints.companyStats({ countryId }));
   const rec = asRecord(data);

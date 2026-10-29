@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { Icon } from "@/components/Icon";
 import { StateMessage } from "@/components/StateMessage";
 import { getDisplay } from "@/features/entities/display.server";
-import { HeroKpi, KpiSkeleton, LatestEvents, TopCountries, TopPlayers, WorldStats } from "@/features/overview/sections";
+import { ActiveBattles, HeroKpi, KpiSkeleton, LatestEvents, TopCountries, TopPlayers, WorldStats } from "@/features/overview/sections";
 import { getLocale, getMessages } from "@/i18n";
 import { ConfigError, getConfig } from "@/lib/config/env";
 
@@ -28,13 +28,15 @@ export default async function OverviewPage() {
           <h1 id="hero-h" className="hero-title" dir="ltr">Nation<b>Scope</b></h1>
           <p className="hero-lead">{o.tagline}</p>
           <div className="kpis">
-            {(["countries", "wars", "alliances", "citizens"] as const).map((k) => <Suspense key={k} fallback={<KpiSkeleton />}><HeroKpi kind={k} ctx={ctx} /></Suspense>)}
+            {(["countries", "alliances", "citizens"] as const).map((k) => <Suspense key={k} fallback={<KpiSkeleton />}><HeroKpi kind={k} ctx={ctx} /></Suspense>)}
           </div>
         </div>
         {/* decorative; empty alt */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="hero-globe" src="/brand/hero-globe.svg" alt="" width={420} height={420} />
       </section>
+
+      <section className="panel p-battles" aria-live="polite"><Suspense fallback={<Block />}><ActiveBattles ctx={ctx} /></Suspense></section>
 
       <div className="home-grid">
         <section className="panel p-countries"><header><h2>{o.topCountries}</h2>{more("/rankings/countryDamage")}</header><Suspense fallback={<Block />}><TopCountries ctx={ctx} /></Suspense></section>

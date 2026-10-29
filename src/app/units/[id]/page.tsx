@@ -29,7 +29,7 @@ const skeleton = (h: string) => <div className="skeleton" style={{ blockSize: h 
 /** Build mix; awaits the shared (cached, capped) census promise so each profile is requested once per render. */
 async function UnitBuilds({ unit, load, m, d }: { unit: UnitProfile; load: Promise<BuildLoad>; m: Messages; d: Display }) {
   const l = await load;
-  return <BuildsSummaryView counts={summarizeBuilds(unit.members.map((x) => x.id), l.results)} load={l} m={m.builds} nl={d.nl} />;
+  return <BuildsSummaryView counts={summarizeBuilds(unit.members.map((x) => x.id), l.results)} m={m.builds} nl={d.nl} />;
 }
 
 async function UnitMembersSection({ unit, load, m, d }: { unit: UnitProfile; load: Promise<BuildLoad>; m: Messages; d: Display }) {

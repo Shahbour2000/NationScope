@@ -1,5 +1,12 @@
 # Changelog
 
+## Active battles, percentage-based builds, richer player page
+- Overview: Active Wars KPI removed; one Active Battles section (live count + up to 6 ongoing battles) sits under the hero; the lower duplicate is gone. "Ongoing" = status `active`, no `endedAt`, no `winner`, round not finished (`src/features/wars/state.ts`, also used by the Battles page and Wars table). Score text no longer wraps (`white-space: nowrap`).
+- Build classification rewritten: War / Eco / Hybrid by capacity-normalised share of combat vs economy skill investment, 70% threshold (inclusive). "Unclassified" removed everywhere; missing data is a separate state. Group counts now report classified / pending / unavailable. See `docs/build-classification.md`.
+- Player page: monthly damage, Combat/Economy % bars, Activity panel, grouped skills with levels and maximums (neutral skills collapsed), optional Companies list from `/players/{id}/companies` (response shape assumed, hidden on failure).
+- Tests: rewritten classifier tests, new `tests/battle-state.test.ts`, `loadBuilds` null-result semantics.
+- Not done: Companies/Economy/Market/Equipment/Rankings/History redesigns, hydration #418 investigation, mobile/Arabic audit results, alliance/country 100-citizen sampling limit. Nothing was verified against the live API (unreachable from the sandbox).
+
 ## Redesign pass (reference image), search, battles, builds
 - Visual direction from the reference: panels with soft gradients, KPI tiles with tinted icon squares, ranked rows (rank chip, identity, flame value), event list, hero with a generated globe (`public/brand/hero-globe.svg`), segmented-style header. Applied through shared CSS, `RankList`, `ProfileHeader` and the new Overview.
 - Overview rebuilt: hero + 4 KPIs (countries, active wars, alliances, active citizens), top countries / top players by damage, latest events, world at a glance. Long names use one-line truncation with the full name in `title`.

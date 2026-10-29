@@ -7,6 +7,7 @@ import { CountryBadge, Dt, Money, RegionLink, Source, StatusBadge } from "@/feat
 import { getDisplay } from "@/features/entities/display.server";
 import { getLocale, getMessages } from "@/i18n";
 import { getBattleRules, getBattles } from "@/lib/data/world";
+import { isBattleOngoing } from "@/features/wars/state";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function BattlesPage() {
   const rules = await getBattleRules().catch(() => ({ roundsToWin: null, pointsToWinRound: null }));
   const d = await getDisplay();
   const nf = new Intl.NumberFormat(d.nl);
-  const active = res.rows.filter((x) => x.status === "active").length;
+  const active = res.rows.filter(isBattleOngoing).length;
   const sorted = [...res.rows].sort((x, y) => (y.startedAt ?? "").localeCompare(x.startedAt ?? ""));
   const win = rules.pointsToWinRound ?? 0;
 

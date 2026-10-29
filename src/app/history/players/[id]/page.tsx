@@ -54,7 +54,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
         {!build ? <p className="empty-mini">{b.noSkills}</p> : (
           <div className="cols">
             <div>
-              <ScoreBars result={build} m={b} />
+              <ScoreBars result={build} m={b} nl={d.nl} />
               <p className="hint">{b.skillsEligible.replace("{n}", String(build.warEligible + build.ecoEligible))} · {b.provisional}</p>
             </div>
             <div>

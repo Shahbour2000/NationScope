@@ -20,7 +20,8 @@ const OK_TTL = 10 * 60_000, FAIL_TTL = 60_000;
 const cache = new Map<string, { at: number; result: BuildResult | null }>();
 
 export interface BuildLoad {
-  results: Map<string, BuildResult>;
+  /** id -> result. `null` = profile failed or has no usable skills (unavailable); an id that is absent was not requested yet (pending). */
+  results: Map<string, BuildResult | null>;
   /** Profiles requested in this call. */
   fetched: number;
   /** Unique ids skipped because the per-render request cap was reached (they fill in on later visits). */
@@ -38,13 +39,13 @@ type Fetcher = (id: string) => Promise<{ player: ReturnType<typeof parsePlayer> 
 export async function loadBuilds(ids: readonly string[], opts: { maxFetch?: number; concurrency?: number } = {}, fetchPlayer: Fetcher = getPlayerProfile): Promise<BuildLoad> {
   const maxFetch = opts.maxFetch ?? 24, conc = opts.concurrency ?? 4, now = Date.now();
   const unique = [...new Set(ids)];
-  const results = new Map<string, BuildResult>();
+  const results = new Map<string, BuildResult | null>();
   const todo: string[] = [];
   let failed = 0;
   for (const id of unique) {
     const hit = cache.get(id);
     const fresh = hit && now - hit.at < (hit.result ? OK_TTL : FAIL_TTL);
-    if (fresh) { if (hit.result) results.set(id, hit.result); else failed++; } else todo.push(id);
+    if (fresh) { results.set(id, hit.result); if (!hit.result) failed++; } else todo.push(id);
   }
   const batch = todo.slice(0, maxFetch);
   let next = 0, fetched = 0;
@@ -56,9 +57,10 @@ export async function loadBuilds(ids: readonly string[], opts: { maxFetch?: numb
         const { player } = await fetchPlayer(id);
         const r = player && player.hasSkills ? classifyBuild(player.skills) : null;
         cache.set(id, { at: Date.now(), result: r });
-        if (r) results.set(id, r); else failed++;
+        results.set(id, r); if (!r) failed++;
       } catch {
         cache.set(id, { at: Date.now(), result: null });
+        results.set(id, null);
         failed++;
       }
     }

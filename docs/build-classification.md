@@ -1,28 +1,37 @@
-# Player build classification (War / Eco / Hybrid): investigation and method
+# Player build classification (War / Eco / Hybrid)
 
-**Status: PROVISIONAL.** Implemented in `src/features/builds/classify.ts`, tested in `tests/build-classify.test.ts`. The thresholds and the skill mapping are a proposal, not official Age of Nations rules, and the UI says so.
+**Status: NationScope's own analytical classification, not an official in-game rating.** Code: `src/features/builds/classify.ts` (pure, no I/O), grouping helper `src/features/builds/skills.ts`, tests `tests/build-classify.test.ts`. The UI states this wherever a build is shown.
 
-## 1. What the API exposes (verified)
-`GET /players/{id}` returns `skills`: an array of `{ code, level, maxLevel }` with 15 codes: energy, stamina, health, hunger, attack, companies, entrepreneurship, production, criticalChance, criticalDamages, armor, precision, dodge, lootChance, management (stamina reported maxLevel 0 in the sample). It also returns `damage {total, day, week, month}`, `presence`, `unit`, `party`, `rank`, `equipment`, `economy`, `badges`, `history`.
-It does **not** return: current health or hunger values, buff/debuff state, a skill-reset cooldown, or any "build" label.
+## 1. Data used (verified API fields)
+`GET /players/{id}` returns `skills`: `[{ code, level, maxLevel }]`. Nothing else is used (no damage, equipment, jobs, companies or trade). The API exposes no build label, no skill costs and no skill-to-category mapping.
 
-## 2. Is there an official rule?
-No. Neither the API reference nor any project document defines which skills are "economic" or "military", nor an Eco/War threshold. The mapping used here is the one supplied in the task; skill names alone do not prove what a skill does, so it stays flagged as unverified.
+## 2. Skill mapping (PROVISIONAL, unverified)
+- Combat: attack, criticalChance, criticalDamages, armor, precision, dodge, health, lootChance.
+- Economy: production, entrepreneurship, companies, management.
+- Neutral (never counted): energy, stamina, hunger.
+The game documents no mapping; this one was supplied by the project owner. It lives in `BUILD_RULES` and is a one-line change.
 
-## 3. Method (deterministic)
-- Eligible skill: `maxLevel` finite and > 0, `0 <= level <= maxLevel`; first entry per code wins; everything else is ignored (no division by zero).
-- `progress = level / maxLevel * 100`; **War score** = mean over eligible War skills (attack, criticalChance, criticalDamages, armor, precision, dodge, health, lootChance); **Eco score** = mean over eligible Eco skills (production, entrepreneurship, companies, management). Energy, stamina and hunger are shared and are **not scored** (no double counting). Equal weights. Scores rounded to 2 decimals before comparing.
-- Order (first match wins, mutually exclusive): **Insufficient data** (fewer than 4 eligible War or 2 eligible Eco skills; this minimum is my addition) -> **War** (war >= 60 and war - eco >= 15) -> **Eco** (eco >= 60 and eco - war >= 15) -> **Hybrid** (both >= 50 and |difference| < 15) -> **Unclassified**.
-- Only skills are used: never damage, equipment, badges, jobs, companies or trade volume.
-- Organisation counts use unique player ids; ids whose profile is not loaded or failed are reported as "not loaded / unavailable", never as zero or as a build.
+## 3. Formula
+A skill is valid if `maxLevel` is finite and > 0 and `0 <= level <= maxLevel`; the first entry per code wins; everything else is ignored.
+- `fill(category) = sum(level) / sum(maxLevel)` over the category's valid skills (real maxima, never an assumed 10).
+- `warShare = fill(war) / (fill(war) + fill(eco)) * 100`, `ecoShare = 100 - warShare`.
+- **War** if `warShare >= 70`; **Eco** if `ecoShare >= 70`; otherwise **Hybrid**. The threshold is inclusive and compared by cross-multiplication on unrounded values, so a displayed 70.00 can never flip a player that is really below 70.
+- There are exactly three build kinds. "Unclassified" no longer exists anywhere.
 
-## 4. Finding from real data (important)
-One real level-22 player (attack 5, critical chance 5, critical damage 4, armor 5, precision 4, dodge 5, health 4, loot chance 4; production 4, entrepreneurship 1, companies 0, management 0; max levels assumed 10 in the fixture) scores **War 45.0 / Eco 12.5**. That is clearly war-leaning, but the proposed absolute floor of 60 makes it **Unclassified**. Skill levels depend on player level, so absolute thresholds will leave most mid-level players unclassified. Options for you to decide: (a) keep the thresholds, (b) lower the floor (e.g. 40) or (c) classify by share of invested levels (war levels / (war + eco levels)) instead of fractions of maximum. All thresholds live in `BUILD_RULES` so changing them is a one-line edit plus test updates.
+### Why this denominator
+The denominator is the player's observed investment in classifiable skills only, not a theoretical maximum. Each category is normalised by its own capacity because the categories differ in size (8 combat vs 4 economy skills): a raw point share would make Eco >= 70% impossible for a high-level player, and a fully maxed player would look War-heavy. With capacity normalisation a fully maxed player is exactly 50/50 Hybrid, and the result does not depend on player level.
 
-## 3b. What is still needed to make it reliable
-1. Several captured `/players/{id}` responses for players at different levels (a clear eco player, a clear war player, a hybrid) with real `maxLevel` values.
-2. The game's own definition of which skills count as economy vs combat, and whether skill points (not levels) have different costs per level.
-3. Your decision on threshold style (a, b or c above).
+### Why 70%
+70/30 means one side's fill is at least about 2.3x the other's. It is a reference value, tested only against one hand-transcribed level-22 player (War 78.26%, fixture `tests/fixtures/real/player-skills.json`, maxLevel assumed 10). It should be validated against real War, Eco and Hybrid profiles.
 
-## 5. Performance
-Profiles are fetched per member, so counts are bounded: at most 24-30 new profile requests per page render (4 in parallel), results cached 10 minutes per server instance (failures 1 minute), the API client's own 30 s cache and 40 requests/minute limiter still apply. Large groups therefore fill in over several visits and the panel says how many players are classified, pending or unavailable. Country and alliance panels use the first 100 returned ACTIVE citizens per country.
+## 4. Data states (not build categories)
+A result has `kind = null` and an `availability` when no reliable calculation is possible:
+- `incomplete`: fewer than 4 valid combat or 2 valid economy skills (design decision).
+- `no_investment`: no levels in combat or economy skills.
+No score is fabricated in these cases.
+
+## 5. Group statistics (units, countries, alliances, parties)
+Counts use unique player ids: **classified** (war + eco + hybrid), **pending** (profile not loaded yet) and **unavailable** (request failed, or incomplete / no-investment data). `total = classified + pending + unavailable`. Pending and unavailable are never build types. A "partial count" note is shown whenever either is non-zero.
+
+## 6. Performance and limits
+At most 24 new profile requests per render (4 in parallel), results cached 10 minutes per server instance (failures 1 minute); the API client's own cache and 40 requests/minute limiter still apply, so large groups fill in over several visits. Country and alliance panels use only the first 100 returned ACTIVE citizens per country, so those counts are a sample, not a full census (not yet addressed in the UI beyond the partial note).
