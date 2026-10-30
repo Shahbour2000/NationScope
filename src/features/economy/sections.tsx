@@ -21,11 +21,9 @@ export async function MarketSection({ d, m }: P) {
     const noAsk = view.filter((v) => v.ask === null);
     const nf = new Intl.NumberFormat(d.nl);
     return (
-      <section className="card">
-        <h2><Icon name="chart" size={18} />{t.marketTitle} <Source kind="api" d={d} /></h2>
+      <section className="panel">
+        <header><h2><Icon name="chart" size={18} />{t.marketTitle}</h2><Source kind="api" d={d} /></header>
         <dl className="metrics">
-          <Metric icon="box" label={t.item} value={nf.format(view.length)} />
-          <Metric icon="trend" label={t.noSellers} value={nf.format(noAsk.length)} />
         </dl>
         <h3 style={{ fontSize: "0.95rem" }}>{t.widestSpreads} <Source kind="estimate" d={d} /></h3>
         <BarList ariaLabel={t.widestSpreads} rows={spreads.map((v) => ({ key: v.itemCode, label: <ItemChip code={v.itemCode} d={d} href={`/market/${encodeURIComponent(v.itemCode)}`} />, value: v.spreadBps!, display: `${nf.format(v.spreadBps! / 100)}%` }))} />
@@ -43,8 +41,8 @@ export async function TradesSection({ d, m }: P) {
     const { rows } = await getTrades(50);
     const groups = tradesByItem(rows);
     return (
-      <section className="card">
-        <h2><Icon name="trend" size={18} />{t.recentTrades} <Source kind="calc" d={d} /></h2>
+      <section className="panel">
+        <header><h2><Icon name="trend" size={18} />{t.recentTrades}</h2><Source kind="calc" d={d} /></header>
         <p className="hint">{t.recentNote}</p>
         {groups.length === 0 ? <p className="empty-mini">{t.noTrades}</p> : (
           <div className="tablewrap">
@@ -76,14 +74,19 @@ export async function JobsSection({ d, m }: P) {
     const res = await getJobs();
     const s = jobsSummary(res.rows);
     return (
-      <section className="card">
-        <h2><Icon name="briefcase" size={18} />{t.jobsTitle} <Source kind="api" d={d} /></h2>
+      <section className="panel">
+        <header><h2><Icon name="briefcase" size={18} />{t.jobsTitle}</h2><Source kind="api" d={d} /></header>
         <dl className="metrics">
-          <Metric icon="briefcase" label={t.offers} value={new Intl.NumberFormat(d.nl).format(s.count)} />
-          <Metric icon="coins" label={t.jobsMedian} value={<Money value={s.medianNet?.toString()} d={d} />} hint={<Source kind="calc" d={d} />} />
           <Metric icon="scale" label={t.wageBand} value={<>{formatMoney(res.wage.min, d.nl) ?? "—"} – {formatMoney(res.wage.max, d.nl) ?? "—"}</>} />
         </dl>
         {s.bestNet && <p className="hint">{t.bestJobs}: <ItemChip code={s.bestNet.itemCode} d={d} /> {s.bestNet.countryId ? <CountryBadge id={s.bestNet.countryId} d={d} /> : null} <Money value={s.bestNet.netPerPoint} d={d} /> <Source kind="calc" d={d} /></p>}
+        {s.byCountry.length > 0 ? (
+          <>
+            <h3 style={{ fontSize: "0.95rem" }}>{m.pagesUi.jobsByCountry} <Source kind="calc" d={d} /></h3>
+            <BarList ariaLabel={m.pagesUi.jobsByCountry} rows={s.byCountry.slice(0, 6).map((r) => ({ key: r.countryId, label: <CountryBadge id={r.countryId} d={d} />, value: Number(r.avgNet), display: <Money value={r.avgNet.toString()} d={d} /> }))} />
+            <p className="hint">{t.payNote}</p>
+          </>
+        ) : null}
         <p className="hint"><Link href="/jobs">{t.jobsLink}</Link></p>
       </section>
     );
@@ -96,8 +99,8 @@ export async function FloorSection({ d, m }: P) {
     const { rows } = await getEquipmentFloor();
     const mx = floorMatrix(rows);
     return (
-      <section className="card">
-        <h2><Icon name="box" size={18} />{t.floorTitle} <Source kind="api" d={d} /></h2>
+      <section className="panel">
+        <header><h2><Icon name="box" size={18} />{t.floorTitle}</h2><Source kind="api" d={d} /></header>
         <div className="heatwrap">
           <table className="heat">
             <thead><tr><th scope="col">{t.slot}</th>{mx.rarities.map((r) => <th key={r} scope="col">{term("rarity", r, d)}</th>)}</tr></thead>
@@ -123,12 +126,30 @@ export async function CompaniesSection({ d, m }: P) {
     const total = res.totals?.companies ?? 0;
     const top = statsWithShare(res.rows, total).slice(0, 8);
     return (
-      <section className="card">
-        <h2><Icon name="factory" size={18} />{c.statsTitle} <Source kind="calc" d={d} /></h2>
-        {res.totals && <dl className="metrics"><Metric icon="factory" label={c.companies} value={nf.format(res.totals.companies)} /><Metric icon="users" label={c.workers} value={nf.format(res.totals.workers ?? 0)} /></dl>}
+      <section className="panel">
+        <header><h2><Icon name="factory" size={18} />{c.statsTitle}</h2><Source kind="calc" d={d} /></header>
+        {res.totals && <dl className="metrics"><Metric icon="users" label={c.workers} value={nf.format(res.totals.workers ?? 0)} /></dl>}
         <BarList ariaLabel={c.byProduct} rows={top.map((r) => ({ key: r.itemCode, label: <ItemChip code={r.itemCode} d={d} />, value: r.companies, display: `${nf.format(r.companies)}${r.sharePct != null ? ` · ${r.sharePct}%` : ""}` }))} />
         <p className="hint"><Link href="/company-stats">{t.companiesLink}</Link></p>
       </section>
     );
   } catch (e) { return <Fail e={e} d={d} />; }
+}
+
+/** Headline numbers for the Economy hub. Each figure comes from an already-cached call; a failed source simply drops its tiles. */
+export async function EconomyKpis({ d, m }: P) {
+  const t = m.economyPage, u = m.pagesUi, nf = new Intl.NumberFormat(d.nl);
+  const [mk, jobs, co] = await Promise.allSettled([getMarket(), getJobs(), getCompanyStats()]);
+  const kpis = [];
+  if (mk.status === "fulfilled") { const v = marketView(mk.value.rows); kpis.push({ icon: "box" as const, label: u.itemsListed, value: nf.format(v.length) }, { icon: "trend" as const, label: t.noSellers, value: nf.format(v.filter((x) => x.ask === null).length), tone: "red" as const }); }
+  if (jobs.status === "fulfilled") { const s = jobsSummary(jobs.value.rows); kpis.push({ icon: "briefcase" as const, label: t.jobsTitle, value: nf.format(s.count), tone: "green" as const }, { icon: "coins" as const, label: t.jobsMedian, value: <Money value={s.medianNet?.toString()} d={d} />, tone: "gold" as const }); }
+  if (co.status === "fulfilled" && co.value.totals) kpis.push({ icon: "factory" as const, label: m.companiesPage.companies, value: nf.format(co.value.totals.companies), tone: "purple" as const });
+  if (kpis.length === 0) return null;
+  return (
+    <div className="kpis" role="list">
+      {kpis.map((k) => (
+        <div className="kpi" role="listitem" key={k.label}><span className="kpi-ico" data-tone={k.tone}><Icon name={k.icon} size={22} /></span><span className="kpi-body"><span className="kpi-val">{k.value}</span><span className="kpi-label" title={k.label}>{k.label}</span></span></div>
+      ))}
+    </div>
+  );
 }

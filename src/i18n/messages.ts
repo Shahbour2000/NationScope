@@ -153,6 +153,21 @@ export const en = {
     activeWars: "Active wars involving members", noWars: "No active wars involving members.", notFound: "This alliance was not found.", citizens: "Citizens", regions: "Regions", back: "All alliances", laws: "Alliance laws",
     unresolved: "Members not found in the country list", sumNote: "Totals are calculated from the rows shown.", noAlliances: "No alliances returned.",
   },
+  pagesUi: {
+    kicker: { companies: "Player businesses", economy: "Economy hub", market: "Order book", equipment: "Gear marketplace", rankings: "Leaderboards", history: "World timeline" },
+    sub: {
+      companies: "Browse player companies by product, country and investment.", economy: "Prices, trades, wages and production at a glance.", market: "Best asks, bids and last prices for every item.",
+      equipment: "Live equipment offers with stats, durability and price.", rankings: "Who leads the game, by period.", history: "Treaties, laws, battles and territory changes as they happen.",
+    },
+    filters: "Filters", reset: "Reset", results: "{n} results", showing: "Showing {a}–{b}", topProducts: "Top products", products: "Products", level: "Level", upgradeLevels: "Upgrade levels", ownedBy: "Owner",
+    marketPulse: "Market pulse", labour: "Labour market", production: "Production", jobsByCountry: "Average net pay by country",
+    itemsListed: "Items on the market", withSellers: "With sellers", withBuyers: "With buyers", medianSpread: "Median spread", askAbove: "Asks furthest above last price", askBelow: "Asks furthest below last price",
+    gapNote: "Calculated from the lowest ask and the last price. Fees are not included. Estimate, not advice.", noGap: "Not enough price data.",
+    offersListed: "Offers on the floor", slotsCovered: "Slots with offers", raritiesCovered: "Rarities", lowestFloor: "Lowest floor price", durability: "Durability", noStats: "No stats returned",
+    leader: "Leader", vsLeader: "of the leader", entries: "Entries listed", podium: "Top 3", moreRanks: "Ranks 4 and below", unlinked: "No profile page",
+    events: "events", latest: "Latest", byType: "By type", showingEvents: "{n} events shown", noDate: "No date",
+    missing: "Not provided",
+  },
   companiesPage: {
     title: "Companies", intro: "Player companies, richest first. Filter by country or product.", company: "Company", owner: "Owner", product: "Product", location: "Location", level: "Level",
     workers: "Workers", upgrades: "Upgrades", storage: "Storage", engine: "Engine", breakRoom: "Break room", investedSteel: "Steel invested", total: "companies in total", allCountries: "All countries", allProducts: "All products",
@@ -446,6 +461,21 @@ export const ar: Messages = {
     damageBonus: "مكافأة الضرر", created: "تأسس", disbanded: "حُلّ", memberCountries: "الدول الأعضاء", aggregate: "إحصاءات الأعضاء مجتمعة", calculatedNote: "المجاميع محسوبة بجمع أرقام الدول الأعضاء.",
     activeWars: "حروب نشطة تشمل الأعضاء", noWars: "لا توجد حروب نشطة تشمل الأعضاء.", notFound: "لم يُعثر على هذا التحالف.", citizens: "المواطنون", regions: "المناطق", back: "كل التحالفات", laws: "قوانين التحالف",
     unresolved: "أعضاء غير موجودين في قائمة الدول", sumNote: "المجاميع محسوبة من الصفوف المعروضة.", noAlliances: "لم تُرجع الواجهة أي تحالفات.",
+  },
+  pagesUi: {
+    kicker: { companies: "أعمال اللاعبين", economy: "مركز الاقتصاد", market: "دفتر الأوامر", equipment: "سوق المعدات", rankings: "لوحات الصدارة", history: "الخط الزمني للعالم" },
+    sub: {
+      companies: "تصفّح شركات اللاعبين حسب المنتج والدولة والاستثمار.", economy: "الأسعار والصفقات والأجور والإنتاج في لمحة.", market: "أفضل أسعار البيع والشراء وآخر سعر لكل سلعة.",
+      equipment: "عروض المعدات المباشرة مع الخصائص والمتانة والسعر.", rankings: "من يتصدر اللعبة، حسب الفترة.", history: "المعاهدات والقوانين والمعارك وتغيّرات الأراضي فور حدوثها.",
+    },
+    filters: "التصفية", reset: "إعادة ضبط", results: "{n} نتيجة", showing: "عرض {a}–{b}", topProducts: "أبرز المنتجات", products: "المنتجات", level: "المستوى", upgradeLevels: "مستويات التطوير", ownedBy: "المالك",
+    marketPulse: "نبض السوق", labour: "سوق العمل", production: "الإنتاج", jobsByCountry: "متوسط الأجر الصافي حسب الدولة",
+    itemsListed: "السلع في السوق", withSellers: "لها بائعون", withBuyers: "لها مشترون", medianSpread: "الوسيط للفارق", askAbove: "أسعار بيع أعلى من آخر سعر", askBelow: "أسعار بيع أدنى من آخر سعر",
+    gapNote: "محسوب من أقل سعر بيع وآخر سعر. الرسوم غير مشمولة. تقدير وليس نصيحة.", noGap: "لا تكفي بيانات الأسعار.",
+    offersListed: "العروض في السوق", slotsCovered: "خانات لها عروض", raritiesCovered: "الندرة", lowestFloor: "أدنى سعر أرضية", durability: "المتانة", noStats: "لم تُرجع الواجهة خصائص",
+    leader: "المتصدر", vsLeader: "من المتصدر", entries: "العناصر المعروضة", podium: "الثلاثة الأوائل", moreRanks: "المراتب من الرابعة فما دون", unlinked: "لا صفحة ملف",
+    events: "حدث", latest: "الأحدث", byType: "حسب النوع", showingEvents: "عرض {n} حدثًا", noDate: "بلا تاريخ",
+    missing: "غير متوفر",
   },
   companiesPage: {
     title: "الشركات", intro: "شركات اللاعبين، الأكثر استثمارًا أولًا. صفِّ حسب الدولة أو المنتج.", company: "الشركة", owner: "المالك", product: "المنتج", location: "الموقع", level: "المستوى",

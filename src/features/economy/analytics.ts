@@ -117,3 +117,24 @@ export function allianceAggregate(alliance: Pick<Alliance, "members">, countries
 }
 
 export const companyUpgradeTotal = (c: Pick<Company, "storageLevel" | "engineLevel" | "breakRoomLevel">): number => (c.storageLevel ?? 0) + (c.engineLevel ?? 0) + (c.breakRoomLevel ?? 0);
+
+export interface MarketInsights {
+  items: number; withAsk: number; withBid: number; noAsk: number;
+  /** Median of the available spreads (basis points); null when no item has both sides. */
+  medianSpreadBps: number | null;
+  /** Items whose lowest ask is furthest above / below the last price (basis points, calculated). */
+  askAbove: MarketView[]; askBelow: MarketView[];
+}
+
+export function marketInsights(view: readonly MarketView[], top = 5): MarketInsights {
+  const spreads = view.map((v) => v.spreadBps).filter((x): x is number => x !== null).sort((a, b) => a - b);
+  const mid = Math.floor(spreads.length / 2);
+  const medianSpreadBps = spreads.length === 0 ? null : spreads.length % 2 ? spreads[mid]! : Math.trunc((spreads[mid - 1]! + spreads[mid]!) / 2);
+  const gaps = view.filter((v) => v.askVsLastBps !== null);
+  return {
+    items: view.length, withAsk: view.filter((v) => v.ask !== null).length, withBid: view.filter((v) => v.bid !== null).length, noAsk: view.filter((v) => v.ask === null).length,
+    medianSpreadBps,
+    askAbove: gaps.filter((v) => v.askVsLastBps! > 0).sort((a, b) => b.askVsLastBps! - a.askVsLastBps!).slice(0, top),
+    askBelow: gaps.filter((v) => v.askVsLastBps! < 0).sort((a, b) => a.askVsLastBps! - b.askVsLastBps!).slice(0, top),
+  };
+}
