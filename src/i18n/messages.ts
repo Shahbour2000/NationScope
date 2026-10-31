@@ -102,7 +102,7 @@ export const en = {
     rarity: { common: "Common", uncommon: "Uncommon", rare: "Rare", epic: "Epic", legendary: "Legendary", mythic: "Mythic" },
     slot: { helmet: "Helmet", chest: "Chest", gloves: "Gloves", pants: "Pants", boots: "Boots", weapon: "Weapon" },
     stat: { attack: "Attack", armor: "Armor", precision: "Precision", dodge: "Dodge", criticalChance: "Critical chance", criticalDamages: "Critical damage" },
-    role: { president: "President", vicePresident: "Vice president", ministerDefense: "Defense minister", ministerEconomy: "Economy minister", congress: "Congress member" },
+    role: { president: "President", vicePresident: "Vice president", ministerDefense: "Defense minister", ministerForeignAffairs: "Foreign affairs minister", ministerEconomy: "Economy minister", congress: "Congress member" },
     eventType: { ownership: "Territory", treaty: "Treaty", battle: "Battle", election: "Election", law: "Law", tournament: "Tournament" },
     ethics: { rule: "Rule", borders: "Borders", economy: "Economy", posture: "Posture" },
     effect: { attackOutsideCorePercent: "Attack outside core", resistanceGrowthPercent: "Resistance growth", productProductionPercent: "Production", damagePercent: "Damage" },
@@ -252,6 +252,7 @@ export const en = {
     daily: "Daily damage", monthly: "Monthly damage", activity: "Activity", rank: "Military rank", joined: "Joined", lastActive: "Last active", unitRole: "Role in unit", partyRole: "Role in party", noActivity: "No further details were returned for this player.",
     skillsTitle: "Skills", combatSkills: "Combat skills", ecoSkills: "Economic skills", neutralSkills: "Neutral skills", otherSkills: "Other skills", moreSkills: "Neutral and other skills",
     neutralNote: "Neutral skills are not counted in the War / Eco / Hybrid classification.", companies: "Companies", workers: "workers", topByLevel: "Showing the {n} highest-level companies.",
+    timeline: "Account timeline", timelineEmpty: "No verified timeline events are available for this player.", timelineNote: "Only events backed by API records are shown: account creation and offices held in the player's current country. Combat, economic and earlier-country history is not provided by the API.", accountCreated: "Account created", startedLabel: "Start", endedLabel: "End", ongoing: "Current", sourceLabel: "Via", reasonLabel: "Ended because", countryLabel: "Country", source: { election: "Election", appointment: "Appointment" },
   },
   units: {
     title: "Military units",
@@ -411,7 +412,7 @@ export const ar: Messages = {
     rarity: { common: "شائع", uncommon: "غير شائع", rare: "نادر", epic: "ملحمي", legendary: "أسطوري", mythic: "خرافي" },
     slot: { helmet: "خوذة", chest: "صدرية", gloves: "قفازات", pants: "بنطال", boots: "حذاء", weapon: "سلاح" },
     stat: { attack: "الهجوم", armor: "الدرع", precision: "الدقة", dodge: "المراوغة", criticalChance: "فرصة الضربة الحرجة", criticalDamages: "ضرر الضربة الحرجة" },
-    role: { president: "الرئيس", vicePresident: "نائب الرئيس", ministerDefense: "وزير الدفاع", ministerEconomy: "وزير الاقتصاد", congress: "عضو الكونغرس" },
+    role: { president: "الرئيس", vicePresident: "نائب الرئيس", ministerDefense: "وزير الدفاع", ministerForeignAffairs: "وزير الخارجية", ministerEconomy: "وزير الاقتصاد", congress: "عضو الكونغرس" },
     eventType: { ownership: "أراضٍ", treaty: "معاهدة", battle: "معركة", election: "انتخابات", law: "قانون", tournament: "بطولة" },
     ethics: { rule: "الحكم", borders: "الحدود", economy: "الاقتصاد", posture: "الموقف" },
     effect: { attackOutsideCorePercent: "الهجوم خارج المناطق الأساسية", resistanceGrowthPercent: "نمو المقاومة", productProductionPercent: "الإنتاج", damagePercent: "الضرر" },
@@ -561,6 +562,7 @@ export const ar: Messages = {
     daily: "الضرر اليومي", monthly: "الضرر الشهري", activity: "النشاط", rank: "الرتبة العسكرية", joined: "تاريخ الانضمام", lastActive: "آخر نشاط", unitRole: "الدور في الوحدة", partyRole: "الدور في الحزب", noActivity: "لم تُرجع الواجهة تفاصيل إضافية لهذا اللاعب.",
     skillsTitle: "المهارات", combatSkills: "مهارات القتال", ecoSkills: "المهارات الاقتصادية", neutralSkills: "مهارات محايدة", otherSkills: "مهارات أخرى", moreSkills: "المهارات المحايدة والأخرى",
     neutralNote: "المهارات المحايدة لا تُحتسب في تصنيف حرب / اقتصاد / مختلط.", companies: "الشركات", workers: "عامل", topByLevel: "عرض أعلى {n} شركات مستوى.",
+    timeline: "الخط الزمني للحساب", timelineEmpty: "لا توجد أحداث موثّقة للخط الزمني لهذا اللاعب.", timelineNote: "تُعرض فقط الأحداث المدعومة بسجلات الواجهة: إنشاء الحساب والمناصب التي شغلها اللاعب في دولته الحالية. لا توفّر الواجهة سجل القتال أو الاقتصاد أو الدول السابقة.", accountCreated: "إنشاء الحساب", startedLabel: "البداية", endedLabel: "النهاية", ongoing: "حالي", sourceLabel: "عن طريق", reasonLabel: "سبب الانتهاء", countryLabel: "الدولة", source: { election: "انتخاب", appointment: "تعيين" },
   },
   units: {
     title: "الوحدات العسكرية",

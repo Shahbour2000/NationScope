@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApiErrorState } from "@/components/ApiErrorState";
+import { DiscordButton } from "@/components/DiscordButton";
 import { Icon } from "@/components/Icon";
 import { Provenance } from "@/components/Provenance";
 import { Tabs } from "@/components/Tabs";
@@ -8,6 +9,7 @@ import { ApiError } from "@/lib/api/errors";
 import { LineChart } from "@/features/charts/charts";
 import { Suspense } from "react";
 import { OrgBuildsPanel } from "@/features/builds/BuildViews";
+import { leadershipHolders } from "@/features/government/roles";
 import { PinButton } from "@/features/pins/PinButton";
 import { flagSrc } from "@/lib/flags";
 import { countryTabs } from "@/features/countries/tabs";
@@ -45,7 +47,7 @@ export default async function CountryPage({ params }: { params: Promise<{ id: st
 
   const coreRegions = p.coreRegions ?? [];
   const coreHeld = coreRegions.filter((r) => !r.lost).length;
-  const holders = (p.government?.holders ?? []).filter((h) => h.role !== "congress");
+  const holders = leadershipHolders(p.government?.holders ?? []);
   const congress = (p.government?.holders ?? []).filter((h) => h.role === "congress").length;
   const battles = parseRows(summary.battles, battleSchema).rows;
   const hist = (p.developmentHistory ?? []).map((h) => ({ label: h.dayKey, value: h.development }));
@@ -60,19 +62,21 @@ export default async function CountryPage({ params }: { params: Promise<{ id: st
         <h1><CountryBadge id={p.id} d={d} link={false} /></h1>
         <PinButton labels={m.pins} target={{ type: "country", id: p.id, name: p.name, image: flagSrc(p.id), href: `/countries/${encodeURIComponent(p.id)}` }} />
         {p.alliance && <Link className="badge" data-tone="neutral" href={`/alliances/${encodeURIComponent(p.alliance.allianceId)}`}><Icon name="shield" size={13} /> {p.alliance.name}</Link>}
-        {p.enemy && <span className="badge" data-tone="bad">{c.enemyCountry}: <CountryBadge id={p.enemy.countryId} d={d} /></span>}
-        {p.discordUrl && /^https:\/\/discord\.(gg|com)\//.test(p.discordUrl) && <a className="badge" href={p.discordUrl} target="_blank" rel="noopener noreferrer">{c.discord}</a>}
+        {p.discordUrl && /^https:\/\/discord\.(gg|com)\//.test(p.discordUrl) && <DiscordButton href={p.discordUrl} label={c.discord} />}
       </div>
       <Tabs items={tabs} label={p.name} />
 
+      <div className="with-aside">
       <dl className="metrics">
         <Metric icon="trend" label={c.development} value={p.development == null ? d.m.ui.missing : nf.format(p.development)} hint={p.worldSharePercent == null ? undefined : <>{p.worldSharePercent}% {c.worldShare} <Source kind="api" d={d} /></>} />
         <Metric icon="users" label={c.citizens} value={p.citizens?.total == null ? d.m.ui.missing : nf.format(p.citizens.total)} hint={p.citizens?.active == null ? undefined : `${nf.format(p.citizens.active)} ${c.activeOf} ${nf.format(p.citizens.total ?? 0)}`} />
         <Metric icon="map" label={c.regions} value={p.controlledRegions ? nf.format(p.controlledRegions.length) : d.m.ui.missing} hint={coreRegions.length ? `${coreHeld}/${coreRegions.length} ${c.coreHeld} (${percent(coreHeld, coreRegions.length)}%)` : undefined} />
         <Metric icon="landmark" label={c.treasury} value={<Money value={p.treasury?.money} d={d} />} />
+        {p.enemy && <Metric icon="war" label={c.enemyCountry} value={<span className="rival"><CountryBadge id={p.enemy.countryId} d={d} /></span>} />}
         <Metric icon="coins" label={c.revenueToday} value={<Money value={p.taxes?.revenueToday} d={d} />} hint={<>{c.revenueYesterday}: <Money value={p.taxes?.revenueYesterday} d={d} /></>} />
       </dl>
-      <div style={{ marginBlockStart: "1rem" }}><Suspense fallback={<div className="skeleton" style={{ blockSize: "7rem" }} />}><OrgBuildsPanel countryIds={[p.id]} m={m.builds} nl={d.nl} title={`${m.builds.title} · ${m.overview.activeCitizens}`} /></Suspense></div>
+      <Suspense fallback={<div className="skeleton" style={{ blockSize: "7rem" }} />}><OrgBuildsPanel countryIds={[p.id]} m={m.builds} nl={d.nl} title={`${m.builds.title} · ${m.overview.activeCitizens}`} /></Suspense>
+      </div>
 
       {hist.length >= 2 && (
         <section className="card">

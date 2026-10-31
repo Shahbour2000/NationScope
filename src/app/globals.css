@@ -668,3 +668,40 @@ a.pod:hover { text-decoration: none; border-color: rgba(25,200,255,.45); }
 .kpi-val { font-size: clamp(1.05rem, 4.2vw, 1.5rem); overflow-wrap: anywhere; }
 .kpi-body { min-inline-size: 0; }
 @media (max-width: 900px) { .seg-scroll { flex-wrap: nowrap; display: flex; } }
+
+/* ---- Discord button + compact rival country (country page) ---- */
+.btn-discord { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.25rem 0.8rem; border-radius: 999px; background: #5865f2; color: #fff; font-size: 0.82rem; font-weight: 700; border: 1px solid #4752c4; white-space: nowrap; }
+.btn-discord:hover { background: #4752c4; color: #fff; text-decoration: none; }
+.btn-discord:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.discord-icon { flex: none; }
+.metric dd .rival { font-size: 1rem; font-weight: 600; }
+.metric dd .rival .cflag-img, .metric dd .rival .cflag { inline-size: 1.4rem; block-size: 1.05rem; }
+
+/* ---- Compact build side panel (country / alliance / unit) ---- */
+.with-aside { display: grid; grid-template-columns: minmax(0, 1fr) minmax(13rem, 16rem); gap: 1rem; align-items: start; margin-block: 1rem; }
+.with-aside > .metrics { margin-block: 0; }
+.builds-compact { padding: 0.7rem 0.85rem; }
+.builds-compact h2 { font-size: 0.92rem; margin: 0 0 0.4rem; white-space: normal; overflow: visible; }
+.builds-compact .mixbar { block-size: 0.5rem; margin-block: 0.25rem 0.5rem; }
+.builds-compact .mixlegend { flex-direction: column; gap: 0.3rem; }
+.builds-compact .mixlegend li { display: flex; justify-content: space-between; gap: 0.5rem; }
+.builds-compact .mixlegend b { font-size: 0.95rem; }
+.builds-compact .hint { margin: 0.5rem 0 0; font-size: 0.74rem; }
+@media (max-width: 900px) { .with-aside { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---- Player timeline ---- */
+.ptl { list-style: none; margin: 0; padding: 0; position: relative; display: grid; gap: 0.2rem; }
+.ptl::before { content: ""; position: absolute; inset-block: 0.6rem; inset-inline-start: 0.95rem; inline-size: 2px; background: var(--line); }
+.ptl-item { position: relative; display: flex; align-items: center; gap: 0.75rem; padding-block: 0.3rem; min-inline-size: 0; }
+.ptl-dot { flex: none; inline-size: 1.9rem; block-size: 1.9rem; border-radius: 50%; display: inline-grid; place-items: center; border: 2px solid var(--bg, #0b1020); color: #fff; cursor: pointer; z-index: 1; padding: 0; }
+.ptl-item[data-kind="political"] .ptl-dot { background: #7c5cff; }
+.ptl-item[data-kind="account"] .ptl-dot { background: #0ea5a4; }
+.ptl-dot:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.ptl-body { display: flex; flex-direction: column; min-inline-size: 0; }
+.ptl-body small { color: var(--muted); }
+.ptl-pop { position: absolute; inset-inline-start: 2.7rem; inset-block-start: 100%; z-index: 5; min-inline-size: 12rem; max-inline-size: min(20rem, calc(100vw - 4rem)); padding: 0.6rem 0.75rem; background: var(--surface-3, #16213f); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); }
+.ptl-pop[hidden] { display: none; }
+.ptl-pop dl { margin: 0.35rem 0 0; display: grid; gap: 0.15rem; font-size: 0.82rem; }
+.ptl-pop dl > div { display: flex; justify-content: space-between; gap: 0.75rem; }
+.ptl-pop dt { color: var(--muted); }
+.ptl-pop dd { margin: 0; text-align: end; }

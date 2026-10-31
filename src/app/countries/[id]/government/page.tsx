@@ -9,6 +9,7 @@ import { term } from "@/features/entities/display";
 import { getDisplay } from "@/features/entities/display.server";
 import { Parliament, type MemberDto } from "@/features/government/CongressView";
 import { RemoteImage } from "@/features/entities/RemoteImage";
+import { leadershipHolders } from "@/features/government/roles";
 import { PinButton } from "@/features/pins/PinButton";
 import { getLocale, getMessages } from "@/i18n";
 import { getGovernment } from "@/lib/data/world";
@@ -16,7 +17,6 @@ import { formatDate, humanizeCode } from "@/lib/format";
 import { mediaSrc } from "@/lib/media";
 
 export const dynamic = "force-dynamic";
-const LEADERSHIP = ["president", "vicePresident", "ministerDefense", "ministerEconomy"];
 
 export default async function GovernmentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -30,7 +30,7 @@ export default async function GovernmentPage({ params }: { params: Promise<{ id:
   const dto = (x: (typeof res.rows)[number]): MemberDto | null => x.userId && x.username
     ? { id: x.userId, name: x.username, level: x.level ?? null, sinceText: formatDate(x.startedAt, d.nl), avatar: mediaSrc(x.avatarUrl, d.mediaOrigin), party: x.party ? { id: x.party.id, name: x.party.name } : null }
     : null;
-  const leaders = LEADERSHIP.flatMap((role) => res.rows.filter((x) => x.role === role).map((x) => ({ role, dto: dto(x) }))).filter((x): x is { role: string; dto: MemberDto } => x.dto !== null);
+  const leaders = leadershipHolders(res.rows).map((x) => ({ role: x.role, dto: dto(x) })).filter((x): x is { role: string; dto: MemberDto } => x.dto !== null);
   const congress = res.rows.filter((x) => x.role === "congress").map(dto).filter((x): x is MemberDto => x !== null);
   const seatsTotal = typeof res.government?.congressSeats === "number" ? res.government.congressSeats : null;
   const vacant = seatsTotal !== null && seatsTotal > congress.length ? seatsTotal - congress.length : 0;
@@ -46,7 +46,7 @@ export default async function GovernmentPage({ params }: { params: Promise<{ id:
         {leaders.length === 0 ? <p className="empty-mini">{g.noLeadership}</p> : (
           <div className="leaders">
             {leaders.map(({ role, dto: p }) => (
-              <article key={role} className="leader" data-top={role === "president"}>
+              <article key={`${role}-${p.id}`} className="leader" data-top={role === "president"}>
                 <RemoteImage src={p.avatar} size={role === "president" ? 88 : 64} round fallback={<span className="seat-fallback big">{p.name.slice(0, 2).toUpperCase()}</span>} />
                 <div>
                   <span className="badge" data-tone="neutral">{term("role", role, d)}</span>

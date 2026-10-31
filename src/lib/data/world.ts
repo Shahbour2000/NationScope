@@ -6,7 +6,7 @@ import { anyJson } from "@/lib/api/schemas";
 import type { Directory } from "@/lib/domain/directory";
 import { asRecord, parseRows } from "@/lib/domain/parse";
 import { parseBattleDetail } from "@/lib/domain/battle-detail";
-import { governmentSchema, memberSchema, allianceSchema, articleSchema, battleSchema, citizenSchema, countrySchema, historyItemSchema, leaderboardSchema, rankingRowSchema, summarySchema, warSchema } from "@/lib/domain/world";
+import { governmentHistorySchema, governmentSchema, memberSchema, allianceSchema, articleSchema, battleSchema, citizenSchema, countrySchema, historyItemSchema, leaderboardSchema, rankingRowSchema, summarySchema, warSchema } from "@/lib/domain/world";
 import type { Endpoint } from "@/lib/api/endpoints";
 
 const get = (e: Endpoint) => getApiClient().get(e.path, { schema: anyJson, query: e.query });
@@ -109,4 +109,10 @@ export async function searchUpstream(q: string) {
 export async function getBattleDetail(id: string) {
   const { data, meta } = await get(endpoints.battle(id));
   return { battle: parseBattleDetail(data, getConfig().origin), meta };
+}
+
+/** Office history of one country (appointments and elections, with start and end). The API caps it at 200 rows. */
+export async function getGovernmentHistory(countryId: string) {
+  const { data, meta } = await get(endpoints.governmentHistory(countryId, { limit: 200 }));
+  return { ...parseRows(listKey(data, "items"), governmentHistorySchema), meta };
 }

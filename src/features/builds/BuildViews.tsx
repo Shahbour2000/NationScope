@@ -45,8 +45,8 @@ export function BuildsSummaryView({ counts: c, m, nl, title }: { counts: BuildCo
   ];
   const complete = c.pending === 0 && c.unavailable === 0;
   return (
-    <section className="panel builds" aria-label={title ?? m.title}>
-      <header><h2><Icon name="flame" size={18} /> {title ?? m.title}</h2></header>
+    <aside className="panel builds builds-compact" aria-label={title ?? m.title}>
+      <h2><Icon name="flame" size={16} /> {title ?? m.title}</h2>
       <div className="mixbar" role="img" aria-label={segs.filter((s) => s.n > 0).map((s) => `${s.label}: ${s.n}`).join(", ")}>
         {segs.filter((s) => s.n > 0).map((s) => <span key={s.kind} data-kind={s.kind} style={{ flexGrow: s.n }} />)}
       </div>
@@ -55,12 +55,9 @@ export function BuildsSummaryView({ counts: c, m, nl, title }: { counts: BuildCo
       </ul>
       <p className="hint">
         {fill(m.classifiedOf, { c: nf.format(c.classified), n: nf.format(c.total) })}
-        {c.pending > 0 ? ` · ${fill(m.pending, { p: nf.format(c.pending) })}` : ""}
-        {c.unavailable > 0 ? ` · ${fill(m.failed, { f: nf.format(c.unavailable) })}` : ""}
+        {!complete ? ` · ${m.partial}` : ""}
       </p>
-      {!complete ? <p className="hint">{m.partial}{c.unavailable > 0 ? ` ${m.unavailableReason}` : ""}</p> : null}
-      <p className="hint">{m.provisional}</p>
-      <Info title={m.methodTitle}><p>{m.method}</p></Info>
-    </section>
+      <Info title={m.methodTitle}><p>{m.method}</p><p>{m.provisional}</p></Info>
+    </aside>
   );
 }

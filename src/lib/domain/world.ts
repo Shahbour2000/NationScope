@@ -112,3 +112,9 @@ export const governmentSchema = z.object({
   }).passthrough().nullish(),
 }).passthrough();
 export type Government = z.infer<typeof governmentSchema>;
+
+/** One row of GET /countries/{id}/government/history (verified against tests/fixtures/real/government-history-eg.json). */
+export const governmentHistorySchema = z.object({
+  id: s, role: s, userId: s.nullish(), username: s.nullish(), source: s.nullish(), startedAt: s.nullish(), endedAt: s.nullish(), endReason: s.nullish(), label: s.nullish(),
+}).passthrough();
+export type GovernmentHistoryRow = z.infer<typeof governmentHistorySchema>;

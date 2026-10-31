@@ -76,7 +76,7 @@ export default async function UnitProfilePage({ params }: { params: Promise<{ id
         ]}
       />
 
-      <div className="cols">
+      <div className="with-aside">
         <section className="panel">
           <header><h2><Icon name="trophy" size={18} /> {u.topWeekly}</h2></header>
           {top.length === 0 ? <p className="empty-mini">{u.notProvided}</p> : (

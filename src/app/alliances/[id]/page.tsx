@@ -33,13 +33,15 @@ export default async function AllianceDetail({ params }: { params: Promise<{ id:
     <>
       <div className="page-head"><h1><Icon name="shield" size={26} /><span dir="auto">{alliance.name}</span></h1><StatusBadge value={alliance.status} d={d} /><PinButton labels={m.pins} target={{ type: "alliance", id: alliance.id, name: alliance.name, image: null, href: `/alliances/${encodeURIComponent(alliance.id)}` }} /></div>
       <Tabs items={tabs} label={alliance.name} />
-      <div style={{ marginBlockEnd: "1rem" }}><Suspense fallback={<div className="skeleton" style={{ blockSize: "7rem" }} />}><OrgBuildsPanel countryIds={agg.members.map((c) => c.id)} m={m.builds} nl={d.nl} title={`${m.builds.title} · ${m.overview.activeCitizens}`} /></Suspense></div>
+      <div className="with-aside">
       <dl className="metrics">
         <Metric icon="landmark" label={a.leader} value={<CountryBadge id={alliance.leaderCountryId} d={d} />} />
         <Metric icon="trend" label={a.development} value={alliance.development == null ? d.m.ui.missing : nf.format(alliance.development)} hint={alliance.sharePercent == null ? undefined : `${alliance.sharePercent}% ${a.share}`} />
         <Metric icon="war" label={a.damageBonus} value={alliance.damageBonusPercent == null ? d.m.ui.missing : `+${alliance.damageBonusPercent}%`} hint={<Source kind="api" d={d} />} />
         <Metric icon="users" label={a.aggregate} value={nf.format(agg.citizens)} hint={<>{nf.format(agg.activeCitizens)} · {nf.format(agg.regions)} {a.regions} <Source kind="calc" d={d} /></>} />
       </dl>
+      <Suspense fallback={<div className="skeleton" style={{ blockSize: "7rem" }} />}><OrgBuildsPanel countryIds={agg.members.map((c) => c.id)} m={m.builds} nl={d.nl} title={`${m.builds.title} · ${m.overview.activeCitizens}`} /></Suspense>
+      </div>
       <p className="hint">{a.calculatedNote} {a.created}: <Dt iso={alliance.createdAt} d={d} /></p>
 
       <section className="card">

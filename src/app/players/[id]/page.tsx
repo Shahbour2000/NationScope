@@ -15,7 +15,11 @@ import { PinButton } from "@/features/pins/PinButton";
 import { getLocale, getMessages } from "@/i18n";
 import { getPlayerCompanies } from "@/lib/data/economy";
 import { getPlayerProfile } from "@/lib/data/players";
-import { humanizeCode } from "@/lib/format";
+import { getGovernmentHistory } from "@/lib/data/world";
+import { PlayerTimeline, type TimelineItem } from "@/features/players/PlayerTimeline";
+import { buildTimeline } from "@/features/players/timeline";
+import { formatDateTime, humanizeCode } from "@/lib/format";
+import { countryName, term } from "@/features/entities/display";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +40,18 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
   const groupTitle: Record<SkillGroup["key"], string> = { war: pp.combatSkills, eco: pp.ecoSkills, shared: pp.neutralSkills, other: pp.otherSkills };
   // Optional section: a failure here must never break the profile, so it simply stays hidden.
   const companies = await getPlayerCompanies(p.id, { limit: 6 }).catch(() => null);
+  const history = p.countryId ? await getGovernmentHistory(p.countryId).catch(() => null) : null;
+  const events = buildTimeline({ userId: p.id, joinedAt: p.joinedAt, countryId: p.countryId, history: history?.rows ?? [] });
+  const when = (iso: string) => formatDateTime(iso, d.nl, d.m.time.utc) ?? d.m.ui.missing;
+  const items: TimelineItem[] = events.map((e) => e.kind === "account"
+    ? { id: e.id, kind: e.kind, title: pp.accountCreated, when: when(e.startedAt), lines: [] }
+    : { id: e.id, kind: e.kind, title: term("role", e.code, d), when: when(e.startedAt), lines: [
+        ...(e.countryId ? [{ label: pp.countryLabel, value: countryName(e.countryId, d.dir) }] : []),
+        { label: pp.startedLabel, value: when(e.startedAt) },
+        { label: pp.endedLabel, value: e.endedAt ? when(e.endedAt) : pp.ongoing },
+        ...(e.source ? [{ label: pp.sourceLabel, value: (pp.source as Record<string, string>)[e.source] ?? humanizeCode(e.source) }] : []),
+        ...(e.endReason ? [{ label: pp.reasonLabel, value: humanizeCode(e.endReason) }] : []),
+      ] });
 
   const skillList = (g: SkillGroup) => (
     <ul className="skilllist">
@@ -89,6 +105,12 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
           {!p.rankCode && !p.joinedAt && !p.lastActiveAt && !p.unit?.role && !p.party?.role ? <p className="empty-mini">{pp.noActivity}</p> : null}
         </section>
       </div>
+
+      <section className="panel" aria-label={pp.timeline} style={{ marginBlockStart: "1rem" }}>
+        <header><h2><Icon name="clock" size={18} /> {pp.timeline}</h2></header>
+        {items.length === 0 ? <p className="empty-mini">{pp.timelineEmpty}</p> : <PlayerTimeline items={items} label={pp.timeline} />}
+        <p className="hint">{pp.timelineNote}</p>
+      </section>
 
       {primary.length > 0 ? (
         <section className="panel" aria-label={pp.skillsTitle}>
