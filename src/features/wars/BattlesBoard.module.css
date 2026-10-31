@@ -1,9 +1,9 @@
 .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1.5rem; border-block-end: 1px solid rgba(148, 163, 184, 0.16); margin-block-start: 0.5rem; }
 .tabs { display: flex; gap: 1.5rem; }
-.tabs button { position: relative; font: inherit; font-size: 0.95rem; font-weight: 600; color: #8b97b3; background: none; border: 0; padding: 0.55rem 0 0.8rem; cursor: pointer; display: inline-flex; align-items: baseline; gap: 0.4rem; }
-.tabs button:hover { color: #e6ebf7; }
-.tabs button[aria-selected="true"] { color: #fff; }
-.tabs button[aria-selected="true"]::after { content: ""; position: absolute; inset-inline: 0; inset-block-end: -1px; block-size: 2px; border-radius: 2px; background: #19c8ff; }
+.tabs a { position: relative; font: inherit; font-size: 0.95rem; font-weight: 600; color: #8b97b3; background: none; border: 0; padding: 0.55rem 0 0.8rem; cursor: pointer; display: inline-flex; align-items: baseline; gap: 0.4rem; text-decoration: none; }
+.tabs a:hover { color: #e6ebf7; }
+.tabs a[aria-current="page"] { color: #fff; }
+.tabs a[aria-current="page"]::after { content: ""; position: absolute; inset-inline: 0; inset-block-end: -1px; block-size: 2px; border-radius: 2px; background: #19c8ff; }
 .tabs small { font-size: 0.78rem; font-weight: 500; opacity: 0.7; font-variant-numeric: tabular-nums; }
 .types { display: flex; flex-wrap: wrap; gap: 0.3rem 1.1rem; margin-block: 0.9rem 1.3rem; }
 .types button { font: inherit; font-size: 0.85rem; color: #8b97b3; background: none; border: 0; padding: 0.2rem 0; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; }
@@ -50,3 +50,13 @@
 .more { display: block; margin: 1.4rem auto 0; padding: 0.55rem 1.6rem; font: inherit; color: #e6ebf7; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(148, 163, 184, 0.25); border-radius: 999px; cursor: pointer; }
 .more:hover { border-color: #19c8ff; }
 .empty { color: #7b87a3; padding-block: 2rem; text-align: center; }
+
+.ranges { display: flex; gap: 0.3rem; margin-block-end: 0.5rem; }
+.ranges a { font-size: 0.82rem; font-weight: 600; color: #8b97b3; padding: 0.3rem 0.8rem; border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.2); text-decoration: none; }
+.ranges a:hover { color: #e6ebf7; }
+.ranges a[aria-current="true"] { color: #fff; border-color: #19c8ff; background: rgba(25, 200, 255, 0.12); }
+.notice { margin: 0.9rem 0 0; padding: 0.55rem 0.8rem; border-radius: 10px; font-size: 0.82rem; color: #fcd34d; background: rgba(234, 179, 8, 0.08); border: 1px solid rgba(234, 179, 8, 0.25); }
+.card { position: relative; }
+.cover { position: absolute; inset: 0; border-radius: 16px; z-index: 1; }
+.cover:focus-visible { outline: 2px solid #19c8ff; outline-offset: 2px; }
+.card:hover .name { color: #19c8ff; }

@@ -14,18 +14,16 @@ import s from "./WarsBoard.module.css";
 
 type Tab = "active" | "ended" | "all";
 const PAGE = 24;
-const idOk = (id: string) => /^[A-Za-z0-9_-]{1,80}$/.test(id);
 const fill = (t: string, v: Record<string, string>) => t.replace(/\{(\w+)\}/g, (_, k: string) => v[k] ?? "");
 
 function Side({ id, note, hot, d }: { id: string; note: string; hot: boolean; d: Display }) {
-  const inner = (
-    <>
+  return (
+    <div className={s.side}>
       <Flag id={id} d={d} />
       <span className={s.name} dir="auto">{countryName(id, d.dir)}</span>
       <span className={s.note} data-hot={hot}>{note}</span>
-    </>
+    </div>
   );
-  return idOk(id) ? <Link className={s.side} href={`/countries/${encodeURIComponent(id)}`}>{inner}</Link> : <span className={s.side}>{inner}</span>;
 }
 
 function WarCard({ w, d, m, nowMs }: { w: War; d: Display; m: Messages["warsPage"]; nowMs: number }) {
@@ -40,6 +38,7 @@ function WarCard({ w, d, m, nowMs }: { w: War; d: Display; m: Messages["warsPage
   const noteFor = (id: string) => (initiative === id ? fill(m.initiativeLeft, { t: short(until - nowMs) }) : w.declaredBy === id ? m.declaredTag : "");
   return (
     <article className={s.card} data-state={live ? "live" : "ended"}>
+      <Link className={s.cover} href={`/wars/${encodeURIComponent(w.id)}`} aria-label={`${m.openWar}: ${countryName(w.countryA, d.dir)} / ${countryName(w.countryB, d.dir)}`} />
       <div className={s.top}>
         <span className={s.status} data-state={live ? "live" : "ended"}>{live ? m.tabActive : m.tabEnded}</span>
         {w.proposalId && <Link className={s.law} href={`/laws/${encodeURIComponent(w.proposalId)}`}>{m.viewLaw}</Link>}

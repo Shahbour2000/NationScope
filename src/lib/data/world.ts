@@ -6,7 +6,7 @@ import { anyJson } from "@/lib/api/schemas";
 import type { Directory } from "@/lib/domain/directory";
 import { asRecord, parseRows } from "@/lib/domain/parse";
 import { parseBattleDetail } from "@/lib/domain/battle-detail";
-import { governmentHistorySchema, governmentSchema, memberSchema, allianceSchema, articleSchema, battleSchema, citizenSchema, countrySchema, historyItemSchema, leaderboardSchema, rankingRowSchema, summarySchema, warSchema } from "@/lib/domain/world";
+import { governmentHistorySchema, governmentSchema, lawDefSchema, lawsCatalogSchema, memberSchema, allianceSchema, articleSchema, battleSchema, citizenSchema, countrySchema, historyItemSchema, leaderboardSchema, rankingRowSchema, summarySchema, warSchema } from "@/lib/domain/world";
 import type { Endpoint } from "@/lib/api/endpoints";
 
 const get = (e: Endpoint) => getApiClient().get(e.path, { schema: anyJson, query: e.query });
@@ -32,9 +32,30 @@ export async function getCountrySummary(id: string) {
   return { summary: parsed.success ? parsed.data : null, meta };
 }
 
+/**
+ * All wars. Active and ended wars are requested separately (`status=active` / `status=ended`) so a long active list
+ * cannot crowd ended wars out of a size-capped response; rows are merged and de-duplicated by id.
+ */
 export async function getWars() {
-  const { data, meta } = await get(endpoints.wars());
-  return { ...parseRows(listKey(data, "wars"), warSchema), meta };
+  const [active, ended] = await Promise.all([get(endpoints.wars({ status: "active" })), get(endpoints.wars({ status: "ended" })).catch(() => null)]);
+  const a = parseRows(listKey(active.data, "wars"), warSchema);
+  const e = ended ? parseRows(listKey(ended.data, "wars"), warSchema) : { rows: [], skipped: 0 };
+  const seen = new Set<string>();
+  const rows = [...a.rows, ...e.rows].filter((w) => (seen.has(w.id) ? false : (seen.add(w.id), true)));
+  return { rows, skipped: a.skipped + e.skipped, meta: active.meta, endedMissing: ended === null };
+}
+
+export async function getWar(id: string) {
+  const res = await getWars();
+  return { war: res.rows.find((w) => w.id === id) ?? null, meta: res.meta };
+}
+
+/** Battles between two countries (either direction), newest first. The list endpoint has no war id, so a war's battles are matched by country pair. */
+export async function getBattlesBetween(a: string, b: string) {
+  const [x, y] = await Promise.all([get(endpoints.battles({ countryId: a, limit: 100 })), get(endpoints.battles({ countryId: a, status: "finished", limit: 100 }))]);
+  const rows = [...parseRows(listKey(x.data, "battles"), battleSchema).rows, ...parseRows(listKey(y.data, "battles"), battleSchema).rows];
+  const seen = new Set<string>();
+  return rows.filter((r) => ((r.attackerCountryId === a && r.defenderCountryId === b) || (r.attackerCountryId === b && r.defenderCountryId === a)) && !seen.has(r.id) && (seen.add(r.id), true));
 }
 
 export async function getBattles(status?: "active" | "finished") {
@@ -115,4 +136,38 @@ export async function getBattleDetail(id: string) {
 export async function getGovernmentHistory(countryId: string) {
   const { data, meta } = await get(endpoints.governmentHistory(countryId, { limit: 200 }));
   return { ...parseRows(listKey(data, "items"), governmentHistorySchema), meta };
+}
+
+export interface BattleHistory {
+  rows: ReturnType<typeof parseRows<typeof battleSchema>>["rows"];
+  /** The `limit` that was actually accepted by the API. */
+  limit: number;
+  /** True when the API returned fewer rows than asked for, i.e. it has no older finished battles to give. */
+  exhausted: boolean;
+  meta: Awaited<ReturnType<typeof get>>["meta"];
+}
+
+/**
+ * Finished battles, newest first. Asks for a large page first and falls back to the documented maximum (100) if the
+ * API rejects it. The API exposes no offset/cursor/date filter for battles, so one page is all that can be fetched.
+ */
+export async function getBattleHistory(): Promise<BattleHistory> {
+  for (const limit of [500, 100]) {
+    try {
+      const { data, meta } = await get(endpoints.battles({ status: "finished", limit }));
+      const rows = parseRows(listKey(data, "battles"), battleSchema).rows;
+      return { rows, limit, exhausted: rows.length < limit, meta };
+    } catch (e) {
+      if (limit === 100) throw e;
+    }
+  }
+  throw new Error("unreachable");
+}
+
+export async function getLawsCatalog() {
+  const { data, meta } = await get(endpoints.lawsCatalog());
+  const head = lawsCatalogSchema.safeParse(data);
+  if (!head.success) throw new Error("Unexpected /laws response");
+  const parsed = parseRows(head.data.laws, lawDefSchema);
+  return { laws: parsed.rows, skipped: parsed.skipped, costItem: head.data.costItem ?? null, voteHours: head.data.voteHours ?? null, answerHours: head.data.counterpartAnswerHours ?? null, maxTax: head.data.maxTaxPercent ?? null, meta };
 }

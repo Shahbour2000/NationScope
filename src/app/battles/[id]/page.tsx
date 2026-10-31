@@ -5,6 +5,7 @@ import { Info } from "@/components/Info";
 import { Provenance } from "@/components/Provenance";
 import { RankList } from "@/components/RankList";
 import { StateMessage } from "@/components/StateMessage";
+import { countryName } from "@/features/entities/display";
 import { CountryBadge, Dt, Flag, RegionLink, Source } from "@/features/entities/entities";
 import { getDisplay } from "@/features/entities/display.server";
 import { RemoteImage } from "@/features/entities/RemoteImage";
@@ -41,7 +42,7 @@ export default async function BattlePage({ params }: { params: Promise<{ id: str
     return (
       <div className="vside" data-side={side}>
         {cid ? <Flag id={cid} d={d} /> : null}
-        <span className="vname" title={cid ?? ""}>{cid ? <CountryBadge id={cid} d={d} /> : "—"}</span>
+        <span className="vname" title={cid ?? ""}>{cid ? countryName(cid, d.dir) : "—"}</span>
         <small>{t[side]}</small>
       </div>
     );

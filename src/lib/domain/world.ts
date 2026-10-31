@@ -118,3 +118,13 @@ export const governmentHistorySchema = z.object({
   id: s, role: s, userId: s.nullish(), username: s.nullish(), source: s.nullish(), startedAt: s.nullish(), endedAt: s.nullish(), endReason: s.nullish(), label: s.nullish(),
 }).passthrough();
 export type GovernmentHistoryRow = z.infer<typeof governmentHistorySchema>;
+
+/** One law from GET /laws (the catalogue of what can be proposed). */
+export const lawDefSchema = z.object({
+  code: s.min(1), scope: s.nullish(), label: s.nullish(), description: s.nullish(), cost: n.nullish(), bilateral: z.boolean().nullish(),
+  params: z.record(z.string(), z.unknown()).nullish(),
+}).passthrough();
+export type LawDef = z.infer<typeof lawDefSchema>;
+export const lawsCatalogSchema = z.object({
+  laws: z.array(z.unknown()), costItem: s.nullish(), voteHours: n.nullish(), counterpartAnswerHours: n.nullish(), maxTaxPercent: n.nullish(),
+}).passthrough();

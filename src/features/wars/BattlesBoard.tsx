@@ -10,26 +10,23 @@ import type { Messages } from "@/i18n/messages";
 import type { Battle } from "@/lib/domain/world";
 import s from "./BattlesBoard.module.css";
 
-type Status = "live" | "done" | "all";
+export interface HistoryInfo { requested: number; returned: number; covered: boolean; oldestMs: number | null }
 const TYPES = ["territorial", "resistance", "revolution", "tournament"] as const;
 const PAGE = 18;
-const idOk = (id: string) => /^[A-Za-z0-9_-]{1,80}$/.test(id);
 const digits = (v: string | null | undefined): bigint | null => (v != null && /^\d+$/.test(v) ? BigInt(v) : null);
 
 function Side({ countryId, muId, side, won, lost, d, m }: { countryId: string | null | undefined; muId: string | null | undefined; side: "a" | "d"; won: boolean; lost: boolean; d: Display; m: Messages["battlesPage"] }) {
   const label = countryId ? countryName(countryId, d.dir) : muId ? m.unit : "—";
-  const inner = (
-    <>
+  return (
+    <div className={s.side} data-side={side} data-lost={lost}>
       {countryId && <Flag id={countryId} d={d} />}
       <span className={s.name} dir="auto">{label}</span>
       <span className={s.sub} data-win={won}>{won ? m.winner : countryId && muId ? m.unit : ""}</span>
-    </>
+    </div>
   );
-  const href = countryId && idOk(countryId) ? `/countries/${encodeURIComponent(countryId)}` : muId && idOk(muId) ? `/units/${encodeURIComponent(muId)}` : null;
-  return href ? <Link className={s.side} href={href} data-side={side} data-lost={lost}>{inner}</Link> : <span className={s.side} data-side={side} data-lost={lost}>{inner}</span>;
 }
 
-function BattleCard({ x, d, m, nowMs }: { x: Battle; d: Display; m: Messages["battlesPage"]; nowMs: number }) {
+export function BattleCard({ x, d, m, nowMs }: { x: Battle; d: Display; m: Messages["battlesPage"]; nowMs: number }) {
   const live = isBattleOngoing(x);
   const type = (TYPES as readonly string[]).includes(x.type) ? (x.type as (typeof TYPES)[number]) : null;
   const compact = new Intl.NumberFormat(d.nl, { notation: "compact", maximumFractionDigits: 1 });
@@ -42,6 +39,7 @@ function BattleCard({ x, d, m, nowMs }: { x: Battle; d: Display; m: Messages["ba
   const roundNo = x.round?.number ?? x.currentRound;
   return (
     <article className={s.card} data-type={type ?? "other"} data-state={live ? "live" : "done"}>
+      <Link className={s.cover} href={`/battles/${encodeURIComponent(x.id)}`} aria-label={`${m.openBattle}: ${x.attackerCountryId ? countryName(x.attackerCountryId, d.dir) : ""} / ${x.defenderCountryId ? countryName(x.defenderCountryId, d.dir) : ""}`} />
       <div className={s.top}>
         <span className={s.type} title={type ? m.typeInfo[type] : undefined}>{type ? d.m.t.battleType[type] : x.type}</span>
         <span className={s.state} data-live={live}>{live ? `${m.tabLive}${roundNo ? ` · ${m.round} ${roundNo}` : ""}` : m.tabDone}</span>
@@ -67,34 +65,41 @@ function BattleCard({ x, d, m, nowMs }: { x: Battle; d: Display; m: Messages["ba
   );
 }
 
-export function BattlesBoard({ rows, d, m, nowMs }: { rows: Battle[]; d: Display; m: Messages["battlesPage"]; nowMs: number }) {
-  const [status, setStatus] = useState<Status>("live");
+export function BattleList({ rows, d, m, nowMs }: { rows: Battle[]; d: Display; m: Messages["battlesPage"]; nowMs: number }) {
+  return <div className={s.grid}>{rows.map((x) => <BattleCard key={x.id} x={x} d={d} m={m} nowMs={nowMs} />)}</div>;
+}
+
+export function BattlesBoard({ rows, view, range, history, d, m, nowMs }: { rows: Battle[]; view: "live" | "history"; range: string; history: HistoryInfo | null; d: Display; m: Messages["battlesPage"]; nowMs: number }) {
   const [type, setType] = useState<string>("all");
   const [limit, setLimit] = useState(PAGE);
   const nf = new Intl.NumberFormat(d.nl);
-  const counts = useMemo(() => ({ live: rows.filter(isBattleOngoing).length, done: rows.filter((x) => !isBattleOngoing(x)).length, all: rows.length }), [rows]);
-  const typeCounts = useMemo(() => {
-    const inStatus = rows.filter((x) => status === "all" || (status === "live") === isBattleOngoing(x));
-    return Object.fromEntries(TYPES.map((t) => [t, inStatus.filter((x) => x.type === t).length])) as Record<(typeof TYPES)[number], number>;
-  }, [rows, status]);
+  const typeCounts = useMemo(() => Object.fromEntries(TYPES.map((t) => [t, rows.filter((x) => x.type === t).length])) as Record<(typeof TYPES)[number], number>, [rows]);
   const shown = useMemo(() => {
     const key = (x: Battle) => (isBattleOngoing(x) ? x.startedAt : x.endedAt ?? x.startedAt) ?? "";
-    return rows
-      .filter((x) => (status === "all" || (status === "live") === isBattleOngoing(x)) && (type === "all" || x.type === type))
-      .sort((x, y) => Number(isBattleOngoing(y)) - Number(isBattleOngoing(x)) || key(y).localeCompare(key(x)));
-  }, [rows, status, type]);
-  const tabs: [Status, string][] = [["live", m.tabLive], ["done", m.tabDone], ["all", m.tabAll]];
+    return rows.filter((x) => type === "all" || x.type === type).sort((x, y) => key(y).localeCompare(key(x)));
+  }, [rows, type]);
   const visibleTypes = TYPES.filter((t) => typeCounts[t] > 0 || type === t);
+  const ranges: [string, string][] = [["7", m.range7], ["30", m.range30], ["90", m.range90]];
+  const fill = (t: string, v: Record<string, string>) => t.replace(/\{(\w+)\}/g, (_, k: string) => v[k] ?? "");
   return (
     <>
       <div className={s.bar}>
-        <div className={s.tabs} role="tablist" aria-label={m.status}>
-          {tabs.map(([k, label]) => <button key={k} type="button" role="tab" aria-selected={status === k} onClick={() => { setStatus(k); setLimit(PAGE); }}>{label} <small>{nf.format(counts[k])}</small></button>)}
-        </div>
+        <nav className={s.tabs} aria-label={m.status}>
+          <Link href="/battles" aria-current={view === "live" ? "page" : undefined}>{m.tabLive}</Link>
+          <Link href={`/battles?view=history&range=${range}`} aria-current={view === "history" ? "page" : undefined}>{m.tabHistory}</Link>
+        </nav>
+        {view === "history" && (
+          <nav className={s.ranges} aria-label={m.tabHistory}>
+            {ranges.map(([k, label]) => <Link key={k} href={`/battles?view=history&range=${k}`} aria-current={range === k ? "true" : undefined}>{label}</Link>)}
+          </nav>
+        )}
       </div>
+      {history && !history.covered && history.oldestMs !== null && (
+        <p className={s.notice} role="status">{fill(m.partial, { n: nf.format(history.returned), d: formatDate(new Date(history.oldestMs).toISOString(), d.nl) ?? "—" })}</p>
+      )}
       {visibleTypes.length > 1 || type !== "all" ? (
         <div className={s.types} role="group" aria-label={m.type}>
-          <button type="button" aria-pressed={type === "all"} onClick={() => { setType("all"); setLimit(PAGE); }}>{m.allTypes}</button>
+          <button type="button" aria-pressed={type === "all"} onClick={() => { setType("all"); setLimit(PAGE); }}>{m.allTypes} <small>{nf.format(rows.length)}</small></button>
           {visibleTypes.map((t) => (
             <button key={t} type="button" data-type={t} aria-pressed={type === t} title={m.typeInfo[t]} onClick={() => { setType(t); setLimit(PAGE); }}>
               <i /> {d.m.t.battleType[t]} <small>{nf.format(typeCounts[t])}</small>
@@ -102,7 +107,7 @@ export function BattlesBoard({ rows, d, m, nowMs }: { rows: Battle[]; d: Display
           ))}
         </div>
       ) : <div style={{ blockSize: "1.2rem" }} />}
-      {shown.length === 0 ? <p className={s.empty}>{m.noMatch}</p> : <div className={s.grid}>{shown.slice(0, limit).map((x) => <BattleCard key={x.id} x={x} d={d} m={m} nowMs={nowMs} />)}</div>}
+      {shown.length === 0 ? <p className={s.empty}>{view === "history" ? m.emptyHistory : m.emptyLive}</p> : <div className={s.grid}>{shown.slice(0, limit).map((x) => <BattleCard key={x.id} x={x} d={d} m={m} nowMs={nowMs} />)}</div>}
       {shown.length > limit && <button type="button" className={s.more} onClick={() => setLimit(limit + PAGE)}>{m.more}</button>}
     </>
   );

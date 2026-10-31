@@ -19,20 +19,13 @@ export interface CareerEvent {
 
 const COLOR: Record<CareerCategory, string> = { account: "#cbd5e1", president: "#f5c542", vice: "#93c5fd", minister: "#a78bfa", congress: "#2dd4bf", other: "#94a3b8" };
 const ICON: Record<CareerCategory, IconName> = { account: "user", president: "crown", vice: "medal", minister: "briefcase", congress: "landmark", other: "flag" };
-const ROW = 36, BAR_H = 28, PAD = 18, MIN_BAR = 30, CHAR_W = 7.1, GAP = 10;
+const ROW = 34, CHIP_H = 28, PAD = 22, CHAR_W = 8.9, GAP = 8, LABEL_PAD = 14;
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-interface Placed extends CareerEvent { x0: number; w: number; lane: number; inside: boolean; labelLeft: boolean; labelW: number }
+interface Placed extends CareerEvent { x0: number; slot: number; above: boolean; level: number; chipW: number; flip: boolean }
 
-/** Nice tick spacing (in days) so labels stay about 90px apart. */
-function tickStepDays(spanDays: number, plotW: number): number {
-  const want = Math.max(2, Math.floor(plotW / 90));
-  for (const step of [1, 2, 3, 7, 14, 30, 60, 90, 180, 365]) if (spanDays / step <= want) return step;
-  return 365;
-}
-
-export function CareerTimeline({ items, nowMs, nl, rtl, label, ongoingLabel }: {
-  items: CareerEvent[]; nowMs: number; nl: string; rtl: boolean; label: string; ongoingLabel: string;
+export function CareerTimeline({ items, nowMs, nl, rtl, label, ongoingLabel, todayLabel }: {
+  items: CareerEvent[]; nowMs: number; nl: string; rtl: boolean; label: string; ongoingLabel: string; todayLabel: string;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(720);
@@ -51,33 +44,45 @@ export function CareerTimeline({ items, nowMs, nl, rtl, label, ongoingLabel }: {
   const layout = useMemo(() => {
     const plotW = width - PAD * 2;
     const min = Math.min(...items.map((e) => e.startMs));
-    const max = Math.max(nowMs, ...items.map((e) => e.endMs ?? e.startMs));
-    const span = Math.max(max - min, 24 * 3600 * 1000);
+    const span = Math.max(nowMs - min, 24 * 3600 * 1000);
     const x = (t: number) => PAD + (plotW * (t - min)) / span;
     const sorted = [...items].sort((a, b) => a.startMs - b.startMs || a.id.localeCompare(b.id));
-    const lanes: [number, number][][] = [];
+    // Slots alternate above / below the axis (0 = first above, 1 = first below, 2 = second above ...), so any number of
+    // events stays around ONE axis. An event takes the first slot whose existing chips it does not collide with.
+    const slots: [number, number][][] = [];
+    const chips: { above: boolean; level: number; ext: [number, number]; stem: number }[] = [];
     const placed: Placed[] = sorted.map((e) => {
-      const dot = e.category === "account";
       const x0 = x(e.startMs);
-      const x1 = x(e.ongoing ? nowMs : e.endMs ?? e.startMs);
-      const w = dot ? BAR_H : Math.max(x1 - x0, MIN_BAR);
-      const labelW = e.title.length * CHAR_W;
-      const inside = !dot && w >= labelW + 40;
-      const labelLeft = !inside && x0 + w + 8 + labelW > width - 4;
-      const ext: [number, number] = inside ? [x0, x0 + w] : labelLeft ? [x0 - 8 - labelW, x0 + w] : [x0, x0 + w + 8 + labelW];
-      let lane = lanes.findIndex((row) => row.every(([a, b]) => ext[1] + GAP <= a || ext[0] >= b + GAP));
-      if (lane === -1) { lane = lanes.length; lanes.push([]); }
-      lanes[lane]!.push(ext);
-      return { ...e, x0, w, lane, inside, labelLeft, labelW };
+      const chipW = CHIP_H + 8 + e.title.length * CHAR_W + 6;
+      const flip = x0 - LABEL_PAD + chipW > width - 4;
+      const ext: [number, number] = flip ? [x0 + LABEL_PAD - chipW, x0 + LABEL_PAD] : [x0 - LABEL_PAD, x0 - LABEL_PAD + chipW];
+      // First slot where the chip neither overlaps a chip in its row nor lets a stem cut through a chip (its own stem
+      // through nearer chips, or an earlier stem through this chip).
+      const rowFree = (slot: number) => (slots[slot] ?? []).every(([a, b]) => ext[1] + GAP <= a || ext[0] >= b + GAP);
+      const stemsClear = (slot: number) => {
+        const above = slot % 2 === 0, level = Math.floor(slot / 2);
+        return chips.every((c) => {
+          if (c.above !== above || Math.abs(c.stem - x0) < 2) return true; // same date: chips stack on one shared stem
+          if (c.level < level) return x0 < c.ext[0] - 3 || x0 > c.ext[1] + 3;
+          if (c.level > level) return c.stem < ext[0] - 3 || c.stem > ext[1] + 3;
+          return true;
+        });
+      };
+      // Prefer a spot where no stem crosses another chip; in dense clusters that may not exist within a few rows, so fall
+      // back to the first free spot (stems then run behind the chips, as in a shared-stem stack).
+      let slot = 0;
+      while (slot < 8 && !(rowFree(slot) && stemsClear(slot))) slot++;
+      if (slot >= 8) { slot = 0; while (!rowFree(slot)) slot++; }
+      (slots[slot] ??= []).push(ext);
+      chips.push({ above: slot % 2 === 0, level: Math.floor(slot / 2), ext, stem: x0 });
+      return { ...e, x0, slot, above: slot % 2 === 0, level: Math.floor(slot / 2), chipW, flip };
     });
-    const day = 86400_000;
-    const step = tickStepDays(span / day, plotW);
-    const ticks: { x: number; ms: number }[] = [];
-    for (let t = Math.ceil(min / (step * day)) * step * day; t <= max; t += step * day) ticks.push({ x: x(t), ms: t });
-    return { placed, ticks, laneCount: Math.max(1, lanes.length), nowX: x(max), spanDays: span / day };
+    const aboveLevels = Math.max(0, ...placed.filter((e) => e.above).map((e) => e.level + 1));
+    const belowLevels = Math.max(0, ...placed.filter((e) => !e.above).map((e) => e.level + 1));
+    return { placed, aboveLevels, belowLevels, startX: x(min), endX: x(nowMs), min };
   }, [items, nowMs, width]);
 
-  const fmt = useMemo(() => new Intl.DateTimeFormat(nl, layout.spanDays > 300 ? { month: "short", year: "numeric", timeZone: "UTC" } : { month: "short", day: "numeric", timeZone: "UTC" }), [nl, layout.spanDays]);
+  const fmt = useMemo(() => new Intl.DateTimeFormat(nl, { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" }), [nl]);
   const active = open ? layout.placed.find((e) => e.id === open.id) ?? null : null;
 
   useEffect(() => {
@@ -91,9 +96,8 @@ export function CareerTimeline({ items, nowMs, nl, rtl, label, ongoingLabel }: {
   }, [open]);
 
   const show = (id: string, el: HTMLElement) => { const r = el.getBoundingClientRect(); setOpen({ id, rect: { left: r.left, top: r.top, bottom: r.bottom, width: r.width } }); };
-  const rowsH = layout.laneCount * ROW + 6;
-  const axisY = rowsH + 6;
-  const plotH = axisY + 30;
+  const top = layout.aboveLevels * ROW + 10;
+  const plotH = top + layout.belowLevels * ROW + 44;
   const popW = 250;
   const pos = open && active ? (() => {
     const vw = window.innerWidth;
@@ -104,28 +108,34 @@ export function CareerTimeline({ items, nowMs, nl, rtl, label, ongoingLabel }: {
   return (
     <div className={s.wrap} ref={box} aria-label={label}>
       <div className={s.plot} style={{ blockSize: plotH }}>
-        {layout.placed.map((e) => <span key={`g-${e.id}`} className={s.guide} style={{ left: e.x0 + (e.category === "account" ? BAR_H / 2 : 0), top: e.lane * ROW + BAR_H, blockSize: axisY - (e.lane * ROW + BAR_H) }} aria-hidden="true" />)}
-        <div className={s.axis} style={{ top: axisY }} />
-        <span className={s.now} style={{ left: layout.nowX, top: axisY }} aria-hidden="true" />
-        {layout.ticks.map((t) => <span key={t.ms} className={s.tick} style={{ left: t.x, top: axisY + 10 }}>{fmt.format(t.ms)}</span>)}
-        {layout.placed.map((e) => (
-          <div key={e.id} data-lane={e.lane}>
-            <button
-              type="button" className={s.bar} data-ongoing={e.ongoing} data-dot={e.category === "account"} aria-expanded={open?.id === e.id}
-              style={{ left: e.x0, top: e.lane * ROW, inlineSize: e.w, ["--c" as string]: COLOR[e.category] }}
-              onMouseEnter={(ev) => show(e.id, ev.currentTarget)} onMouseLeave={() => setOpen(null)}
-              onFocus={(ev) => show(e.id, ev.currentTarget)} onBlur={() => setOpen(null)}
-              onClick={(ev) => (open?.id === e.id ? setOpen(null) : show(e.id, ev.currentTarget))}
-              aria-label={e.title}
-            >
-              <Icon name={ICON[e.category]} size={14} />
-              {e.inside && <span dir="auto">{e.title}</span>}
-            </button>
-            {!e.inside && (
-              <span className={s.out} dir="auto" style={e.labelLeft ? { left: e.x0 - 8 - e.labelW, inlineSize: e.labelW, justifyContent: "flex-end", top: e.lane * ROW } : { left: e.x0 + e.w + 8, top: e.lane * ROW }}>{e.title}</span>
-            )}
-          </div>
-        ))}
+        <div className={s.axis} style={{ top }} />
+        <span className={s.end} style={{ left: layout.startX, top }} aria-hidden="true" />
+        <span className={s.end} style={{ left: layout.endX, top }} aria-hidden="true" />
+        <span className={s.edge} data-end="start" style={{ left: layout.startX, top: plotH - 20 }}>{fmt.format(layout.min)}</span>
+        <span className={s.edge} data-end="end" style={{ left: layout.endX, top: plotH - 20 }}>{todayLabel}</span>
+        <span className={s.edgeLine} style={{ left: layout.startX, top, blockSize: plotH - 20 - top }} aria-hidden="true" />
+        <span className={s.edgeLine} style={{ left: layout.endX, top, blockSize: plotH - 20 - top }} aria-hidden="true" />
+        {layout.placed.map((e) => {
+          const y = e.above ? top - (e.level + 1) * ROW + (ROW - CHIP_H) / 2 : top + e.level * ROW + (ROW - CHIP_H) / 2 + 8;
+          const stemTop = e.above ? y + CHIP_H / 2 : top;
+          const stemH = e.above ? top - stemTop : y + CHIP_H / 2 - top;
+          return (
+            <div key={e.id} data-slot={e.slot} data-above={e.above}>
+              <span className={s.stem} style={{ left: e.x0, top: stemTop, blockSize: stemH, ["--c" as string]: COLOR[e.category] }} aria-hidden="true" />
+              <button
+                type="button" className={s.chip} data-flip={e.flip} data-ongoing={e.ongoing} aria-expanded={open?.id === e.id}
+                style={{ left: e.flip ? e.x0 + LABEL_PAD - e.chipW : e.x0 - LABEL_PAD, top: y, inlineSize: e.chipW, ["--c" as string]: COLOR[e.category] }}
+                onMouseEnter={(ev) => show(e.id, ev.currentTarget)} onMouseLeave={() => setOpen(null)}
+                onFocus={(ev) => show(e.id, ev.currentTarget)} onBlur={() => setOpen(null)}
+                onClick={(ev) => (open?.id === e.id ? setOpen(null) : show(e.id, ev.currentTarget))}
+                aria-label={e.title}
+              >
+                <i className={s.icon}><Icon name={ICON[e.category]} size={14} /></i>
+                <span dir="auto">{e.title}</span>
+              </button>
+            </div>
+          );
+        })}
       </div>
       {active && pos && (
         <div className={s.pop} role="tooltip" dir={rtl ? "rtl" : "ltr"} style={{ ...pos, inlineSize: popW, ["--c" as string]: COLOR[active.category] }}>

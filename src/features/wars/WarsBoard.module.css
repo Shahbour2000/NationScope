@@ -11,7 +11,7 @@
 .search input:focus { outline: none; border-color: #19c8ff; }
 
 .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); }
-.card { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.4rem 1.25rem 1rem; border-radius: 16px; background: #0d1529; border: 1px solid rgba(148, 163, 184, 0.16); min-inline-size: 0; transition: border-color 0.15s; }
+.card { position: relative; display: flex; flex-direction: column; gap: 1.25rem; padding: 1.4rem 1.25rem 1rem; border-radius: 16px; background: #0d1529; border: 1px solid rgba(148, 163, 184, 0.16); min-inline-size: 0; transition: border-color 0.15s; }
 .card:hover { border-color: rgba(148, 163, 184, 0.34); }
 .versus { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; gap: 0.5rem; }
 .side { display: flex; flex-direction: column; align-items: center; gap: 0.55rem; text-align: center; color: #fff; min-inline-size: 0; text-decoration: none; }
@@ -38,3 +38,8 @@
 .more { display: block; margin: 1.4rem auto 0; padding: 0.55rem 1.6rem; font: inherit; color: #e6ebf7; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(148, 163, 184, 0.25); border-radius: 999px; cursor: pointer; }
 .more:hover { border-color: #19c8ff; }
 .empty { color: #7b87a3; padding-block: 2rem; text-align: center; }
+
+.cover { position: absolute; inset: 0; border-radius: 16px; z-index: 1; }
+.cover:focus-visible { outline: 2px solid #19c8ff; outline-offset: 2px; }
+.card:hover .name { color: #19c8ff; }
+.law { position: relative; z-index: 2; }

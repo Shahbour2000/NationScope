@@ -90,7 +90,7 @@ export const endpoints = {
     ep("/battles", {
       status: oneOf("status", o.status, ["active", "finished"] as const),
       type: oneOf("type", o.type, ["territorial", "resistance", "revolution", "tournament"] as const),
-      countryId: optId("countryId", o.countryId), regionId: optId("regionId", o.regionId), limit: int("limit", o.limit, 1, 100),
+      countryId: optId("countryId", o.countryId), regionId: optId("regionId", o.regionId), limit: int("limit", o.limit, 1, 1000),
     }),
   battle: (battleId: string) => ep(`/battles/${id(battleId, "battle id")}`),
   battleContracts: (battleId: string) => ep(`/battles/${id(battleId, "battle id")}/contracts`),

@@ -142,12 +142,19 @@ export const en = {
     declaredBy: "Declared by", duration: "Duration", battles: "Battles", law: "Declaration law", active: "active", finished: "finished", searchPlaceholder: "Search by country", allStatuses: "All statuses",
     activeWars: "Active wars", endedWars: "Ended wars", priority: "Priority", viewLaw: "View law", versus: "vs", sumNote: "Counts are calculated from the rows shown.", noMatch: "No wars match these filters.",
     durationNote: "Elapsed time for active wars, total length for ended wars.",
-    tabActive: "Active", tabEnded: "Ended", tabAll: "All", left: "left", declaredAgo: "Declared {t} ago", lasted: "Lasted {t}", initiativeLeft: "Initiative · {t}", more: "Show more", initiativeTip: "Only the declaring country can start regional battles during this window.", declaredTag: "Declared", lawTip: "Declaration law", battlesTip: "Active / finished battles", durationTip: "War length",
+    tabActive: "Active", tabEnded: "Ended", tabAll: "All", left: "left", warBattles: "Battles between these countries", warNotFound: "War not found.", initiativeTitle: "Attack initiative", factDeclared: "Declared", factBy: "by {c}", factEnded: "Ended", factDuration: "Duration", factBattles: "Battles", openWar: "Open war", noBattles: "No battles found between these countries.", battlesNote: "Regional battles between the two countries since the declaration.", declaredAgo: "Declared {t} ago", lasted: "Lasted {t}", initiativeLeft: "Initiative · {t}", more: "Show more", initiativeTip: "Only the declaring country can start regional battles during this window.", declaredTag: "Declared", lawTip: "Declaration law", battlesTip: "Active / finished battles", durationTip: "War length",
+  },
+  lawsPage: {
+    title: "Laws", intro: "What countries and alliances can enact, and what it costs.",
+    voting: "Voting period", answer: "Counterpart answer window", maxTax: "Maximum tax", hours: "h", cost: "Cost", needsAgreement: "Needs the other side to agree", target: "Applies to",
+    scopeAll: "All", scopeCountry: "Country laws", scopeAlliance: "Alliance laws", featured: "War law", noLaws: "No laws available.",
+    cat: { war: "War & peace", pacts: "Pacts", tax: "Taxes", trade: "Trade & money", land: "Regions", gov: "Government", alliances: "Alliances", admin: "Alliance administration", other: "Other" },
+    param: { country: "a country", percent: "a percentage" },
   },
   battlesPage: {
     title: "Battles", intro: "Combat encounters between opposing sides, fought over regions or through other game events.", region: "Region", attacker: "Attacker", defender: "Defender", type: "Type", status: "Status", round: "Round",
     rounds: "Rounds won", damage: "Round damage", points: "Round points", bounty: "Bounty", started: "Started", nextTick: "Next update", noBattles: "No battles right now.", sumNote: "Counts are calculated from the rows shown.", activeBattles: "Active battles",
-    tabLive: "Live", tabDone: "Finished", tabAll: "All", allTypes: "All types", more: "Show more", unit: "Military unit", winner: "Winner", leftLabel: "left", noMatch: "No battles match.",
+    tabLive: "Live", tabDone: "Finished", tabHistory: "History", range7: "7 days", range30: "30 days", range90: "3 months", partial: "Showing the latest {n} finished battles. The API returned no older ones; earliest shown: {d}.", openBattle: "Open battle", emptyHistory: "No finished battles in this period.", emptyLive: "No battles are live right now.", tabAll: "All", allTypes: "All types", more: "Show more", unit: "Military unit", winner: "Winner", leftLabel: "left", noMatch: "No battles match.",
     typeInfo: { territorial: "A country attacks a neighboring enemy region.", resistance: "The original owner fights to retake an occupied region.", revolution: "Citizens fight their own government in the capital.", tournament: "A scheduled match between countries or units." },
   },
   alliancesPage: {
@@ -255,7 +262,7 @@ export const en = {
     daily: "Daily damage", monthly: "Monthly damage", activity: "Activity", rank: "Military rank", joined: "Joined", lastActive: "Last active", unitRole: "Role in unit", partyRole: "Role in party", noActivity: "No further details were returned for this player.",
     skillsTitle: "Skills", combatSkills: "Combat skills", ecoSkills: "Economic skills", neutralSkills: "Neutral skills", otherSkills: "Other skills", moreSkills: "Neutral and other skills",
     neutralNote: "Neutral skills are not counted in the War / Eco / Hybrid classification.", companies: "Companies", workers: "workers", topByLevel: "Showing the {n} highest-level companies.",
-    timeline: "Account timeline", timelineEmpty: "No verified timeline events are available for this player.", timelineNote: "Offices held in the current country.", accountCreated: "Account created", minister: "Minister", otherOffice: "Other office", startedLabel: "Start", endedLabel: "End", ongoing: "Current", sourceLabel: "Via", reasonLabel: "Ended because", countryLabel: "Country", source: { election: "Election", appointment: "Appointment" },
+    timeline: "Career timeline", timelineEmpty: "No verified timeline events are available for this player.", timelineNote: "Offices held in the current country.", accountCreated: "Account created", minister: "Minister", otherOffice: "Other office", startedLabel: "Start", endedLabel: "End", ongoing: "Current", today: "Today", sourceLabel: "Via", reasonLabel: "Ended because", countryLabel: "Country", source: { election: "Election", appointment: "Appointment" },
   },
   units: {
     title: "Military units",
@@ -455,12 +462,19 @@ export const ar: Messages = {
     declaredBy: "أعلنها", duration: "المدة", battles: "المعارك", law: "قانون الإعلان", active: "نشطة", finished: "منتهية", searchPlaceholder: "ابحث حسب الدولة", allStatuses: "كل الحالات",
     activeWars: "حروب نشطة", endedWars: "حروب منتهية", priority: "الأولوية", viewLaw: "عرض القانون", versus: "ضد", sumNote: "الأعداد محسوبة من الصفوف المعروضة.", noMatch: "لا توجد حروب تطابق هذه التصفية.",
     durationNote: "الوقت المنقضي للحروب النشطة، والمدة الكاملة للحروب المنتهية.",
-    tabActive: "نشطة", tabEnded: "منتهية", tabAll: "الكل", left: "متبقية", declaredAgo: "أُعلنت منذ {t}", lasted: "استمرت {t}", initiativeLeft: "المبادرة · {t}", more: "عرض المزيد", initiativeTip: "خلال هذه المدة تستطيع الدولة المعلِنة وحدها بدء المعارك الإقليمية.", declaredTag: "أعلنت", lawTip: "قانون الإعلان", battlesTip: "المعارك النشطة / المنتهية", durationTip: "مدة الحرب",
+    tabActive: "نشطة", tabEnded: "منتهية", tabAll: "الكل", left: "متبقية", warBattles: "المعارك بين الدولتين", warNotFound: "الحرب غير موجودة.", initiativeTitle: "مبادرة الهجوم", factDeclared: "الإعلان", factBy: "من {c}", factEnded: "الانتهاء", factDuration: "المدة", factBattles: "المعارك", openWar: "فتح الحرب", noBattles: "لا توجد معارك بين الدولتين.", battlesNote: "المعارك الإقليمية بين الدولتين منذ إعلان الحرب.", declaredAgo: "أُعلنت منذ {t}", lasted: "استمرت {t}", initiativeLeft: "المبادرة · {t}", more: "عرض المزيد", initiativeTip: "خلال هذه المدة تستطيع الدولة المعلِنة وحدها بدء المعارك الإقليمية.", declaredTag: "أعلنت", lawTip: "قانون الإعلان", battlesTip: "المعارك النشطة / المنتهية", durationTip: "مدة الحرب",
+  },
+  lawsPage: {
+    title: "القوانين", intro: "ما الذي تستطيع الدول والتحالفات سنّه، وكم يكلّف.",
+    voting: "مدة التصويت", answer: "مهلة رد الطرف الآخر", maxTax: "أقصى ضريبة", hours: "س", cost: "التكلفة", needsAgreement: "يتطلب موافقة الطرف الآخر", target: "يخص",
+    scopeAll: "الكل", scopeCountry: "قوانين الدول", scopeAlliance: "قوانين التحالفات", featured: "قانون الحرب", noLaws: "لا توجد قوانين.",
+    cat: { war: "الحرب والسلام", pacts: "المعاهدات", tax: "الضرائب", trade: "التجارة والمال", land: "المناطق", gov: "الحكومة", alliances: "التحالفات", admin: "إدارة التحالف", other: "أخرى" },
+    param: { country: "دولة", percent: "نسبة مئوية" },
   },
   battlesPage: {
     title: "المعارك", intro: "مواجهات قتالية بين طرفين متقابلين، على المناطق أو ضمن أحداث اللعبة.", region: "المنطقة", attacker: "المهاجم", defender: "المدافع", type: "النوع", status: "الحالة", round: "الجولة",
     rounds: "الجولات المكسوبة", damage: "ضرر الجولة", points: "نقاط الجولة", bounty: "المكافأة", started: "بدأت", nextTick: "التحديث التالي", noBattles: "لا توجد معارك الآن.", sumNote: "الأعداد محسوبة من الصفوف المعروضة.", activeBattles: "معارك نشطة",
-    tabLive: "جارية", tabDone: "منتهية", tabAll: "الكل", allTypes: "كل الأنواع", more: "عرض المزيد", unit: "وحدة عسكرية", winner: "الفائز", leftLabel: "متبقية", noMatch: "لا توجد معارك مطابقة.",
+    tabLive: "جارية", tabDone: "منتهية", tabHistory: "السجل", range7: "7 أيام", range30: "30 يومًا", range90: "3 أشهر", partial: "تُعرض آخر {n} معركة منتهية. لم تُرجع الواجهة معارك أقدم؛ أقدم معركة معروضة: {d}.", openBattle: "فتح المعركة", emptyHistory: "لا توجد معارك منتهية في هذه الفترة.", emptyLive: "لا توجد معارك جارية الآن.", tabAll: "الكل", allTypes: "كل الأنواع", more: "عرض المزيد", unit: "وحدة عسكرية", winner: "الفائز", leftLabel: "متبقية", noMatch: "لا توجد معارك مطابقة.",
     typeInfo: { territorial: "دولة تهاجم منطقة مجاورة للعدو.", resistance: "المالك الأصلي يقاتل لاستعادة منطقة محتلة.", revolution: "المواطنون يقاتلون حكومتهم في العاصمة.", tournament: "مباراة مجدولة بين دولتين أو وحدتين." },
   },
   alliancesPage: {
@@ -568,7 +582,7 @@ export const ar: Messages = {
     daily: "الضرر اليومي", monthly: "الضرر الشهري", activity: "النشاط", rank: "الرتبة العسكرية", joined: "تاريخ الانضمام", lastActive: "آخر نشاط", unitRole: "الدور في الوحدة", partyRole: "الدور في الحزب", noActivity: "لم تُرجع الواجهة تفاصيل إضافية لهذا اللاعب.",
     skillsTitle: "المهارات", combatSkills: "مهارات القتال", ecoSkills: "المهارات الاقتصادية", neutralSkills: "مهارات محايدة", otherSkills: "مهارات أخرى", moreSkills: "المهارات المحايدة والأخرى",
     neutralNote: "المهارات المحايدة لا تُحتسب في تصنيف حرب / اقتصاد / مختلط.", companies: "الشركات", workers: "عامل", topByLevel: "عرض أعلى {n} شركات مستوى.",
-    timeline: "الخط الزمني للحساب", timelineEmpty: "لا توجد أحداث موثّقة للخط الزمني لهذا اللاعب.", timelineNote: "المناصب التي شغلها اللاعب في دولته الحالية.", accountCreated: "إنشاء الحساب", minister: "وزير", otherOffice: "منصب آخر", startedLabel: "البداية", endedLabel: "النهاية", ongoing: "حالي", sourceLabel: "عن طريق", reasonLabel: "سبب الانتهاء", countryLabel: "الدولة", source: { election: "انتخاب", appointment: "تعيين" },
+    timeline: "المسار الزمني", timelineEmpty: "لا توجد أحداث موثّقة للخط الزمني لهذا اللاعب.", timelineNote: "المناصب التي شغلها اللاعب في دولته الحالية.", accountCreated: "إنشاء الحساب", minister: "وزير", otherOffice: "منصب آخر", startedLabel: "البداية", endedLabel: "النهاية", ongoing: "حالي", today: "اليوم", sourceLabel: "عن طريق", reasonLabel: "سبب الانتهاء", countryLabel: "الدولة", source: { election: "انتخاب", appointment: "تعيين" },
   },
   units: {
     title: "الوحدات العسكرية",

@@ -31,10 +31,21 @@ describe.each(["en", "ar"] as const)("boards render (%s)", (loc) => {
     expect(html).not.toContain("undefined");
   });
   it("battles: renders live cards with scores and a damage bar, no stray undefined", () => {
-    const html = renderToStaticMarkup(createElement(BattlesBoard, { rows: battles, d: display(loc), m: m.battlesPage, nowMs: NOW }));
+    const html = renderToStaticMarkup(createElement(BattlesBoard, { rows: battles.filter(isBattleOngoing), view: "live", range: "30", history: null, d: display(loc), m: m.battlesPage, nowMs: NOW }));
     expect(html.match(/<article/g)?.length).toBe(Math.min(battles.filter(isBattleOngoing).length, 18));
     expect(html).toMatch(/track/);
     expect(html).not.toContain("undefined");
     expect(html).not.toContain("NaN");
+  });
+});
+
+describe("clickable cards", () => {
+  it("every war and battle card links to its details page", () => {
+    const m = getMessages("en");
+    const w = renderToStaticMarkup(createElement(WarsBoard, { rows: wars, d: display("en"), m: m.warsPage, nowMs: NOW }));
+    const first = wars.find((x) => x.status === "active" && !x.endedAt)!;
+    expect(w).toContain(`href="/wars/${first.id}"`);
+    const b = renderToStaticMarkup(createElement(BattlesBoard, { rows: battles, view: "live", range: "30", history: null, d: display("en"), m: m.battlesPage, nowMs: NOW }));
+    expect(b).toContain(`href="/battles/${battles[0]!.id}"`);
   });
 });

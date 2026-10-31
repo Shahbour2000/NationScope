@@ -86,7 +86,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       {items.length > 0 ? (
         <section className="panel ctl-panel" aria-label={pp.timeline}>
           <header><h2><Icon name="clock" size={18} /> {pp.timeline}</h2><small className="muted">{pp.timelineNote}</small></header>
-          <CareerTimeline items={items} nowMs={nowMs} nl={d.nl} rtl={d.locale === "ar"} label={pp.timeline} ongoingLabel={pp.ongoing} />
+          <CareerTimeline items={items} nowMs={nowMs} nl={d.nl} rtl={d.locale === "ar"} label={pp.timeline} ongoingLabel={pp.ongoing} todayLabel={pp.today} />
         </section>
       ) : null}
 
