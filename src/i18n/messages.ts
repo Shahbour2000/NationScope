@@ -138,17 +138,17 @@ export const en = {
     joined: "Joined", members: "Members", level: "Level", viewAll: "View all", citizensTab: "Citizens", lastActive: "Last active", homeRegion: "Home region", location: "Location", player: "Player",
   },
   warsPage: {
-    title: "Wars", intro: "A war is an official conflict between two countries, started by a declaration of war. It lets them fight regional battles under specific rules, including attack restrictions and ceasefire conditions.", sides: "Countries", status: "Status", declared: "Declared",
+    title: "Wars", intro: "Official conflicts between countries that allow them to fight regional battles.", sides: "Countries", status: "Status", declared: "Declared",
     declaredBy: "Declared by", duration: "Duration", battles: "Battles", law: "Declaration law", active: "active", finished: "finished", searchPlaceholder: "Search by country", allStatuses: "All statuses",
     activeWars: "Active wars", endedWars: "Ended wars", priority: "Priority", viewLaw: "View law", versus: "vs", sumNote: "Counts are calculated from the rows shown.", noMatch: "No wars match these filters.",
     durationNote: "Elapsed time for active wars, total length for ended wars.",
-    howTitle: "How wars work", how1: "Declared by law", how1d: "A country declares war on another through its Declare War law.", how2: "24-hour initiative", how2d: "For the first 24 hours only the declaring country can start regional battles. This can end earlier when one of its battles in the war finishes.", how3: "Battles follow", how3d: "Regional battles between the two countries happen inside the war. Each battle is tracked separately.", initiative: "Initiative", initiativeUntil: "{c} until {t}", initiativeNone: "Open to both",
+    tabActive: "Active", tabEnded: "Ended", tabAll: "All", left: "left", more: "Show more", initiativeTip: "Only the declaring country can start regional battles during this window.", declaredTag: "Declared", lawTip: "Declaration law", battlesTip: "Active / finished battles", durationTip: "War length",
   },
   battlesPage: {
-    title: "Battles", intro: "Battles are the actual combat encounters in Age of Nations. They happen as regional attacks, resistance efforts, revolutions or tournament matches, each with its own participants, damage, rounds and outcome.", region: "Region", attacker: "Attacker", defender: "Defender", type: "Type", status: "Status", round: "Round",
+    title: "Battles", intro: "Combat encounters between opposing sides, fought over regions or through other game events.", region: "Region", attacker: "Attacker", defender: "Defender", type: "Type", status: "Status", round: "Round",
     rounds: "Rounds won", damage: "Round damage", points: "Round points", bounty: "Bounty", started: "Started", nextTick: "Next update", noBattles: "No battles right now.", sumNote: "Counts are calculated from the rows shown.", activeBattles: "Active battles",
-    typesTitle: "Battle types", byType: "{n} now",
-    typeInfo: { territorial: "A country attacks an adjacent enemy region. It must be at war with the defender. Anyone can join either side.", resistance: "The original owner tries to take back an occupied region. Players can fight for either side.", revolution: "Citizens rise against their own government in the capital. Only citizens of that country can fight.", tournament: "A scheduled match between countries or military units. No region changes hands." },
+    tabLive: "Live", tabDone: "Finished", tabAll: "All", allTypes: "All types", more: "Show more", unit: "Military unit", winner: "Winner", leftLabel: "left", noMatch: "No battles match.",
+    typeInfo: { territorial: "A country attacks a neighboring enemy region.", resistance: "The original owner fights to retake an occupied region.", revolution: "Citizens fight their own government in the capital.", tournament: "A scheduled match between countries or units." },
   },
   alliancesPage: {
     title: "Alliances", intro: "Alliances, their member countries and the development-based bonus they receive.", members: "Members", leader: "Leader", development: "Development", share: "World share",
@@ -255,7 +255,7 @@ export const en = {
     daily: "Daily damage", monthly: "Monthly damage", activity: "Activity", rank: "Military rank", joined: "Joined", lastActive: "Last active", unitRole: "Role in unit", partyRole: "Role in party", noActivity: "No further details were returned for this player.",
     skillsTitle: "Skills", combatSkills: "Combat skills", ecoSkills: "Economic skills", neutralSkills: "Neutral skills", otherSkills: "Other skills", moreSkills: "Neutral and other skills",
     neutralNote: "Neutral skills are not counted in the War / Eco / Hybrid classification.", companies: "Companies", workers: "workers", topByLevel: "Showing the {n} highest-level companies.",
-    timeline: "Account timeline", timelineEmpty: "No verified timeline events are available for this player.", timelineNote: "Only events backed by API records are shown: account creation and offices held in the player's current country. Combat, economic and earlier-country history is not provided by the API.", accountCreated: "Account created", startedLabel: "Start", endedLabel: "End", ongoing: "Current", sourceLabel: "Via", reasonLabel: "Ended because", countryLabel: "Country", source: { election: "Election", appointment: "Appointment" },
+    timeline: "Account timeline", timelineEmpty: "No verified timeline events are available for this player.", timelineNote: "Offices held in the current country.", accountCreated: "Account created", minister: "Minister", otherOffice: "Other office", startedLabel: "Start", endedLabel: "End", ongoing: "Current", sourceLabel: "Via", reasonLabel: "Ended because", countryLabel: "Country", source: { election: "Election", appointment: "Appointment" },
   },
   units: {
     title: "Military units",
@@ -451,17 +451,17 @@ export const ar: Messages = {
     joined: "انضمت", members: "الأعضاء", level: "المستوى", viewAll: "عرض الكل", citizensTab: "المواطنون", lastActive: "آخر نشاط", homeRegion: "المنطقة الأصلية", location: "الموقع", player: "اللاعب",
   },
   warsPage: {
-    title: "الحروب", intro: "الحرب نزاع رسمي بين دولتين يبدأ بإعلان الحرب. وهي تتيح لهما خوض معارك إقليمية وفق قواعد محددة، منها قيود الهجوم وشروط وقف إطلاق النار.", sides: "الدولتان", status: "الحالة", declared: "تاريخ الإعلان",
+    title: "الحروب", intro: "نزاعات رسمية بين الدول تتيح لها خوض معارك إقليمية.", sides: "الدولتان", status: "الحالة", declared: "تاريخ الإعلان",
     declaredBy: "أعلنها", duration: "المدة", battles: "المعارك", law: "قانون الإعلان", active: "نشطة", finished: "منتهية", searchPlaceholder: "ابحث حسب الدولة", allStatuses: "كل الحالات",
     activeWars: "حروب نشطة", endedWars: "حروب منتهية", priority: "الأولوية", viewLaw: "عرض القانون", versus: "ضد", sumNote: "الأعداد محسوبة من الصفوف المعروضة.", noMatch: "لا توجد حروب تطابق هذه التصفية.",
     durationNote: "الوقت المنقضي للحروب النشطة، والمدة الكاملة للحروب المنتهية.",
-    howTitle: "كيف تعمل الحروب", how1: "تُعلَن بقانون", how1d: "تعلن دولة الحرب على أخرى عبر قانون إعلان الحرب.", how2: "مبادرة الهجوم 24 ساعة", how2d: "في أول 24 ساعة تستطيع الدولة المعلِنة وحدها بدء المعارك الإقليمية. وقد تنتهي مبكرًا عند انتهاء إحدى معاركها في الحرب.", how3: "ثم المعارك", how3d: "تدور المعارك الإقليمية بين الدولتين داخل الحرب، وتُتابَع كل معركة على حدة.", initiative: "المبادرة", initiativeUntil: "{c} حتى {t}", initiativeNone: "مفتوحة للطرفين",
+    tabActive: "نشطة", tabEnded: "منتهية", tabAll: "الكل", left: "متبقية", more: "عرض المزيد", initiativeTip: "خلال هذه المدة تستطيع الدولة المعلِنة وحدها بدء المعارك الإقليمية.", declaredTag: "أعلنت", lawTip: "قانون الإعلان", battlesTip: "المعارك النشطة / المنتهية", durationTip: "مدة الحرب",
   },
   battlesPage: {
-    title: "المعارك", intro: "المعارك هي مواجهات القتال الفعلية في Age of Nations. تقع كهجمات إقليمية أو مقاومة أو ثورات أو مباريات بطولة، ولكل منها مشاركوها وضررها وجولاتها ونتيجتها.", region: "المنطقة", attacker: "المهاجم", defender: "المدافع", type: "النوع", status: "الحالة", round: "الجولة",
+    title: "المعارك", intro: "مواجهات قتالية بين طرفين متقابلين، على المناطق أو ضمن أحداث اللعبة.", region: "المنطقة", attacker: "المهاجم", defender: "المدافع", type: "النوع", status: "الحالة", round: "الجولة",
     rounds: "الجولات المكسوبة", damage: "ضرر الجولة", points: "نقاط الجولة", bounty: "المكافأة", started: "بدأت", nextTick: "التحديث التالي", noBattles: "لا توجد معارك الآن.", sumNote: "الأعداد محسوبة من الصفوف المعروضة.", activeBattles: "معارك نشطة",
-    typesTitle: "أنواع المعارك", byType: "{n} الآن",
-    typeInfo: { territorial: "دولة تهاجم منطقة مجاورة يسيطر عليها عدوها، ويجب أن تكون في حرب مع المدافع. يستطيع أي لاعب الانضمام لأي طرف.", resistance: "المالك الأصلي يحاول استعادة منطقة محتلة، ويمكن للاعبين القتال مع أي طرف.", revolution: "المواطنون يثورون على حكومتهم في العاصمة، ولا يشارك إلا مواطنو تلك الدولة.", tournament: "مباراة مجدولة بين دولتين أو وحدتين عسكريتين، ولا تتغير فيها ملكية أي منطقة." },
+    tabLive: "جارية", tabDone: "منتهية", tabAll: "الكل", allTypes: "كل الأنواع", more: "عرض المزيد", unit: "وحدة عسكرية", winner: "الفائز", leftLabel: "متبقية", noMatch: "لا توجد معارك مطابقة.",
+    typeInfo: { territorial: "دولة تهاجم منطقة مجاورة للعدو.", resistance: "المالك الأصلي يقاتل لاستعادة منطقة محتلة.", revolution: "المواطنون يقاتلون حكومتهم في العاصمة.", tournament: "مباراة مجدولة بين دولتين أو وحدتين." },
   },
   alliancesPage: {
     title: "التحالفات", intro: "التحالفات ودولها الأعضاء ومكافأة الضرر المبنية على التطور.", members: "الأعضاء", leader: "القائد", development: "التطور", share: "حصة العالم",
@@ -568,7 +568,7 @@ export const ar: Messages = {
     daily: "الضرر اليومي", monthly: "الضرر الشهري", activity: "النشاط", rank: "الرتبة العسكرية", joined: "تاريخ الانضمام", lastActive: "آخر نشاط", unitRole: "الدور في الوحدة", partyRole: "الدور في الحزب", noActivity: "لم تُرجع الواجهة تفاصيل إضافية لهذا اللاعب.",
     skillsTitle: "المهارات", combatSkills: "مهارات القتال", ecoSkills: "المهارات الاقتصادية", neutralSkills: "مهارات محايدة", otherSkills: "مهارات أخرى", moreSkills: "المهارات المحايدة والأخرى",
     neutralNote: "المهارات المحايدة لا تُحتسب في تصنيف حرب / اقتصاد / مختلط.", companies: "الشركات", workers: "عامل", topByLevel: "عرض أعلى {n} شركات مستوى.",
-    timeline: "الخط الزمني للحساب", timelineEmpty: "لا توجد أحداث موثّقة للخط الزمني لهذا اللاعب.", timelineNote: "تُعرض فقط الأحداث المدعومة بسجلات الواجهة: إنشاء الحساب والمناصب التي شغلها اللاعب في دولته الحالية. لا توفّر الواجهة سجل القتال أو الاقتصاد أو الدول السابقة.", accountCreated: "إنشاء الحساب", startedLabel: "البداية", endedLabel: "النهاية", ongoing: "حالي", sourceLabel: "عن طريق", reasonLabel: "سبب الانتهاء", countryLabel: "الدولة", source: { election: "انتخاب", appointment: "تعيين" },
+    timeline: "الخط الزمني للحساب", timelineEmpty: "لا توجد أحداث موثّقة للخط الزمني لهذا اللاعب.", timelineNote: "المناصب التي شغلها اللاعب في دولته الحالية.", accountCreated: "إنشاء الحساب", minister: "وزير", otherOffice: "منصب آخر", startedLabel: "البداية", endedLabel: "النهاية", ongoing: "حالي", sourceLabel: "عن طريق", reasonLabel: "سبب الانتهاء", countryLabel: "الدولة", source: { election: "انتخاب", appointment: "تعيين" },
   },
   units: {
     title: "الوحدات العسكرية",
