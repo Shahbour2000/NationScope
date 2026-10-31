@@ -11,6 +11,8 @@ import { isBattleOngoing } from "@/features/wars/state";
 
 export const dynamic = "force-dynamic";
 
+const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k: string) => String(v[k] ?? ""));
+
 /** Share of the combined round damage dealt by side A, as a whole percent (exact integer arithmetic). */
 const splitPct = (a: string | null | undefined, b: string | null | undefined): number | null => {
   if (a == null || b == null || !/^\d+$/.test(a) || !/^\d+$/.test(b)) return null;
@@ -35,7 +37,17 @@ export default async function BattlesPage() {
       <div className="page-head"><h1><Icon name="battle" size={26} />{b.title}</h1></div>
       <p className="note">{b.intro}</p>
       <dl className="stats"><div className="stat"><dt>{b.activeBattles}</dt><dd>{nf.format(active)}</dd></div><div className="stat"><dt>{m.ui.total}</dt><dd>{nf.format(res.rows.length)}</dd></div></dl>
-      <p className="note">{b.sumNote}</p>
+      <section aria-label={b.typesTitle} className="typegrid">
+        {(["territorial", "resistance", "revolution", "tournament"] as const).map((k) => {
+          const n = res.rows.filter((x) => x.type === k && isBattleOngoing(x)).length;
+          return (
+            <article key={k} className="typecard" data-type={k}>
+              <header><b>{d.m.t.battleType[k]}</b><span className="chip">{fill(b.byType, { n: nf.format(n) })}</span></header>
+              <p>{b.typeInfo[k]}</p>
+            </article>
+          );
+        })}
+      </section>
       {sorted.length === 0 ? <p className="empty-mini">{b.noBattles}</p> : (
         <div className="card-grid">
           {sorted.map((x) => {

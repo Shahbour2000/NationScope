@@ -10,6 +10,14 @@ import type { Messages } from "@/i18n/messages";
 import type { War } from "@/lib/domain/world";
 import { isWarOngoing } from "@/features/wars/state";
 
+/** The declaring country's attack-initiative window, shown only while the API still reports it as running. */
+function initiative(w: War, nowMs: number, d: Display, m: Messages["warsPage"]) {
+  if (!isWarOngoing(w)) return "—";
+  const until = w.priority?.until ? Date.parse(w.priority.until) : NaN;
+  if (!w.priority || !Number.isFinite(until) || until <= nowMs) return <span className="hint">{m.initiativeNone}</span>;
+  return <span className="compare"><CountryBadge id={w.priority.countryId} d={d} /> <Dt iso={w.priority.until} d={d} /></span>;
+}
+
 export function WarsTable({ rows, d, m, nowMs }: { rows: War[]; d: Display; m: Messages["warsPage"]; nowMs: number }) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
@@ -29,8 +37,7 @@ export function WarsTable({ rows, d, m, nowMs }: { rows: War[]; d: Display; m: M
         <div className="stat"><dt>{m.activeWars}</dt><dd>{nf.format(active)}</dd></div>
         <div className="stat"><dt>{m.endedWars}</dt><dd>{nf.format(ended)}</dd></div>
       </dl>
-      <p className="note">{m.sumNote}</p>
-      <div className="filterbar">
+            <div className="filterbar">
         <label>{m.searchPlaceholder}<input className="field" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={m.searchPlaceholder} /></label>
         <label>{m.status}
           <select className="field" value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -42,7 +49,7 @@ export function WarsTable({ rows, d, m, nowMs }: { rows: War[]; d: Display; m: M
       </div>
       <div className="tablewrap">
         <table className="table">
-          <thead><tr><th scope="col">{m.sides}</th><th scope="col">{m.status}</th><th scope="col">{m.declared}</th><th scope="col">{m.declaredBy}</th><th scope="col">{m.duration}</th><th scope="col">{m.battles}</th><th scope="col">{m.law}</th></tr></thead>
+          <thead><tr><th scope="col">{m.sides}</th><th scope="col">{m.status}</th><th scope="col">{m.declared}</th><th scope="col">{m.declaredBy}</th><th scope="col">{m.duration}</th><th scope="col">{m.initiative}</th><th scope="col">{m.battles}</th><th scope="col">{m.law}</th></tr></thead>
           <tbody>
             {shown.map((w) => {
               const dur = warDurationMs(w, nowMs);
@@ -53,12 +60,13 @@ export function WarsTable({ rows, d, m, nowMs }: { rows: War[]; d: Display; m: M
                   <td data-label={m.declared}><Dt iso={w.declaredAt} d={d} /></td>
                   <td data-label={m.declaredBy}>{w.declaredBy ? <CountryBadge id={w.declaredBy} d={d} /> : "—"}</td>
                   <td data-label={m.duration}>{dur === null ? "—" : formatDuration(dur, d.m.time)}</td>
+                  <td data-label={m.initiative}>{initiative(w, nowMs, d, m)}</td>
                   <td data-label={m.battles}>{(w.activeBattles ?? 0)} {m.active} · {(w.finishedBattles ?? 0)} {m.finished}</td>
                   <td data-label={m.law}>{w.proposalId ? <Link href={`/laws/${encodeURIComponent(w.proposalId)}`}>{m.viewLaw}</Link> : "—"}</td>
                 </tr>
               );
             })}
-            {shown.length === 0 && <tr><td colSpan={7}>{m.noMatch}</td></tr>}
+            {shown.length === 0 && <tr><td colSpan={8}>{m.noMatch}</td></tr>}
           </tbody>
         </table>
       </div>
