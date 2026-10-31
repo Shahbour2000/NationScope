@@ -16,7 +16,7 @@ export default async function BattlesPage() {
   return (
     <>
       <div className="page-head"><h1><Icon name="battle" size={26} />{m.battlesPage.title}</h1></div>
-      <p className="lede">{m.battlesPage.intro}</p>
+      <p style={{ color: "#8b97b3", margin: "-0.3rem 0 1.4rem", maxInlineSize: "62rem" }}>{m.battlesPage.intro}</p>
       <BattlesBoard rows={res.rows} d={d} m={m.battlesPage} nowMs={Date.now()} />
       <Provenance meta={res.meta} m={m} />
     </>

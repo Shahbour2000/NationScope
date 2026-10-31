@@ -16,7 +16,7 @@ export default async function WarsPage() {
   return (
     <>
       <div className="page-head"><h1><Icon name="war" size={26} />{m.warsPage.title}</h1></div>
-      <p className="lede">{m.warsPage.intro}</p>
+      <p style={{ color: "#8b97b3", margin: "-0.3rem 0 1.4rem", maxInlineSize: "62rem" }}>{m.warsPage.intro}</p>
       <WarsBoard rows={res.rows} d={d} m={m.warsPage} nowMs={Date.now()} />
       {res.skipped > 0 && <p className="banner" role="status">{res.skipped} {m.units.skipped}</p>}
       <Provenance meta={res.meta} m={m} />

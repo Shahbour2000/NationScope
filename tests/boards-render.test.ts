@@ -25,15 +25,15 @@ describe.each(["en", "ar"] as const)("boards render (%s)", (loc) => {
   it("wars: shows one card per active war and an initiative pill only for running windows", () => {
     const html = renderToStaticMarkup(createElement(WarsBoard, { rows: wars, d: display(loc), m: m.warsPage, nowMs: NOW }));
     const active = wars.filter((w) => w.status === "active" && !w.endedAt).length;
-    expect(html.match(/class="wcard"/g)?.length ?? 0).toBe(Math.min(active, 24));
+    expect(html.match(/<article/g)?.length ?? 0).toBe(Math.min(active, 24));
     const running = wars.filter((w) => w.priority?.until && Date.parse(w.priority.until) > NOW && w.status === "active").length;
-    expect(html.match(/data-tone="initiative"/g)?.length ?? 0).toBe(running);
+    expect(html.match(/data-hot="true"/g)?.length ?? 0).toBe(running);
     expect(html).not.toContain("undefined");
   });
   it("battles: renders live cards with scores and a damage bar, no stray undefined", () => {
     const html = renderToStaticMarkup(createElement(BattlesBoard, { rows: battles, d: display(loc), m: m.battlesPage, nowMs: NOW }));
-    expect(html.match(/class="bcard"/g)?.length).toBe(Math.min(battles.filter(isBattleOngoing).length, 18));
-    expect(html).toContain("btug-bar");
+    expect(html.match(/<article/g)?.length).toBe(Math.min(battles.filter(isBattleOngoing).length, 18));
+    expect(html).toMatch(/track/);
     expect(html).not.toContain("undefined");
     expect(html).not.toContain("NaN");
   });

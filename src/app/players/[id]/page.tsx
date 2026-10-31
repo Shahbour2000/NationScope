@@ -53,7 +53,6 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
         ...(e.source ? [{ label: pp.sourceLabel, value: (pp.source as Record<string, string>)[e.source] ?? humanizeCode(e.source) }] : []),
         ...(e.endReason ? [{ label: pp.reasonLabel, value: humanizeCode(e.endReason) }] : []),
       ] });
-  const legend: Record<CareerCategory, string> = { account: pp.accountCreated, president: term("role", "president", d), vice: term("role", "vicePresident", d), minister: pp.minister, congress: term("role", "congress", d), other: pp.otherOffice };
   const nowMs = Date.now();
 
   const skillList = (g: SkillGroup) => (
@@ -87,7 +86,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
       {items.length > 0 ? (
         <section className="panel ctl-panel" aria-label={pp.timeline}>
           <header><h2><Icon name="clock" size={18} /> {pp.timeline}</h2><small className="muted">{pp.timelineNote}</small></header>
-          <CareerTimeline items={items} nowMs={nowMs} nl={d.nl} rtl={d.locale === "ar"} label={pp.timeline} legend={legend} ongoingLabel={pp.ongoing} />
+          <CareerTimeline items={items} nowMs={nowMs} nl={d.nl} rtl={d.locale === "ar"} label={pp.timeline} ongoingLabel={pp.ongoing} />
         </section>
       ) : null}
 

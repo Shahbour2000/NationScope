@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Icon, type IconName } from "@/components/Icon";
+import s from "./CareerTimeline.module.css";
 
 export type CareerCategory = "account" | "president" | "vice" | "minister" | "congress" | "other";
 export interface CareerEvent {
@@ -15,51 +17,68 @@ export interface CareerEvent {
   lines: { label: string; value: string }[];
 }
 
-const COLOR: Record<CareerCategory, string> = { account: "#34d399", president: "#facc15", vice: "#fb923c", minister: "#a78bfa", congress: "#22d3ee", other: "#94a3b8" };
-const ORDER: CareerCategory[] = ["account", "president", "vice", "minister", "congress", "other"];
-const LANE_H = 30, MARK = 24, MIN_GAP_PCT = 5, PAD_PCT = 4;
+const COLOR: Record<CareerCategory, string> = { account: "#cbd5e1", president: "#f5c542", vice: "#93c5fd", minister: "#a78bfa", congress: "#2dd4bf", other: "#94a3b8" };
+const ICON: Record<CareerCategory, IconName> = { account: "user", president: "crown", vice: "medal", minister: "briefcase", congress: "landmark", other: "flag" };
+const ROW = 36, BAR_H = 28, PAD = 18, MIN_BAR = 30, CHAR_W = 7.1, GAP = 10;
+const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-/** One distinct silhouette per category so the roles stay recognisable without colour. */
-export function Shape({ cat, size = MARK }: { cat: CareerCategory; size?: number }) {
-  const c = COLOR[cat];
-  const body = {
-    president: <path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z" fill={c} />,
-    vice: <path d="M12 2.5l9 9.5-9 9.5L3 12z" fill={c} />,
-    minister: <path d="M12 2.5l8 4.5v10l-8 4.5-8-4.5V7z" fill={c} />,
-    congress: <rect x="3.5" y="3.5" width="17" height="17" rx="4" fill={c} />,
-    account: <circle cx="12" cy="12" r="8" fill="none" stroke={c} strokeWidth="3.5" />,
-    other: <circle cx="12" cy="12" r="6.5" fill={c} />,
-  }[cat];
-  return <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false">{body}</svg>;
+interface Placed extends CareerEvent { x0: number; w: number; lane: number; inside: boolean; labelLeft: boolean; labelW: number }
+
+/** Nice tick spacing (in days) so labels stay about 90px apart. */
+function tickStepDays(spanDays: number, plotW: number): number {
+  const want = Math.max(2, Math.floor(plotW / 90));
+  for (const step of [1, 2, 3, 7, 14, 30, 60, 90, 180, 365]) if (spanDays / step <= want) return step;
+  return 365;
 }
 
-interface Placed extends CareerEvent { xPct: number; endPct: number; lane: number }
-
-export function CareerTimeline({ items, nowMs, nl, rtl, label, legend, ongoingLabel }: {
-  items: CareerEvent[]; nowMs: number; nl: string; rtl: boolean; label: string; legend: Record<CareerCategory, string>; ongoingLabel: string;
+export function CareerTimeline({ items, nowMs, nl, rtl, label, ongoingLabel }: {
+  items: CareerEvent[]; nowMs: number; nl: string; rtl: boolean; label: string; ongoingLabel: string;
 }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(720);
   const [open, setOpen] = useState<{ id: string; rect: { left: number; top: number; bottom: number; width: number } } | null>(null);
 
+  useIsoLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const read = () => setWidth(Math.max(260, Math.floor(el.clientWidth)));
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const layout = useMemo(() => {
+    const plotW = width - PAD * 2;
     const min = Math.min(...items.map((e) => e.startMs));
     const max = Math.max(nowMs, ...items.map((e) => e.endMs ?? e.startMs));
     const span = Math.max(max - min, 24 * 3600 * 1000);
-    const x = (t: number) => PAD_PCT + ((100 - 2 * PAD_PCT) * (t - min)) / span;
-    const lanes: number[] = [];
-    const placed: Placed[] = [...items].sort((a, b) => a.startMs - b.startMs || a.id.localeCompare(b.id)).map((e) => {
-      const xPct = x(e.startMs);
-      let lane = lanes.findIndex((last) => xPct - last >= MIN_GAP_PCT);
-      if (lane === -1) lane = lanes.length;
-      lanes[lane] = xPct;
-      return { ...e, xPct, endPct: x(e.ongoing ? nowMs : e.endMs ?? e.startMs), lane };
+    const x = (t: number) => PAD + (plotW * (t - min)) / span;
+    const sorted = [...items].sort((a, b) => a.startMs - b.startMs || a.id.localeCompare(b.id));
+    const lanes: [number, number][][] = [];
+    const placed: Placed[] = sorted.map((e) => {
+      const dot = e.category === "account";
+      const x0 = x(e.startMs);
+      const x1 = x(e.ongoing ? nowMs : e.endMs ?? e.startMs);
+      const w = dot ? BAR_H : Math.max(x1 - x0, MIN_BAR);
+      const labelW = e.title.length * CHAR_W;
+      const inside = !dot && w >= labelW + 40;
+      const labelLeft = !inside && x0 + w + 8 + labelW > width - 4;
+      const ext: [number, number] = inside ? [x0, x0 + w] : labelLeft ? [x0 - 8 - labelW, x0 + w] : [x0, x0 + w + 8 + labelW];
+      let lane = lanes.findIndex((row) => row.every(([a, b]) => ext[1] + GAP <= a || ext[0] >= b + GAP));
+      if (lane === -1) { lane = lanes.length; lanes.push([]); }
+      lanes[lane]!.push(ext);
+      return { ...e, x0, w, lane, inside, labelLeft, labelW };
     });
-    const ticks = Array.from({ length: 5 }, (_, i) => ({ pct: PAD_PCT + ((100 - 2 * PAD_PCT) * i) / 4, ms: min + (span * i) / 4 }));
-    return { placed, ticks, laneCount: Math.max(1, lanes.length) };
-  }, [items, nowMs]);
+    const day = 86400_000;
+    const step = tickStepDays(span / day, plotW);
+    const ticks: { x: number; ms: number }[] = [];
+    for (let t = Math.ceil(min / (step * day)) * step * day; t <= max; t += step * day) ticks.push({ x: x(t), ms: t });
+    return { placed, ticks, laneCount: Math.max(1, lanes.length), nowX: x(max), spanDays: span / day };
+  }, [items, nowMs, width]);
 
-  const fmt = useMemo(() => new Intl.DateTimeFormat(nl, { month: "short", year: "numeric", timeZone: "UTC" }), [nl]);
-  const cats = ORDER.filter((c) => items.some((e) => e.category === c));
-  const active = open ? layout.placed.find((e) => e.id === open.id) : null;
+  const fmt = useMemo(() => new Intl.DateTimeFormat(nl, layout.spanDays > 300 ? { month: "short", year: "numeric", timeZone: "UTC" } : { month: "short", day: "numeric", timeZone: "UTC" }), [nl, layout.spanDays]);
+  const active = open ? layout.placed.find((e) => e.id === open.id) ?? null : null;
 
   useEffect(() => {
     if (!open) return;
@@ -72,46 +91,48 @@ export function CareerTimeline({ items, nowMs, nl, rtl, label, legend, ongoingLa
   }, [open]);
 
   const show = (id: string, el: HTMLElement) => { const r = el.getBoundingClientRect(); setOpen({ id, rect: { left: r.left, top: r.top, bottom: r.bottom, width: r.width } }); };
-  const trackH = 26 + 10 + MARK + (layout.laneCount - 1) * LANE_H + 12;
-  const popW = 240;
-  const pop = open && active ? (() => {
-    const vw = typeof window === "undefined" ? 800 : window.innerWidth;
+  const rowsH = layout.laneCount * ROW + 6;
+  const axisY = rowsH + 6;
+  const plotH = axisY + 30;
+  const popW = 250;
+  const pos = open && active ? (() => {
+    const vw = window.innerWidth;
     const left = Math.min(Math.max(8, open.rect.left + open.rect.width / 2 - popW / 2), vw - popW - 8);
-    const above = open.rect.top > 170;
-    return { left, ...(above ? { bottom: (typeof window === "undefined" ? 0 : window.innerHeight) - open.rect.top + 8 } : { top: open.rect.bottom + 8 }) };
+    return open.rect.top > 190 ? { left, bottom: window.innerHeight - open.rect.top + 8 } : { left, top: open.rect.bottom + 8 };
   })() : null;
 
   return (
-    <div className="ctl" aria-label={label}>
-      <ul className="ctl-legend">{cats.map((c) => <li key={c}><Shape cat={c} size={16} /> {legend[c]}</li>)}</ul>
-      <div className="ctl-scroll">
-        <div className="ctl-track" style={{ blockSize: trackH }} dir="ltr">
-          <div className="ctl-axis" />
-          {layout.placed.filter((e) => e.category !== "account" && e.endPct > e.xPct).map((e) => (
-            <span key={`bar-${e.id}`} className="ctl-span" style={{ insetInlineStart: `${e.xPct}%`, inlineSize: `${e.endPct - e.xPct}%`, background: COLOR[e.category] }} aria-hidden="true" />
-          ))}
-          {layout.ticks.map((t) => <span key={t.pct} className="ctl-tick" style={{ insetInlineStart: `${t.pct}%` }}><i />{fmt.format(t.ms)}</span>)}
-          {layout.placed.map((e) => (
-            <div key={e.id} className="ctl-ev" style={{ insetInlineStart: `${e.xPct}%`, blockSize: 10 + MARK / 2 + e.lane * LANE_H }}>
-              <span className="ctl-stem" style={{ background: COLOR[e.category] }} aria-hidden="true" />
-              <button
-                type="button" className="ctl-mark" data-cat={e.category} aria-expanded={open?.id === e.id}
-                onMouseEnter={(ev) => show(e.id, ev.currentTarget)} onMouseLeave={() => setOpen(null)}
-                onFocus={(ev) => show(e.id, ev.currentTarget)} onBlur={() => setOpen(null)}
-                onClick={(ev) => (open?.id === e.id ? setOpen(null) : show(e.id, ev.currentTarget))}
-              >
-                <Shape cat={e.category} /><span className="sr-only">{e.title}</span>
-              </button>
-            </div>
-          ))}
-        </div>
+    <div className={s.wrap} ref={box} aria-label={label}>
+      <div className={s.plot} style={{ blockSize: plotH }}>
+        {layout.placed.map((e) => <span key={`g-${e.id}`} className={s.guide} style={{ left: e.x0 + (e.category === "account" ? BAR_H / 2 : 0), top: e.lane * ROW + BAR_H, blockSize: axisY - (e.lane * ROW + BAR_H) }} aria-hidden="true" />)}
+        <div className={s.axis} style={{ top: axisY }} />
+        <span className={s.now} style={{ left: layout.nowX, top: axisY }} aria-hidden="true" />
+        {layout.ticks.map((t) => <span key={t.ms} className={s.tick} style={{ left: t.x, top: axisY + 10 }}>{fmt.format(t.ms)}</span>)}
+        {layout.placed.map((e) => (
+          <div key={e.id} data-lane={e.lane}>
+            <button
+              type="button" className={s.bar} data-ongoing={e.ongoing} data-dot={e.category === "account"} aria-expanded={open?.id === e.id}
+              style={{ left: e.x0, top: e.lane * ROW, inlineSize: e.w, ["--c" as string]: COLOR[e.category] }}
+              onMouseEnter={(ev) => show(e.id, ev.currentTarget)} onMouseLeave={() => setOpen(null)}
+              onFocus={(ev) => show(e.id, ev.currentTarget)} onBlur={() => setOpen(null)}
+              onClick={(ev) => (open?.id === e.id ? setOpen(null) : show(e.id, ev.currentTarget))}
+              aria-label={e.title}
+            >
+              <Icon name={ICON[e.category]} size={14} />
+              {e.inside && <span dir="auto">{e.title}</span>}
+            </button>
+            {!e.inside && (
+              <span className={s.out} dir="auto" style={e.labelLeft ? { left: e.x0 - 8 - e.labelW, inlineSize: e.labelW, justifyContent: "flex-end", top: e.lane * ROW } : { left: e.x0 + e.w + 8, top: e.lane * ROW }}>{e.title}</span>
+            )}
+          </div>
+        ))}
       </div>
-      {active && pop && (
-        <div className="ctl-pop" role="tooltip" dir={rtl ? "rtl" : "ltr"} style={{ ...pop, inlineSize: popW, borderColor: COLOR[active.category] }}>
-          <strong dir="auto"><Shape cat={active.category} size={16} /> {active.title}</strong>
+      {active && pos && (
+        <div className={s.pop} role="tooltip" dir={rtl ? "rtl" : "ltr"} style={{ ...pos, inlineSize: popW, ["--c" as string]: COLOR[active.category] }}>
+          <strong dir="auto"><Icon name={ICON[active.category]} size={15} /> {active.title}</strong>
           <dl>
             {active.lines.map((l) => <div key={l.label}><dt>{l.label}</dt><dd dir="auto">{l.value}</dd></div>)}
-            {active.ongoing && <div><dt /><dd><span className="chip">{ongoingLabel}</span></dd></div>}
+            {active.ongoing && <div><dt /><dd className={s.cur}>{ongoingLabel}</dd></div>}
           </dl>
         </div>
       )}

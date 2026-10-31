@@ -142,7 +142,7 @@ export const en = {
     declaredBy: "Declared by", duration: "Duration", battles: "Battles", law: "Declaration law", active: "active", finished: "finished", searchPlaceholder: "Search by country", allStatuses: "All statuses",
     activeWars: "Active wars", endedWars: "Ended wars", priority: "Priority", viewLaw: "View law", versus: "vs", sumNote: "Counts are calculated from the rows shown.", noMatch: "No wars match these filters.",
     durationNote: "Elapsed time for active wars, total length for ended wars.",
-    tabActive: "Active", tabEnded: "Ended", tabAll: "All", left: "left", more: "Show more", initiativeTip: "Only the declaring country can start regional battles during this window.", declaredTag: "Declared", lawTip: "Declaration law", battlesTip: "Active / finished battles", durationTip: "War length",
+    tabActive: "Active", tabEnded: "Ended", tabAll: "All", left: "left", declaredAgo: "Declared {t} ago", lasted: "Lasted {t}", initiativeLeft: "Initiative · {t}", more: "Show more", initiativeTip: "Only the declaring country can start regional battles during this window.", declaredTag: "Declared", lawTip: "Declaration law", battlesTip: "Active / finished battles", durationTip: "War length",
   },
   battlesPage: {
     title: "Battles", intro: "Combat encounters between opposing sides, fought over regions or through other game events.", region: "Region", attacker: "Attacker", defender: "Defender", type: "Type", status: "Status", round: "Round",
@@ -455,7 +455,7 @@ export const ar: Messages = {
     declaredBy: "أعلنها", duration: "المدة", battles: "المعارك", law: "قانون الإعلان", active: "نشطة", finished: "منتهية", searchPlaceholder: "ابحث حسب الدولة", allStatuses: "كل الحالات",
     activeWars: "حروب نشطة", endedWars: "حروب منتهية", priority: "الأولوية", viewLaw: "عرض القانون", versus: "ضد", sumNote: "الأعداد محسوبة من الصفوف المعروضة.", noMatch: "لا توجد حروب تطابق هذه التصفية.",
     durationNote: "الوقت المنقضي للحروب النشطة، والمدة الكاملة للحروب المنتهية.",
-    tabActive: "نشطة", tabEnded: "منتهية", tabAll: "الكل", left: "متبقية", more: "عرض المزيد", initiativeTip: "خلال هذه المدة تستطيع الدولة المعلِنة وحدها بدء المعارك الإقليمية.", declaredTag: "أعلنت", lawTip: "قانون الإعلان", battlesTip: "المعارك النشطة / المنتهية", durationTip: "مدة الحرب",
+    tabActive: "نشطة", tabEnded: "منتهية", tabAll: "الكل", left: "متبقية", declaredAgo: "أُعلنت منذ {t}", lasted: "استمرت {t}", initiativeLeft: "المبادرة · {t}", more: "عرض المزيد", initiativeTip: "خلال هذه المدة تستطيع الدولة المعلِنة وحدها بدء المعارك الإقليمية.", declaredTag: "أعلنت", lawTip: "قانون الإعلان", battlesTip: "المعارك النشطة / المنتهية", durationTip: "مدة الحرب",
   },
   battlesPage: {
     title: "المعارك", intro: "مواجهات قتالية بين طرفين متقابلين، على المناطق أو ضمن أحداث اللعبة.", region: "المنطقة", attacker: "المهاجم", defender: "المدافع", type: "النوع", status: "الحالة", round: "الجولة",
