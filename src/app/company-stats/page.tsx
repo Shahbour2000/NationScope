@@ -43,7 +43,6 @@ export default async function CompanyStatsPage({ searchParams }: { searchParams:
       <section className="card">
         <h2><Icon name="chart" size={18} />{c.byProduct} <Source kind="calc" d={d} /></h2>
         <BarList ariaLabel={c.byProduct} rows={rows.map((r) => ({ key: r.itemCode, label: <ItemChip code={r.itemCode} d={d} />, value: r.companies, display: <>{nf.format(r.companies)}{r.sharePct != null ? ` · ${r.sharePct}%` : ""}</> }))} />
-        <p className="hint">{c.compareNote}</p>
       </section>
       <div className="tablewrap" style={{ marginBlockStart: "1rem" }}>
         <table className="table">

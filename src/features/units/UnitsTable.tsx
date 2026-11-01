@@ -38,7 +38,6 @@ export function UnitsTable({ rows, m, noneLabel, allLabel, numberLocale, d }: Pr
         <div className="stat"><dt>{m.totalMembers}</dt><dd>{fmt.format(totals.members)}</dd></div>
         <div className="stat"><dt>{m.totalDamage}</dt><dd>{fmt.format(totals.damage)}</dd></div>
       </dl>
-      <p className="note">{m.calculated}</p>
 
       <div className="toolbar">
         <input className="field" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={m.search} aria-label={m.search} />

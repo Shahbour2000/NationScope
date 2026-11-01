@@ -34,7 +34,6 @@ export default async function SectionPage({ params, searchParams }: { params: Pr
   return (
     <>
       <h1>{title}</h1>
-      <p className="note">{m.explorer.genericNote} {m.explorer.linksNote}</p>
       <DataView data={result.data} section={section} detailLinks={!!def.detail || !!def.linkRows} labels={m.explorer} d={d} />
       {def.paged && <Pager basePath={`/${section}`} offset={offset} pageSize={pageSize} rowCount={rowCount} prev={m.explorer.prev} next={m.explorer.next} />}
       <Provenance meta={result.meta} m={m} />

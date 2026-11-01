@@ -121,7 +121,7 @@ export const en = {
     iconNote: "Item icons come from the game's public site; a missing icon is replaced by a generic symbol. Country flags are not provided by the API, so countries use their in-game colour.",
   },
   countriesPage: {
-    title: "Countries", intro: "Every country in the world, with live control, population and economy figures from the API.",
+    title: "Countries", intro: "Every nation at a glance: development, people, territory and alliances.",
     country: "Country", regions: "Regions", capital: "Capital", core: "Core regions", development: "Development", citizens: "Citizens", activeCitizens: "active",
     alliance: "Alliance", enemy: "Enemy", taxes: "Taxes (income / market)", specialty: "Specialty", searchPlaceholder: "Search countries", capitalLost: "Capital lost",
     onlyAllied: "In an alliance", held: "held", lost: "lost", worldDevelopment: "World development", countriesCount: "Countries", totalCitizens: "Citizens (all countries)",
@@ -155,6 +155,16 @@ export const en = {
   regionsPage: {
     title: "Regions", intro: "Who controls the map, where the resources are, and where the fighting is.", regions: "Regions", occupied: "Occupied", deposits: "Deposits", underAttack: "Under attack",
     depositsTitle: "Resource deposits", frontTitle: "Frontlines", occupiedTitle: "Occupied territories", controlTitle: "Control by country", heldBy: "held by", coreOf: "belongs to", left: "left", showAll: "Show all {n}", none: "Nothing to show.", attacking: "attacks",
+  },
+  contractsPage: {
+    title: "Mercenary contracts", intro: "Money offered to fight on a chosen side of a battle.", offers: "Open offers", pool: "Left to earn", best: "Best pay per 1K damage",
+    per1k: "per 1K damage", left: "left", fundedBy: "Funded by", forSide: "Pays the attacker", forSideD: "Pays the defender", empty: "No mercenary offers right now.",
+    fee: "Acceptance fee", penalty: "Cancellation penalty", expiry: "Contracts expire after", hours: "h", more: "More contract data",
+  },
+  tournamentsPage: {
+    title: "Tournaments", intro: "Scheduled matches between military units and between countries.", running: "Running", finished: "Finished", registration: "Registration open", upcoming: "Upcoming", kindMu: "Unit tournament", kindCountry: "Country tournament",
+    rounds: "rounds", entrants: "Entrants", seed: "Seed", starts: "Starts", registrationOpens: "Registration opens", startsIn: "Starts in {t}", opensIn: "Opens in {t}", prizes: "Prizes", winner: "Winner", runnerUp: "Runner-up", participant: "Participant", entry: "Entry fee", free: "Free",
+    nextTitle: "Next tournament", history: "Past tournaments", noCurrent: "No tournament is running.", every: "Every {n} weeks", minEntrants: "At least {n} entrants",
   },
   lawsPage: {
     title: "Laws", intro: "What countries and alliances can enact, and what it costs.",
@@ -194,11 +204,11 @@ export const en = {
     title: "Companies", intro: "Player companies, richest first. Filter by country or product.", company: "Company", owner: "Owner", product: "Product", location: "Location", level: "Level",
     workers: "Workers", upgrades: "Upgrades", storage: "Storage", engine: "Engine", breakRoom: "Break room", investedSteel: "Steel invested", total: "companies in total", allCountries: "All countries", allProducts: "All products",
     sort: "Sort", sortInvested: "Most invested", sortWorkers: "Most workers", sortLevel: "Highest level", sortNewest: "Newest", noMatch: "No companies match these filters.", statsTitle: "Company statistics",
-    statsIntro: "Companies, workers and owners per product. Shares are calculated from the API totals.", totals: "Totals", companies: "Companies", investedMoney: "Money invested", owners: "Owners", share: "Share of companies",
+    statsIntro: "Companies, workers and owners per product.", totals: "Totals", companies: "Companies", investedMoney: "Money invested", owners: "Owners", share: "Share of companies",
     byProduct: "Companies by product", scope: "Scope", world: "Whole world", compareNote: "Shares are calculated as companies of the product divided by all companies in the selected scope.",
   },
   economyPage: {
-    title: "Economy", intro: "A practical view of the market: prices, spreads, recent trades, jobs and equipment. Every figure says whether it comes from the API or is calculated.",
+    title: "Economy", intro: "A practical view of the market: prices, spreads, recent trades, jobs and equipment.",
     marketTitle: "Market prices", item: "Item", bestAsk: "Lowest ask", bestBid: "Highest bid", last: "Last price", spread: "Spread", askQty: "Qty at ask", bidQty: "Qty at bid", askVsLast: "Ask vs last",
     noAsk: "No sellers", noBid: "No buyers", noTrades: "No recent trades", widestSpreads: "Widest spreads", widestNote: "Spread = (lowest ask - highest bid) / highest bid. A wide spread can mean a thin market; taxes and fees are not included. Estimate, not advice.",
     noSellers: "Items with no sellers", noSellersNote: "Items that currently have no ask in the order book.", recentTrades: "Recent trades", recentNote: "Volume-weighted average price from the most recent trades returned by the API (a sample, not full history).",
@@ -278,7 +288,7 @@ export const en = {
   },
   units: {
     title: "Military units",
-    intro: "All units reported by the API, in one request. Totals below are calculated from this list.",
+    intro: "Every military unit, ranked by what it has fought for.",
     count: "Units",
     totalMembers: "Members",
     totalDamage: "Total damage",
@@ -453,7 +463,7 @@ export const ar: Messages = {
     iconNote: "أيقونات العناصر من الموقع العام للعبة، وإذا غابت أيقونة يُعرض رمز عام بدلًا منها. الواجهة لا توفر أعلام الدول، لذا تُعرض الدول بلونها داخل اللعبة.",
   },
   countriesPage: {
-    title: "الدول", intro: "كل دول العالم مع أرقام السيطرة والسكان والاقتصاد المباشرة من الواجهة.",
+    title: "الدول", intro: "كل دول العالم بنظرة واحدة: التطور والسكان والأراضي والتحالفات.",
     country: "الدولة", regions: "المناطق", capital: "العاصمة", core: "المناطق الأساسية", development: "التطور", citizens: "المواطنون", activeCitizens: "نشط",
     alliance: "التحالف", enemy: "العدو", taxes: "الضرائب (دخل / سوق)", specialty: "التخصص", searchPlaceholder: "ابحث عن دولة", capitalLost: "العاصمة مفقودة",
     onlyAllied: "ضمن تحالف", held: "تحت السيطرة", lost: "مفقودة", worldDevelopment: "تطور العالم", countriesCount: "الدول", totalCitizens: "المواطنون (كل الدول)",
@@ -487,6 +497,16 @@ export const ar: Messages = {
   regionsPage: {
     title: "المناطق", intro: "من يسيطر على الخريطة، وأين الموارد، وأين القتال.", regions: "المناطق", occupied: "محتلة", deposits: "مكامن", underAttack: "تحت الهجوم",
     depositsTitle: "مكامن الموارد", frontTitle: "خطوط القتال", occupiedTitle: "الأراضي المحتلة", controlTitle: "السيطرة حسب الدولة", heldBy: "تحتلها", coreOf: "تتبع", left: "متبقية", showAll: "عرض الكل ({n})", none: "لا شيء للعرض.", attacking: "تهاجم",
+  },
+  contractsPage: {
+    title: "عقود المرتزقة", intro: "مبالغ تُعرض مقابل القتال إلى جانب طرف محدد في معركة.", offers: "عروض مفتوحة", pool: "المتبقي للكسب", best: "أعلى أجر لكل 1K ضرر",
+    per1k: "لكل 1K ضرر", left: "متبقٍ", fundedBy: "بتمويل", forSide: "يدفع للمهاجم", forSideD: "يدفع للمدافع", empty: "لا توجد عروض مرتزقة الآن.",
+    fee: "رسوم القبول", penalty: "غرامة الإلغاء", expiry: "تنتهي العقود بعد", hours: "س", more: "بيانات عقود إضافية",
+  },
+  tournamentsPage: {
+    title: "البطولات", intro: "مباريات مجدولة بين الوحدات العسكرية وبين الدول.", running: "جارية", finished: "منتهية", registration: "التسجيل مفتوح", upcoming: "قادمة", kindMu: "بطولة الوحدات", kindCountry: "بطولة الدول",
+    rounds: "جولات", entrants: "المشاركون", seed: "التصنيف", starts: "تبدأ", registrationOpens: "يفتح التسجيل", startsIn: "تبدأ بعد {t}", opensIn: "يفتح بعد {t}", prizes: "الجوائز", winner: "الفائز", runnerUp: "الوصيف", participant: "المشارك", entry: "رسوم الدخول", free: "مجانًا",
+    nextTitle: "البطولة القادمة", history: "البطولات السابقة", noCurrent: "لا توجد بطولة جارية.", every: "كل {n} أسابيع", minEntrants: "على الأقل {n} مشاركين",
   },
   lawsPage: {
     title: "القوانين", intro: "ما الذي تستطيع الدول والتحالفات سنّه، وكم يكلّف.",
@@ -526,11 +546,11 @@ export const ar: Messages = {
     title: "الشركات", intro: "شركات اللاعبين، الأكثر استثمارًا أولًا. صفِّ حسب الدولة أو المنتج.", company: "الشركة", owner: "المالك", product: "المنتج", location: "الموقع", level: "المستوى",
     workers: "العمال", upgrades: "التحسينات", storage: "التخزين", engine: "المحرك", breakRoom: "غرفة الاستراحة", investedSteel: "الفولاذ المستثمر", total: "شركة في المجموع", allCountries: "كل الدول", allProducts: "كل المنتجات",
     sort: "الترتيب", sortInvested: "الأكثر استثمارًا", sortWorkers: "الأكثر عمالًا", sortLevel: "الأعلى مستوى", sortNewest: "الأحدث", noMatch: "لا توجد شركات تطابق هذه التصفية.", statsTitle: "إحصاءات الشركات",
-    statsIntro: "الشركات والعمال والملاك لكل منتج. النسب محسوبة من إجماليات الواجهة.", totals: "الإجماليات", companies: "الشركات", investedMoney: "المال المستثمر", owners: "الملاك", share: "حصة الشركات",
+    statsIntro: "الشركات والعمال والملاك لكل منتج.", totals: "الإجماليات", companies: "الشركات", investedMoney: "المال المستثمر", owners: "الملاك", share: "حصة الشركات",
     byProduct: "الشركات حسب المنتج", scope: "النطاق", world: "العالم كله", compareNote: "النسبة = شركات المنتج مقسومة على كل الشركات في النطاق المحدد.",
   },
   economyPage: {
-    title: "الاقتصاد", intro: "نظرة عملية على السوق: الأسعار والفروقات والصفقات الأخيرة والوظائف والمعدات. يوضح كل رقم هل هو من الواجهة أم محسوب.",
+    title: "الاقتصاد", intro: "نظرة عملية على السوق: الأسعار والفروقات والصفقات الأخيرة والوظائف والمعدات.",
     marketTitle: "أسعار السوق", item: "العنصر", bestAsk: "أقل سعر بيع", bestBid: "أعلى سعر شراء", last: "آخر سعر", spread: "الفارق", askQty: "الكمية عند البيع", bidQty: "الكمية عند الشراء", askVsLast: "البيع مقابل الأخير",
     noAsk: "لا يوجد بائعون", noBid: "لا يوجد مشترون", noTrades: "لا صفقات حديثة", widestSpreads: "أوسع الفروقات", widestNote: "الفارق = (أقل سعر بيع - أعلى سعر شراء) / أعلى سعر شراء. الفارق الواسع قد يعني سوقًا ضعيفة السيولة؛ الضرائب والرسوم غير مشمولة. تقدير وليس نصيحة.",
     noSellers: "عناصر بلا بائعين", noSellersNote: "عناصر ليس لها حاليًا أي عرض بيع في دفتر الأوامر.", recentTrades: "الصفقات الأخيرة", recentNote: "متوسط السعر المرجّح بالكمية من أحدث الصفقات التي تعيدها الواجهة (عينة وليست سجلًا كاملًا).",
@@ -610,7 +630,7 @@ export const ar: Messages = {
   },
   units: {
     title: "الوحدات العسكرية",
-    intro: "جميع الوحدات التي تعرضها الواجهة في طلب واحد. المجاميع أدناه محسوبة من هذه القائمة.",
+    intro: "كل الوحدات العسكرية، مرتبة بحسب ما قاتلت لأجله.",
     count: "الوحدات",
     totalMembers: "الأعضاء",
     totalDamage: "إجمالي الضرر",

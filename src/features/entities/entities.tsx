@@ -84,6 +84,7 @@ export function Metric({ icon, label, value, hint, children }: { icon: IconName;
 
 /** Marks where a figure comes from. Keeps raw API facts, calculations and estimates visibly different. */
 export function Source({ kind, d }: { kind: "api" | "calc" | "estimate"; d: Display }) {
-  const label = kind === "api" ? d.m.ui.fromApi : kind === "calc" ? d.m.ui.calculated : d.m.ui.estimate;
-  return <span className="src" data-kind={kind}>{label}</span>;
+  // Data-origin labels are developer-facing; they are intentionally not rendered (the prop signature is kept for existing callers).
+  void kind; void d;
+  return null;
 }

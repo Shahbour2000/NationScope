@@ -91,7 +91,6 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
           <aside className="panel" aria-label={u.topProducts}>
             <header><h2>{u.topProducts}</h2></header>
             <BarList ariaLabel={c.byProduct} rows={top.map((r) => ({ key: r.itemCode, label: <ItemChip code={r.itemCode} d={d} />, value: r.companies, display: `${nf.format(r.companies)}${r.sharePct != null ? ` · ${r.sharePct}%` : ""}` }))} />
-            <p className="hint">{c.compareNote}</p>
           </aside>
         ) : null}
       </div>

@@ -39,7 +39,6 @@ export default async function SubPage({ params, searchParams }: { params: Promis
     <>
       <h1>{title}</h1>
       <Tabs items={tabs} label={title} />
-      <p className="note">{m.explorer.genericNote} {m.explorer.linksNote}</p>
       <DataView data={result.data} section={null} detailLinks={false} labels={m.explorer} d={d} />
       {subDef.paged && <Pager basePath={`${base}/${sub}`} offset={offset} pageSize={pageSize} rowCount={rowCount} prev={m.explorer.prev} next={m.explorer.next} />}
       <Provenance meta={result.meta} m={m} />

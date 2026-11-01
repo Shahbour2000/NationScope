@@ -24,7 +24,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <h1>{m.explorer.searchTitle}</h1>
-      <p className="note">{m.explorer.searchFor} “{q}”. {m.explorer.genericNote}</p>
+      <p className="note">{m.explorer.searchFor} “{q}”.</p>
       <DataView data={result.data} section={null} detailLinks={false} labels={m.explorer} d={d} />
       <Provenance meta={result.meta} m={m} />
     </>

@@ -44,7 +44,6 @@ export default async function DetailPage({ params }: { params: Promise<{ section
     <>
       <div className="page-head"><h1>{heading}</h1>{pinType && <PinButton labels={m.pins} target={{ type: pinType, id, name: heading, image: img, href: `/${section}/${encodeURIComponent(id)}` }} />}</div>
       {tabs.length > 1 && <Tabs items={tabs} label={title} />}
-      <p className="note">{m.explorer.genericNote} {m.explorer.linksNote}</p>
       <DataView data={result.data} section={null} detailLinks={false} labels={m.explorer} d={d} />
       <Provenance meta={result.meta} m={m} />
     </>

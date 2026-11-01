@@ -196,3 +196,52 @@ export async function getRegionsMap() {
   const battles = parseRows(Array.isArray(obj.battles) ? obj.battles : [], battleRow);
   return { regions: regions.rows, battles: battles.rows, skipped: regions.skipped, meta };
 }
+
+/** GET /contracts: mercenary bounties on running battles plus auctions/contracts (shape verified for rules and bounties). */
+export async function getContracts() {
+  const { data, meta } = await get(endpoints.contracts());
+  const o = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
+  const bounty = z.object({
+    id: z.string(), side: z.string().nullish(), perK: z.string().nullish(), budget: z.string().nullish(), remaining: z.string().nullish(), status: z.string().nullish(), earned: z.string().nullish(),
+    battle: z.object({ id: z.string(), type: z.string().nullish(), status: z.string().nullish(), regionId: z.string().nullish(), attackerCountryId: z.string().nullish(), defenderCountryId: z.string().nullish() }).passthrough().nullish(),
+    funder: z.object({ type: z.string().nullish(), id: z.string().nullish(), name: z.string().nullish() }).passthrough().nullish(),
+  }).passthrough();
+  const bounties = parseRows(Array.isArray(o.bounties) ? o.bounties : [], bounty);
+  const rules = (o.rules && typeof o.rules === "object" ? o.rules : {}) as Record<string, unknown>;
+  const num = (v: unknown) => (typeof v === "number" ? v : null);
+  return {
+    bounties: bounties.rows,
+    auctions: Array.isArray(o.auctions) ? o.auctions : [],
+    myContracts: Array.isArray(o.myContracts) ? o.myContracts : [],
+    issued: Array.isArray(o.issuedContracts) ? o.issuedContracts : [],
+    fee: num(rules.acceptanceFeePercent), penalty: num(rules.cancellationPenaltyPercent), expiryHours: num(rules.contractExpiryHours),
+    meta,
+  };
+}
+
+/** GET /tournaments: the running/most recent edition with its entrants, the next scheduled one, past editions and prize rules. */
+export async function getTournaments() {
+  const { data, meta } = await get(endpoints.tournaments());
+  const o = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
+  const reg = z.object({ id: z.string(), entrantId: z.string(), seed: z.number().nullish(), name: z.string().nullish(), registrarName: z.string().nullish() }).passthrough();
+  const edition = z.object({
+    id: z.string(), kind: z.string(), name: z.string().nullish(), status: z.string().nullish(), periodKey: z.string().nullish(), startsAt: z.string().nullish(), registrationOpensAt: z.string().nullish(),
+    rarityCap: z.string().nullish(), totalRounds: z.number().nullish(), winnerId: z.string().nullish(), runnerUpId: z.string().nullish(), finishedAt: z.string().nullish(), registrationOpen: z.boolean().nullish(),
+    registrations: z.array(z.unknown()).nullish(),
+  }).passthrough();
+  const next = z.object({ kind: z.string(), name: z.string().nullish(), periodKey: z.string().nullish(), registrationOpensAt: z.string().nullish(), startsAt: z.string().nullish() }).passthrough();
+  const cur = edition.safeParse(o.current);
+  const nx = next.safeParse(o.next);
+  const rules = (o.rules && typeof o.rules === "object" ? o.rules : {}) as Record<string, unknown>;
+  const rewards = (rules.rewards && typeof rules.rewards === "object" ? rules.rewards : {}) as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" ? v : null);
+  const current = cur.success ? { ...cur.data, entrants: parseRows(cur.data.registrations ?? [], reg).rows } : null;
+  return {
+    current,
+    next: nx.success ? nx.data : null,
+    history: parseRows(Array.isArray(o.history) ? o.history : [], edition).rows,
+    prizes: { winner: str(rewards.winner), runnerUp: str(rewards.runnerUp), participant: str(rewards.participant) },
+    entryFee: str(rules.entryFee), cadenceWeeks: typeof rules.cadenceWeeks === "number" ? rules.cadenceWeeks : null, minRegistrations: typeof rules.minRegistrations === "number" ? rules.minRegistrations : null,
+    meta,
+  };
+}

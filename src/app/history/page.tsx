@@ -64,7 +64,6 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
           </ul>
         </section>
       ))}
-      <p className="hint">{h.sumNote}</p>
       <Provenance meta={res.meta} m={m} />
     </>
   );

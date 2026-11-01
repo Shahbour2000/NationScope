@@ -42,7 +42,7 @@ export default async function AllianceDetail({ params }: { params: Promise<{ id:
       </dl>
       <Suspense fallback={<div className="skeleton" style={{ blockSize: "7rem" }} />}><OrgBuildsPanel countryIds={agg.members.map((c) => c.id)} m={m.builds} nl={d.nl} title={`${m.builds.title} · ${m.overview.activeCitizens}`} /></Suspense>
       </div>
-      <p className="hint">{a.calculatedNote} {a.created}: <Dt iso={alliance.createdAt} d={d} /></p>
+      <p className="hint">{a.created}: <Dt iso={alliance.createdAt} d={d} /></p>
 
       <section className="card">
         <h2><Icon name="flag" size={18} />{a.memberCountries} <span className="chip">{agg.members.length}</span></h2>
