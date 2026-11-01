@@ -1,0 +1,27 @@
+.head { display: flex; align-items: center; gap: 0.7rem; margin-block-end: 0.2rem; }
+.head h1 { margin: 0; font-size: 1.5rem; }
+.head :global(.cflag-img), .head :global(.cflag) { inline-size: 2rem; block-size: 1.5rem; border-radius: 4px; }
+.list { display: grid; gap: 0.9rem; margin-block-start: 1.4rem; }
+.party { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 1.1rem 1.4rem; align-items: center; padding: 1.2rem 1.4rem; border-radius: 16px; background: #0d1529; border: 1px solid rgba(148, 163, 184, 0.16); }
+.party[data-ruling="true"] { border-color: rgba(245, 197, 66, 0.4); background: linear-gradient(90deg, rgba(245, 197, 66, 0.08), #0d1529 45%); }
+.logo { inline-size: 4.5rem; block-size: 4.5rem; border-radius: 14px; object-fit: cover; background: #16203a; display: grid; place-items: center; font-size: 1.4rem; font-weight: 800; color: #8b97b3; overflow: hidden; }
+.logo img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+.main { min-inline-size: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.name { display: flex; align-items: center; flex-wrap: wrap; gap: 0.2rem 0.7rem; }
+.name a { font-size: 1.2rem; font-weight: 700; color: #fff; text-decoration: none; overflow-wrap: anywhere; }
+.name a:hover { color: #19c8ff; }
+.ruling { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #f5c542; }
+.sub { font-size: 0.85rem; color: #8b97b3; }
+.sub a { color: #b9c3dc; font-weight: 600; text-decoration: none; }
+.sub a:hover { color: #19c8ff; }
+.desc { margin: 0; font-size: 0.88rem; color: #aab5cf; overflow-wrap: anywhere; }
+.ethics { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; margin-block-start: 0.3rem; font-size: 0.78rem; color: #8b97b3; }
+.stat { text-align: end; min-inline-size: 7rem; }
+.stat b { display: block; font-size: 2rem; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 0.78rem; color: #7b87a3; }
+.bar { margin-block-start: 0.5rem; block-size: 4px; border-radius: 2px; background: rgba(148, 163, 184, 0.18); overflow: hidden; }
+.bar i { display: block; block-size: 100%; background: #19c8ff; }
+.party[data-ruling="true"] .bar i { background: #f5c542; }
+.note { margin-block-start: 1.2rem; font-size: 0.82rem; color: #7b87a3; }
+.empty { color: #7b87a3; padding-block: 2.5rem; text-align: center; }
+@media (max-width: 640px) { .party { grid-template-columns: auto minmax(0, 1fr); } .stat { grid-column: 1 / -1; text-align: start; display: flex; align-items: baseline; gap: 0.5rem; } .stat b { font-size: 1.5rem; } .logo { inline-size: 3.6rem; block-size: 3.6rem; } }

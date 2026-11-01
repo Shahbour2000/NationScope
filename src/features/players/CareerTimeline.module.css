@@ -6,12 +6,11 @@
 .edge[data-end="end"] { transform: translateX(-100%); }
 .edgeLine { position: absolute; inline-size: 0; border-inline-start: 1px dashed rgba(148, 163, 184, 0.22); }
 .stem { position: absolute; inline-size: 1px; background: color-mix(in srgb, var(--c) 55%, transparent); }
-.chip { position: absolute; block-size: 28px; box-sizing: border-box; display: flex; align-items: center; gap: 0.45rem; padding: 0 0.6rem 0 0; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); background: #0e1730; color: #e6ebf7; font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; white-space: nowrap; text-align: start; }
-.chip[data-flip="true"] { flex-direction: row-reverse; padding: 0 0 0 0.6rem; }
+.chip { position: absolute; block-size: 28px; box-sizing: border-box; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); background: #0e1730; color: #e6ebf7; font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; white-space: nowrap; text-align: start; }
 .chip:hover, .chip[aria-expanded="true"] { border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, #0e1730); }
 .chip:focus-visible { outline: 2px solid #19c8ff; outline-offset: 2px; }
 .chip[data-ongoing="true"] { border-style: dashed; }
-.icon { flex: none; inline-size: 26px; block-size: 26px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 22%, #0e1730); color: var(--c); }
+.icon { flex: none; inline-size: 24px; block-size: 24px; font-style: normal; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 22%, #0e1730); color: var(--c); }
 .chip span { overflow: hidden; text-overflow: ellipsis; }
 .pop { position: fixed; z-index: 60; padding: 0.7rem 0.85rem; background: #0f1830; border: 1px solid rgba(148, 163, 184, 0.3); border-block-start: 2px solid var(--c); border-radius: 12px; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55); pointer-events: none; }
 .pop strong { display: flex; align-items: center; gap: 0.45rem; color: #fff; font-size: 0.92rem; }

@@ -144,6 +144,18 @@ export const en = {
     durationNote: "Elapsed time for active wars, total length for ended wars.",
     tabActive: "Active", tabEnded: "Ended", tabAll: "All", left: "left", warBattles: "Battles between these countries", warNotFound: "War not found.", initiativeTitle: "Attack initiative", factDeclared: "Declared", factBy: "by {c}", factEnded: "Ended", factDuration: "Duration", factBattles: "Battles", openWar: "Open war", noBattles: "No battles found between these countries.", battlesNote: "Regional battles between the two countries since the declaration.", declaredAgo: "Declared {t} ago", lasted: "Lasted {t}", initiativeLeft: "Initiative · {t}", more: "Show more", initiativeTip: "Only the declaring country can start regional battles during this window.", declaredTag: "Declared", lawTip: "Declaration law", battlesTip: "Active / finished battles", durationTip: "War length",
   },
+  partiesPage: {
+    title: "Parties", ruling: "Ruling party", members: "members", leader: "Leader", founded: "Founded", empty: "No parties have been founded yet.", foundCost: "Founding a party costs {c}.", share: "of party members",
+    ethic: { imperialist: "Imperialist", authoritarian: "Authoritarian", isolationist: "Isolationist", pacifist: "Pacifist", industrial: "Industrial", militarist: "Militarist", fanatic: "Fanatic" },
+  },
+  electionsPage: {
+    title: "Elections", open: "Open now", upcoming: "Upcoming", results: "Results", empty: "No elections yet.", candidates: "candidates", seats: "seats", seat: "seat", elected: "Elected", winner: "Winner",
+    candidacy: "Candidacy", voting: "Voting", closes: "Closes", closed: "Closed", opensIn: "Opens in {t}", endsIn: "Ends in {t}", from: "{a} → {b}", noWinners: "No winners recorded.",
+  },
+  regionsPage: {
+    title: "Regions", intro: "Who controls the map, where the resources are, and where the fighting is.", regions: "Regions", occupied: "Occupied", deposits: "Deposits", underAttack: "Under attack",
+    depositsTitle: "Resource deposits", frontTitle: "Frontlines", occupiedTitle: "Occupied territories", controlTitle: "Control by country", heldBy: "held by", coreOf: "belongs to", left: "left", showAll: "Show all {n}", none: "Nothing to show.", attacking: "attacks",
+  },
   lawsPage: {
     title: "Laws", intro: "What countries and alliances can enact, and what it costs.",
     voting: "Voting period", answer: "Counterpart answer window", maxTax: "Maximum tax", hours: "h", cost: "Cost", needsAgreement: "Needs the other side to agree", target: "Applies to",
@@ -463,6 +475,18 @@ export const ar: Messages = {
     activeWars: "حروب نشطة", endedWars: "حروب منتهية", priority: "الأولوية", viewLaw: "عرض القانون", versus: "ضد", sumNote: "الأعداد محسوبة من الصفوف المعروضة.", noMatch: "لا توجد حروب تطابق هذه التصفية.",
     durationNote: "الوقت المنقضي للحروب النشطة، والمدة الكاملة للحروب المنتهية.",
     tabActive: "نشطة", tabEnded: "منتهية", tabAll: "الكل", left: "متبقية", warBattles: "المعارك بين الدولتين", warNotFound: "الحرب غير موجودة.", initiativeTitle: "مبادرة الهجوم", factDeclared: "الإعلان", factBy: "من {c}", factEnded: "الانتهاء", factDuration: "المدة", factBattles: "المعارك", openWar: "فتح الحرب", noBattles: "لا توجد معارك بين الدولتين.", battlesNote: "المعارك الإقليمية بين الدولتين منذ إعلان الحرب.", declaredAgo: "أُعلنت منذ {t}", lasted: "استمرت {t}", initiativeLeft: "المبادرة · {t}", more: "عرض المزيد", initiativeTip: "خلال هذه المدة تستطيع الدولة المعلِنة وحدها بدء المعارك الإقليمية.", declaredTag: "أعلنت", lawTip: "قانون الإعلان", battlesTip: "المعارك النشطة / المنتهية", durationTip: "مدة الحرب",
+  },
+  partiesPage: {
+    title: "الأحزاب", ruling: "الحزب الحاكم", members: "عضو", leader: "الزعيم", founded: "تأسس", empty: "لم يتأسس أي حزب بعد.", foundCost: "تكلفة تأسيس حزب {c}.", share: "من أعضاء الأحزاب",
+    ethic: { imperialist: "إمبريالي", authoritarian: "استبدادي", isolationist: "انعزالي", pacifist: "مسالم", industrial: "صناعي", militarist: "عسكري", fanatic: "متشدد" },
+  },
+  electionsPage: {
+    title: "الانتخابات", open: "جارية الآن", upcoming: "القادمة", results: "النتائج", empty: "لا توجد انتخابات بعد.", candidates: "مرشحًا", seats: "مقاعد", seat: "مقعد", elected: "المنتخبون", winner: "الفائز",
+    candidacy: "الترشح", voting: "التصويت", closes: "الإغلاق", closed: "مغلقة", opensIn: "تبدأ بعد {t}", endsIn: "تنتهي بعد {t}", from: "{a} ← {b}", noWinners: "لا يوجد فائزون مسجّلون.",
+  },
+  regionsPage: {
+    title: "المناطق", intro: "من يسيطر على الخريطة، وأين الموارد، وأين القتال.", regions: "المناطق", occupied: "محتلة", deposits: "مكامن", underAttack: "تحت الهجوم",
+    depositsTitle: "مكامن الموارد", frontTitle: "خطوط القتال", occupiedTitle: "الأراضي المحتلة", controlTitle: "السيطرة حسب الدولة", heldBy: "تحتلها", coreOf: "تتبع", left: "متبقية", showAll: "عرض الكل ({n})", none: "لا شيء للعرض.", attacking: "تهاجم",
   },
   lawsPage: {
     title: "القوانين", intro: "ما الذي تستطيع الدول والتحالفات سنّه، وكم يكلّف.",

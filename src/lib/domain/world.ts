@@ -128,3 +128,20 @@ export type LawDef = z.infer<typeof lawDefSchema>;
 export const lawsCatalogSchema = z.object({
   laws: z.array(z.unknown()), costItem: s.nullish(), voteHours: n.nullish(), counterpartAnswerHours: n.nullish(), maxTaxPercent: n.nullish(),
 }).passthrough();
+
+/** GET /countries/{id}/parties (shape verified against tests/fixtures/real/parties-eg.json). */
+export const partySchema = z.object({
+  id: s, name: s, description: s.nullish(), logoUrl: s.nullish(), leaderId: s.nullish(), leaderName: s.nullish(),
+  members: n.nullish(), createdAt: s.nullish(), ethics: z.array(z.string()).nullish(), ruling: z.boolean().nullish(),
+}).passthrough();
+export type Party = z.infer<typeof partySchema>;
+
+/** One election in GET /countries/{id}/elections (open[] / finished[]; shape verified from the finished rows). */
+export const electionSchema = z.object({
+  id: s, kind: s, label: s.nullish(), partyId: s.nullish(), partyName: s.nullish(), status: s.nullish(), seats: n.nullish(),
+  candidacyOpensAt: s.nullish(), votingOpensAt: s.nullish(), closesAt: s.nullish(), finishedAt: s.nullish(), candidates: n.nullish(),
+  winners: z.array(z.object({ userId: s, username: s.nullish() }).passthrough()).nullish(),
+}).passthrough();
+export type Election = z.infer<typeof electionSchema>;
+export const electionCalendarSchema = z.object({ kind: s, label: s.nullish(), periodKey: s.nullish(), candidacyOpensAt: s.nullish(), votingOpensAt: s.nullish(), closesAt: s.nullish() }).passthrough();
+export type ElectionSlot = z.infer<typeof electionCalendarSchema>;

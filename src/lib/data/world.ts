@@ -6,7 +6,7 @@ import { anyJson } from "@/lib/api/schemas";
 import type { Directory } from "@/lib/domain/directory";
 import { asRecord, parseRows } from "@/lib/domain/parse";
 import { parseBattleDetail } from "@/lib/domain/battle-detail";
-import { governmentHistorySchema, governmentSchema, lawDefSchema, lawsCatalogSchema, memberSchema, allianceSchema, articleSchema, battleSchema, citizenSchema, countrySchema, historyItemSchema, leaderboardSchema, rankingRowSchema, summarySchema, warSchema } from "@/lib/domain/world";
+import { electionCalendarSchema, electionSchema, governmentHistorySchema, governmentSchema, partySchema, lawDefSchema, lawsCatalogSchema, memberSchema, allianceSchema, articleSchema, battleSchema, citizenSchema, countrySchema, historyItemSchema, leaderboardSchema, rankingRowSchema, summarySchema, warSchema } from "@/lib/domain/world";
 import type { Endpoint } from "@/lib/api/endpoints";
 
 const get = (e: Endpoint) => getApiClient().get(e.path, { schema: anyJson, query: e.query });
@@ -170,4 +170,29 @@ export async function getLawsCatalog() {
   if (!head.success) throw new Error("Unexpected /laws response");
   const parsed = parseRows(head.data.laws, lawDefSchema);
   return { laws: parsed.rows, skipped: parsed.skipped, costItem: head.data.costItem ?? null, voteHours: head.data.voteHours ?? null, answerHours: head.data.counterpartAnswerHours ?? null, maxTax: head.data.maxTaxPercent ?? null, meta };
+}
+
+export async function getCountryParties(countryId: string) {
+  const { data, meta } = await get(endpoints.countryParties(countryId));
+  const obj = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
+  const parsed = parseRows(Array.isArray(obj.parties) ? obj.parties : [], partySchema);
+  return { parties: parsed.rows, skipped: parsed.skipped, createCost: typeof obj.createCost === "string" ? obj.createCost : null, meta };
+}
+
+export async function getCountryElections(countryId: string) {
+  const { data, meta } = await get(endpoints.countryElections(countryId));
+  const obj = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
+  const list = (v: unknown) => parseRows(Array.isArray(v) ? v : [], electionSchema).rows;
+  return { open: list(obj.open), finished: list(obj.finished), calendar: parseRows(Array.isArray(obj.calendar) ? obj.calendar : [], electionCalendarSchema).rows, meta };
+}
+
+/** GET /regions: the world map (regions with owner/core owner/deposit, plus the battles running on it). */
+export async function getRegionsMap() {
+  const { data, meta } = await get(endpoints.regions());
+  const obj = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
+  const regionRow = z.object({ id: z.string(), countryId: z.string().nullish(), coreCountryId: z.string().nullish(), deposit: z.object({ type: z.string().nullish(), bonusPercent: z.number().nullish(), endsAt: z.string().nullish() }).passthrough().nullish() }).passthrough();
+  const battleRow = z.object({ id: z.string(), regionId: z.string().nullish(), type: z.string().nullish(), attackerCountryId: z.string().nullish(), defenderCountryId: z.string().nullish() }).passthrough();
+  const regions = parseRows(Array.isArray(obj.regions) ? obj.regions : [], regionRow);
+  const battles = parseRows(Array.isArray(obj.battles) ? obj.battles : [], battleRow);
+  return { regions: regions.rows, battles: battles.rows, skipped: regions.skipped, meta };
 }

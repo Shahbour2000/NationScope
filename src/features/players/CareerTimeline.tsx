@@ -19,7 +19,7 @@ export interface CareerEvent {
 
 const COLOR: Record<CareerCategory, string> = { account: "#cbd5e1", president: "#f5c542", vice: "#93c5fd", minister: "#a78bfa", congress: "#2dd4bf", other: "#94a3b8" };
 const ICON: Record<CareerCategory, IconName> = { account: "user", president: "crown", vice: "medal", minister: "briefcase", congress: "landmark", other: "flag" };
-const ROW = 34, CHIP_H = 28, PAD = 22, CHAR_W = 8.9, GAP = 8, LABEL_PAD = 14;
+const ROW = 34, CHIP_H = 28, PAD = 22, GAP = 8, LABEL_PAD = 14;
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 interface Placed extends CareerEvent { x0: number; slot: number; above: boolean; level: number; chipW: number; flip: boolean }
@@ -53,7 +53,7 @@ export function CareerTimeline({ items, nowMs, nl, rtl, label, ongoingLabel, tod
     const chips: { above: boolean; level: number; ext: [number, number]; stem: number }[] = [];
     const placed: Placed[] = sorted.map((e) => {
       const x0 = x(e.startMs);
-      const chipW = CHIP_H + 8 + e.title.length * CHAR_W + 6;
+      const chipW = CHIP_H; // icon-only marker: the title lives in the popover
       const flip = x0 - LABEL_PAD + chipW > width - 4;
       const ext: [number, number] = flip ? [x0 + LABEL_PAD - chipW, x0 + LABEL_PAD] : [x0 - LABEL_PAD, x0 - LABEL_PAD + chipW];
       // First slot where the chip neither overlaps a chip in its row nor lets a stem cut through a chip (its own stem
@@ -131,7 +131,6 @@ export function CareerTimeline({ items, nowMs, nl, rtl, label, ongoingLabel, tod
                 aria-label={e.title}
               >
                 <i className={s.icon}><Icon name={ICON[e.category]} size={14} /></i>
-                <span dir="auto">{e.title}</span>
               </button>
             </div>
           );
