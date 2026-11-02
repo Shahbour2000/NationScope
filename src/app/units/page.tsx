@@ -1,7 +1,8 @@
 import { ApiErrorState } from "@/components/ApiErrorState";
 import { StateMessage } from "@/components/StateMessage";
 import { getDisplay } from "@/features/entities/display.server";
-import { UnitsTable } from "@/features/units/UnitsTable";
+import { UnitsBoard } from "@/features/units/UnitsBoard";
+import { Provenance } from "@/components/Provenance";
 import { getLocale, getMessages, numberLocale } from "@/i18n";
 import { getUnits } from "@/lib/data/units";
 
@@ -22,20 +23,14 @@ export default async function UnitsPage() {
   return (
     <>
       <h1>{m.units.title}</h1>
-      <p className="note">{m.units.intro}</p>
-      {meta.source === "stale" && (
-        <p className="banner" role="status">{m.common.source.stale} ({Math.round(meta.ageMs / 1000)}s, {meta.staleReason})</p>
-      )}
+      <p style={{ color: "#8b97b3", margin: "-0.3rem 0 1.2rem", maxInlineSize: "62rem" }}>{m.units.intro}</p>
       {units.length === 0 ? (
         <StateMessage tone="empty" title={m.units.emptyTitle} detail={m.units.emptyDetail} />
       ) : (
-        <UnitsTable rows={units} m={m.units} noneLabel={m.common.none} allLabel={m.common.all} numberLocale={numberLocale(locale)} d={d} />
+        <UnitsBoard moreLabel={m.explorer.next} rows={units} m={m.units} noneLabel={m.common.none} allLabel={m.common.all} numberLocale={numberLocale(locale)} d={d} />
       )}
       {skipped > 0 && <p className="banner" role="status">{skipped} {m.units.skipped}</p>}
-      <p className="provenance">
-        {m.common.apiHost}: {meta.host} · {m.common.source[meta.source]} · {m.common.receivedAt} <time dateTime={meta.fetchedAt}>{meta.fetchedAt}</time>
-        <br />{m.units.countryNote} {m.units.logoNote}
-      </p>
+      <Provenance meta={meta} m={m} />
     </>
   );
 }

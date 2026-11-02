@@ -245,3 +245,43 @@ export async function getTournaments() {
     meta,
   };
 }
+
+const lawProposal = z.object({
+  id: z.string(), lawCode: z.string(), params: z.record(z.string(), z.unknown()).nullish(), proposerId: z.string().nullish(), proposerName: z.string().nullish(), status: z.string().nullish(),
+  paperCost: z.number().nullish(), yes: z.number().nullish(), no: z.number().nullish(), electorateSize: z.number().nullish(), opensAt: z.string().nullish(), closesAt: z.string().nullish(),
+  executedAt: z.string().nullish(), closedAt: z.string().nullish(), failureReason: z.string().nullish(), counterpartCountryId: z.string().nullish(),
+}).passthrough();
+export type LawProposal = z.infer<typeof lawProposal>;
+
+/** GET /countries/{id}/laws: proposals with their vote counts (shape verified against tests/fixtures/real/laws-eg.json). */
+export async function getCountryLawProposals(countryId: string, o: { filter?: "open" | "closed" | "all"; offset?: number; limit?: number } = {}) {
+  const { data, meta } = await get(endpoints.countryLaws(countryId, { filter: o.filter ?? "all", offset: o.offset, limit: o.limit ?? 30 }));
+  const obj = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
+  const parsed = parseRows(Array.isArray(obj.proposals) ? obj.proposals : [], lawProposal);
+  return { proposals: parsed.rows, skipped: parsed.skipped, hasMore: obj.hasMore === true, meta };
+}
+
+const embassy = z.object({ countryId: z.string(), openedAt: z.string().nullish(), mutual: z.boolean().nullish() }).passthrough();
+/** GET /countries/{id}/embassies: embassies this country has abroad and those it hosts. */
+export async function getCountryEmbassies(countryId: string) {
+  const { data, meta } = await get(endpoints.embassies(countryId));
+  const obj = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
+  return { abroad: parseRows(Array.isArray(obj.abroad) ? obj.abroad : [], embassy).rows, hosted: parseRows(Array.isArray(obj.hosted) ? obj.hosted : [], embassy).rows, meta };
+}
+
+/** GET /countries/{id}/bank: money system, taxes, port and embargoes (shape verified against tests/fixtures/real/bank-eg.json). */
+export async function getCountryBank(countryId: string) {
+  const { data, meta } = await get(endpoints.bank(countryId));
+  const o = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" ? v : null);
+  const num = (v: unknown) => (typeof v === "number" ? v : null);
+  const cur = (o.currency && typeof o.currency === "object" ? o.currency : {}) as Record<string, unknown>;
+  const port = (o.port && typeof o.port === "object" ? o.port : null) as Record<string, unknown> | null;
+  const emb = z.object({ id: z.string(), byCountryId: z.string(), onCountryId: z.string(), endsAt: z.string().nullish(), imposedByUs: z.boolean().nullish() }).passthrough();
+  return {
+    currencyCode: str(cur.code), currencyName: str(cur.name), backed: o.backed === true, treasury: str(o.treasuryGold), mintCap: str(o.mintCap), supply: str(o.supply), inCirculation: str(o.inCirculation), reserve: str(o.reserve),
+    fixedRate: str(o.fixedRate), buyback: o.buybackEnabled === true, importTax: num(o.importTax), exportTax: num(o.exportTax), maxTradeTax: num(o.maxTradeTax), exchangeFee: num(o.exchangeFee), maxExchangeFee: num(o.maxExchangeFee),
+    port: port ? { level: num(port.level) ?? 0, max: num(port.max), nextCost: num(port.nextCost) } : null,
+    embargoes: parseRows(Array.isArray(o.embargoes) ? o.embargoes : [], emb).rows, meta,
+  };
+}

@@ -166,6 +166,12 @@ export const en = {
     rounds: "rounds", entrants: "Entrants", seed: "Seed", starts: "Starts", registrationOpens: "Registration opens", startsIn: "Starts in {t}", opensIn: "Opens in {t}", prizes: "Prizes", winner: "Winner", runnerUp: "Runner-up", participant: "Participant", entry: "Entry fee", free: "Free",
     nextTitle: "Next tournament", history: "Past tournaments", noCurrent: "No tournament is running.", every: "Every {n} weeks", minEntrants: "At least {n} entrants",
   },
+  countrySubs: {
+    laws: { title: "Laws", all: "All", open: "Open", closed: "Closed", yes: "Yes", no: "No", voters: "voters", empty: "No law proposals.", by: "Proposed by", cost: "paper", status: { executed: "Enacted", failed: "Rejected", open: "Voting", expired: "Expired", cancelled: "Cancelled" } },
+    embassies: { title: "Embassies", abroad: "Embassies abroad", hosted: "Hosted embassies", mutual: "Mutual", opened: "Opened", empty: "None yet.", mutualCount: "mutual" },
+    bank: { title: "National bank", treasury: "Treasury", port: "Port", portLevel: "Level", nextUpgrade: "Next upgrade", exchangeFee: "Exchange fee", importTax: "Import tax", exportTax: "Export tax", upTo: "up to {n}%", embargoes: "Embargoes", embargoNone: "No embargoes.", until: "until", currency: "Currency", backed: "Gold-backed", buyback: "Buyback", on: "On", off: "Off", circulation: "In circulation", supply: "Supply", reserve: "Reserve", mintCap: "Mint cap", imposed: "imposed by us", against: "imposed on us" },
+    history: { title: "Government history", all: "All", current: "Current", elected: "Elected", appointed: "Appointed", empty: "No history recorded.", ended: "Ended", since: "Since", reason: "Ended because" },
+  },
   lawsPage: {
     title: "Laws", intro: "What countries and alliances can enact, and what it costs.",
     voting: "Voting period", answer: "Counterpart answer window", maxTax: "Maximum tax", hours: "h", cost: "Cost", needsAgreement: "Needs the other side to agree", target: "Applies to",
@@ -507,6 +513,12 @@ export const ar: Messages = {
     title: "البطولات", intro: "مباريات مجدولة بين الوحدات العسكرية وبين الدول.", running: "جارية", finished: "منتهية", registration: "التسجيل مفتوح", upcoming: "قادمة", kindMu: "بطولة الوحدات", kindCountry: "بطولة الدول",
     rounds: "جولات", entrants: "المشاركون", seed: "التصنيف", starts: "تبدأ", registrationOpens: "يفتح التسجيل", startsIn: "تبدأ بعد {t}", opensIn: "يفتح بعد {t}", prizes: "الجوائز", winner: "الفائز", runnerUp: "الوصيف", participant: "المشارك", entry: "رسوم الدخول", free: "مجانًا",
     nextTitle: "البطولة القادمة", history: "البطولات السابقة", noCurrent: "لا توجد بطولة جارية.", every: "كل {n} أسابيع", minEntrants: "على الأقل {n} مشاركين",
+  },
+  countrySubs: {
+    laws: { title: "القوانين", all: "الكل", open: "مفتوحة", closed: "مغلقة", yes: "نعم", no: "لا", voters: "ناخبين", empty: "لا توجد مقترحات قوانين.", by: "اقترحه", cost: "ورق", status: { executed: "أُقرّ", failed: "رُفض", open: "قيد التصويت", expired: "انتهت مدته", cancelled: "أُلغي" } },
+    embassies: { title: "السفارات", abroad: "سفارات في الخارج", hosted: "سفارات مستضافة", mutual: "متبادلة", opened: "افتُتحت", empty: "لا شيء بعد.", mutualCount: "متبادلة" },
+    bank: { title: "البنك الوطني", treasury: "الخزينة", port: "الميناء", portLevel: "المستوى", nextUpgrade: "الترقية التالية", exchangeFee: "رسوم الصرف", importTax: "ضريبة الاستيراد", exportTax: "ضريبة التصدير", upTo: "حتى {n}%", embargoes: "الحظر", embargoNone: "لا يوجد حظر.", until: "حتى", currency: "العملة", backed: "مدعومة بالذهب", buyback: "إعادة الشراء", on: "مفعّلة", off: "متوقفة", circulation: "المتداول", supply: "المعروض", reserve: "الاحتياطي", mintCap: "سقف الإصدار", imposed: "فرضناه", against: "مفروض علينا" },
+    history: { title: "تاريخ الحكومة", all: "الكل", current: "حالي", elected: "انتخاب", appointed: "تعيين", empty: "لا يوجد سجل.", ended: "انتهى", since: "منذ", reason: "سبب الانتهاء" },
   },
   lawsPage: {
     title: "القوانين", intro: "ما الذي تستطيع الدول والتحالفات سنّه، وكم يكلّف.",
