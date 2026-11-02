@@ -1,0 +1,15 @@
+.lede { color: #8b97b3; margin: -0.3rem 0 1.2rem; }
+.sec { margin-block-start: 1.6rem; }
+.sec h2 { display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: #8b97b3; margin: 0 0 0.7rem; font-weight: 700; }
+.sec h2 small { font-weight: 500; opacity: 0.7; letter-spacing: 0; }
+.grid { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr)); }
+.hit { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 0.9rem; border-radius: 14px; background: #0d1529; border: 1px solid rgba(148, 163, 184, 0.16); color: #fff; text-decoration: none; min-inline-size: 0; transition: border-color 0.15s; }
+.hit:hover { border-color: rgba(25, 200, 255, 0.5); text-decoration: none; }
+.av { flex: none; inline-size: 2.6rem; block-size: 2.6rem; border-radius: 50%; background: #1b2748; display: grid; place-items: center; color: #9fb0d6; font-weight: 800; font-size: 0.85rem; overflow: hidden; }
+.sq { border-radius: 10px; }
+.who { min-inline-size: 0; display: flex; flex-direction: column; gap: 0.15rem; flex: 1; }
+.name { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sub { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: #8b97b3; }
+.sub :global(.cflag-img), .sub :global(.cflag) { inline-size: 1.2rem; block-size: 0.9rem; border-radius: 3px; }
+.lvl { font-size: 0.78rem; color: #8b97b3; white-space: nowrap; }
+.lvl b { color: #e6ebf7; }

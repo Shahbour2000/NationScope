@@ -5,7 +5,8 @@ import { Provenance } from "@/components/Provenance";
 import { Tabs } from "@/components/Tabs";
 import { countryTabs } from "@/features/countries/tabs";
 import { parseOffset } from "@/features/explorer/catalog";
-import { Avatar, CountryBadge, Dt, RegionLink } from "@/features/entities/entities";
+import { SubHead } from "@/features/countries/SubHead";
+import { Avatar, Dt, RegionLink } from "@/features/entities/entities";
 import { getDisplay } from "@/features/entities/display.server";
 import { getLocale, getMessages } from "@/i18n";
 import { getCitizens } from "@/lib/data/world";
@@ -26,9 +27,8 @@ export default async function CitizensPage({ params, searchParams }: { params: P
   const nf = new Intl.NumberFormat(d.nl);
   return (
     <>
-      <div className="page-head"><h1><CountryBadge id={id} d={d} link={false} /> <span className="h1-sub">· {c.citizensTab}</span></h1></div>
-      <Tabs items={tabs} label={c.citizensTab} />
-      {res.total != null && <p className="note">{nf.format(res.total)} {m.ui.total}</p>}
+      <SubHead id={id} title={c.citizensTab} tabs={tabs} d={d} />
+      {res.total != null && <p style={{ color: "#8b97b3", margin: "0.9rem 0" }}>{nf.format(res.total)} {m.ui.total}</p>}
       <div className="tablewrap">
         <table className="table">
           <thead><tr><th scope="col">{c.player}</th><th scope="col" className="num">{c.level}</th><th scope="col">{c.homeRegion}</th><th scope="col">{c.location}</th><th scope="col">{c.lastActive}</th><th scope="col">{m.warsPage.status}</th></tr></thead>

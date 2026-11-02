@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { Icon } from "@/components/Icon";
-import { Info } from "@/components/Info";
 import { PageHero, PanelSkeleton } from "@/components/PageHero";
 import { CompaniesSection, EconomyKpis, FloorSection, JobsSection, MarketSection, TradesSection } from "@/features/economy/sections";
 import { getDisplay } from "@/features/entities/display.server";
@@ -16,8 +15,6 @@ export default async function EconomyPage() {
     <>
       <PageHero icon="chart" kicker={u.kicker.economy} title={m.economyPage.title} sub={u.sub.economy} />
       <Suspense fallback={null}><EconomyKpis d={d} m={m} /></Suspense>
-      <p className="hint">{m.economyPage.historyNote}</p>
-      <Info title={m.economyPage.howTitle}><ul>{m.economyPage.how.map((t) => <li key={t}>{t}</li>)}</ul><p>{m.economyPage.howLimits}</p></Info>
 
       <h2 className="sec-title"><Icon name="trend" size={20} />{u.marketPulse} · {u.labour}</h2>
       <div className="grid-2">

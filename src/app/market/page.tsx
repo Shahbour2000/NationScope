@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ApiErrorState } from "@/components/ApiErrorState";
-import { Info } from "@/components/Info";
 import { PageHero } from "@/components/PageHero";
 import { Provenance } from "@/components/Provenance";
 import { BarList } from "@/features/charts/charts";
@@ -49,8 +48,6 @@ export default async function MarketPage() {
         </section>
       </div>
       <p className="hint">{u.gapNote}</p>
-
-      <Info title={e.howTitle}><ul>{e.how.map((t) => <li key={t}>{t}</li>)}</ul><p>{e.howLimits}</p></Info>
       <MarketTable rows={res.rows} d={d} m={e} />
       <p className="hint">{e.widestNote}</p>
       <Provenance meta={res.meta} m={m} note={m.ui.iconNote} />
