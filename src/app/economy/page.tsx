@@ -30,7 +30,6 @@ export default async function EconomyPage() {
 
       <h2 className="sec-title"><Icon name="box" size={20} />{m.economyPage.floorTitle}</h2>
       <Suspense fallback={<PanelSkeleton />}><FloorSection d={d} m={m} /></Suspense>
-      <p className="hint">{m.ui.iconNote}</p>
     </>
   );
 }

@@ -77,7 +77,6 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
           ) : null}
         </>
       )}
-      <p className="hint">{r.valueNote}</p>
       <Provenance meta={res.meta} m={m} />
     </>
   );

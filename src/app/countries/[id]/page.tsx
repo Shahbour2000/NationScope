@@ -82,7 +82,6 @@ export default async function CountryPage({ params }: { params: Promise<{ id: st
         <section className="card">
           <h2><Icon name="chart" size={18} />{c.developmentHistory}</h2>
           <LineChart points={hist} ariaLabel={c.developmentHistory} format={(n) => nf.format(n)} />
-          <p className="hint">{c.historyNote}</p>
         </section>
       )}
 

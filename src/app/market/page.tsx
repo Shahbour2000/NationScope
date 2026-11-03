@@ -50,7 +50,7 @@ export default async function MarketPage() {
       <p className="hint">{u.gapNote}</p>
       <MarketTable rows={res.rows} d={d} m={e} />
       <p className="hint">{e.widestNote}</p>
-      <Provenance meta={res.meta} m={m} note={m.ui.iconNote} />
+      <Provenance meta={res.meta} m={m} />
     </>
   );
 }

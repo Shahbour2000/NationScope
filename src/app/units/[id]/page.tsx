@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ApiErrorState } from "@/components/ApiErrorState";
 import { Icon } from "@/components/Icon";
-import { Info } from "@/components/Info";
 import { ProfileHeader } from "@/components/ProfileHeader";
 import { Provenance } from "@/components/Provenance";
 import { RankList } from "@/components/RankList";
@@ -92,7 +91,6 @@ export default async function UnitProfilePage({ params }: { params: Promise<{ id
       <section className="panel" style={{ marginBlockStart: "1rem" }} aria-labelledby="members-h">
         <header><h2 id="members-h"><Icon name="users" size={18} /> {u.members} <span className="chip">{s.count}</span></h2></header>
         <Suspense fallback={skeleton("14rem")}><UnitMembersSection unit={unit} load={load} m={m} d={d} /></Suspense>
-        <p className="hint">{u.totalsNote}</p>
       </section>
 
       <details className="info more">
@@ -108,10 +106,6 @@ export default async function UnitProfilePage({ params }: { params: Promise<{ id
           ) : null}
         </div>
       </details>
-      <Info title={u.availTitle}>
-        <p>{u.availIntro}</p>
-        <ul>{Object.values(u.avail).map((label) => <li key={label}>{label}: <b>{u.notProvided}</b></li>)}</ul>
-      </Info>
       <Provenance meta={res.meta} m={m} />
     </>
   );
