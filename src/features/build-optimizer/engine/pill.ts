@@ -32,7 +32,7 @@ function statePieces(state: Exclude<PillState, { kind: 'unknown' }>): Piece[] {
   if (state.kind === 'debuff') return [{ from: 0, to: state.remainingMinutes, phase: 'debuff' }];
   return [];
 }
-const usePieces = (t: number): Piece[] => [{ from: t, to: t + PILL.buffMinutes, phase: 'buff' }, { from: t + PILL.buffMinutes, to: t + PILL.buffMinutes + PILL.debuffMinutes, phase: 'debuff' }];
+const makePillPieces = (t: number): Piece[] => [{ from: t, to: t + PILL.buffMinutes, phase: 'buff' }, { from: t + PILL.buffMinutes, to: t + PILL.buffMinutes + PILL.debuffMinutes, phase: 'debuff' }];
 export const phaseAt = (pieces: Piece[], t: number): Phase => pieces.find((p) => t >= p.from && t < p.to)?.phase ?? 'none';
 
 export interface Battle { startMinutes: number; durationMinutes: number; hits: number; /** optional explicit hit times (minutes from battle start); default uniform */ hitOffsetsMinutes?: number[] }
@@ -107,7 +107,7 @@ export function analysePill(input: PillPlanInput): PillAnalysisResult {
   const hn = hits('none'), hb = hits('positive'), hd = hits('negative');
   const E = { none: hn.expected, buff: hb.expected, debuff: hd.expected };
   const evalPlan = (label: string, useAt: number | null): PillPlanOutcome => {
-    const pieces = [...statePieces(state), ...(useAt === null ? [] : usePieces(useAt))];
+    const pieces = [...statePieces(state), ...(useAt === null ? [] : makePillPieces(useAt))];
     let total = 0, inDebuff = 0, inBuff = 0;
     const per = input.schedule.map((b) => {
       const s = phaseShares(pieces, b);

@@ -93,7 +93,15 @@ const diminish = (v: number, threshold: number) => (v <= threshold ? v : thresho
 
 export function battleModifierPct(mods: BattleModifier[]): number {
   let pos = 0, neg = 0;
-  for (const m of mods) (m.pct >= 0 ? (pos += m.pct) : (neg += m.pct));
+
+  for (const m of mods) {
+    if (m.pct >= 0) {
+      pos += m.pct;
+    } else {
+      neg += m.pct;
+    }
+  }
+
   return Math.min(pos, 100) + Math.max(neg, -50);
 }
 
