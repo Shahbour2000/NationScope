@@ -285,3 +285,71 @@ export async function getCountryBank(countryId: string) {
     embargoes: parseRows(Array.isArray(o.embargoes) ? o.embargoes : [], emb).rows, meta,
   };
 }
+
+/** Wars of one country (as either side), active and ended requested separately, merged by id. */
+export async function getCountryWars(countryId: string) {
+  const [a, e] = await Promise.all([get(endpoints.countryWars(countryId, { status: "active" })), get(endpoints.countryWars(countryId, { status: "ended" })).catch(() => null)]);
+  const pa = parseRows(listKey(a.data, "wars"), warSchema), pe = e ? parseRows(listKey(e.data, "wars"), warSchema) : { rows: [], skipped: 0 };
+  const seen = new Set<string>();
+  return { rows: [...pa.rows, ...pe.rows].filter((w) => (seen.has(w.id) ? false : (seen.add(w.id), true))), meta: a.meta };
+}
+
+/** Battles involving one country: running ones plus the most recent finished ones. */
+export async function getCountryBattles(countryId: string) {
+  const [a, f] = await Promise.all([get(endpoints.countryBattles(countryId, { status: "active", limit: 100 })), get(endpoints.countryBattles(countryId, { status: "finished", limit: 50 })).catch(() => null)]);
+  const pa = parseRows(listKey(a.data, "battles"), battleSchema), pf = f ? parseRows(listKey(f.data, "battles"), battleSchema) : { rows: [], skipped: 0 };
+  const seen = new Set<string>();
+  return { rows: [...pa.rows, ...pf.rows].filter((b) => (seen.has(b.id) ? false : (seen.add(b.id), true))), meta: a.meta };
+}
+
+/** World events that involve one country (cursor-paged by the API). */
+export async function getCountryHistory(countryId: string, cursor?: string) {
+  const { data, meta } = await get(endpoints.countryHistory(countryId, { cursor }));
+  const o = asRecord(data);
+  return { ...parseRows(o.items, historyItemSchema), nextCursor: typeof o.nextCursor === "string" ? o.nextCursor : null, meta };
+}
+
+/** GET /countries/{id}/revolution (shape verified against tests/fixtures/real/revolution-eg.json). */
+export async function getRevolution(countryId: string) {
+  const { data, meta } = await get(endpoints.revolution(countryId));
+  const o = asRecord(data) as Record<string, unknown>;
+  const num = (v: unknown) => (typeof v === "number" ? v : null);
+  const str = (v: unknown) => (typeof v === "string" ? v : null);
+  const bag = (v: unknown) => (v && typeof v === "object" ? (v as Record<string, unknown>) : {});
+  const costs = bag(o.costs), rules = bag(o.rules), restr = bag(o.restrictions);
+  return {
+    unrest: num(o.unrest), max: num(o.max), activeCitizens: num(o.activeCitizens), full: o.full === true, hasPresident: o.hasPresident === true,
+    launchCost: str(costs.launch), contribution: num(costs.contribution), contributionCurrency: str(costs.contributionCurrency),
+    minLevel: num(rules.minLevel), battleCooldownHours: num(rules.battleCooldownHours), contributionCooldownHours: num(rules.contributionCooldownHours), nominationPeriodHours: num(rules.nominationPeriodHours), bordersOpenDays: num(rules.bordersOpenDays), dailyDecayPercent: num(rules.dailyDecayPercent),
+    governmentFrozen: restr.governmentFrozen === true, bordersOpen: restr.bordersOpen === true, bordersOpenUntil: str(restr.bordersOpenUntil),
+    battleId: o.battle && typeof o.battle === "object" ? str((o.battle as Record<string, unknown>).id) : null,
+    lastRevolutionAt: o.lastRevolution && typeof o.lastRevolution === "object" ? str((o.lastRevolution as Record<string, unknown>).at ?? (o.lastRevolution as Record<string, unknown>).endedAt) : null,
+    recentEvents: Array.isArray(o.recentEvents) ? o.recentEvents.length : 0,
+    meta,
+  };
+}
+
+/** The API has no world-wide parties list (only /countries/{id}/parties), so the largest countries by population are queried (cached, capped). */
+export const PARTY_COUNTRY_CAP = 20;
+export async function getWorldParties() {
+  const { countries, meta } = await getCountries();
+  const picked = [...countries].filter((c) => (c.citizens ?? 0) > 0).sort((a, b) => (b.citizens ?? 0) - (a.citizens ?? 0)).slice(0, PARTY_COUNTRY_CAP);
+  const settled = await Promise.allSettled(picked.map((c) => getCountryParties(c.id)));
+  const rows = settled.flatMap((r, i) => (r.status === "fulfilled" ? r.value.parties.map((p) => ({ ...p, countryId: picked[i]!.id })) : []));
+  return { rows, covered: picked.length, failed: settled.filter((r) => r.status === "rejected").length, meta };
+}
+
+/** GET /parties/{id}. The response shape is not recorded: accept an object (or {party: {...}}) that has the verified list fields, otherwise return null. */
+export async function getPartyDetail(partyId: string) {
+  const { data, meta } = await get(endpoints.party(partyId));
+  const o = asRecord(data);
+  const body = o.party && typeof o.party === "object" ? asRecord(o.party) : o;
+  const parsed = partySchema.safeParse({ ...body, members: typeof body.members === "number" ? body.members : Array.isArray(body.members) ? body.members.length : null });
+  const members = (Array.isArray(body.members) ? body.members : []).flatMap((m) => {
+    const r = asRecord(m);
+    const id = typeof r.userId === "string" ? r.userId : typeof r.id === "string" ? r.id : null;
+    const name = typeof r.username === "string" ? r.username : typeof r.name === "string" ? r.name : null;
+    return id && name ? [{ id, name, level: typeof r.level === "number" ? r.level : null, role: typeof r.role === "string" ? r.role : null }] : [];
+  });
+  return { party: parsed.success ? { ...parsed.data, countryId: typeof body.countryId === "string" ? body.countryId : null } : null, members, raw: data, meta };
+}

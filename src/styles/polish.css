@@ -1,0 +1,29 @@
+/* ---- NationScope polish layer (scrollbars, sidebar groups). Loaded after globals.css. ---- */
+
+/* Subtle semi-transparent blue scrollbars, everywhere (page, sidebar, tables, tab bars, any scroll container). */
+@supports selector(::-webkit-scrollbar) {
+  ::-webkit-scrollbar { inline-size: 10px; block-size: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(25, 200, 255, 0.28); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(25, 200, 255, 0.55); background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:active { background: rgba(25, 200, 255, 0.7); background-clip: padding-box; }
+  ::-webkit-scrollbar-corner { background: transparent; }
+}
+@supports not selector(::-webkit-scrollbar) {
+  * { scrollbar-width: thin; scrollbar-color: rgba(25, 200, 255, 0.4) transparent; }
+}
+
+/* Sidebar: collapsible groups */
+.side-group { margin-block-end: 0.35rem; }
+.side-group[data-solo="true"] { margin-block-end: 0.6rem; }
+.side-toggle { display: flex; align-items: center; justify-content: space-between; inline-size: 100%; margin: 0; padding: 0.55rem 0.7rem 0.35rem; background: none; border: 0; cursor: pointer; font: inherit; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6f7c99; }
+.side-toggle:hover { color: #c3cde3; }
+.side-toggle svg { transition: transform 0.15s; }
+.side-group[data-open="false"] .side-toggle svg { transform: rotate(-90deg); }
+[dir="rtl"] .side-group[data-open="false"] .side-toggle svg { transform: rotate(90deg); }
+.side-group[data-open="false"] .side-items { display: none; }
+.side-group + .side-group { border-block-start: 1px solid rgba(148, 163, 184, 0.08); padding-block-start: 0.2rem; }
+.side-link { min-block-size: 2.3rem; }
+.shell[data-collapsed="true"] .side-toggle { display: none; }
+.shell[data-collapsed="true"] .side-group[data-open="false"] .side-items { display: block; }
+@media (max-width: 48rem) { .shell[data-collapsed="true"] .side-toggle { display: flex; } .shell[data-collapsed="true"] .side-group[data-open="false"] .side-items { display: none; } }

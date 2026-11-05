@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ScrollNav } from "@/components/ScrollNav";
 import { ApiErrorState } from "@/components/ApiErrorState";
 import { PageHero } from "@/components/PageHero";
 import { Provenance } from "@/components/Provenance";
@@ -37,9 +38,9 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
       <PageHero icon="trophy" kicker={u.kicker.rankings} title={label} sub={grain ?? u.sub.rankings}
         kpis={res.rows[0] ? [{ icon: "trophy", label: u.leader, value: <span dir="auto">{res.rows[0].name}</span>, tone: "gold" }, { icon: "flame", label: r.value, value: num(res.rows[0].value), tone: "purple" }, { icon: "users", label: u.entries, value: nf.format(res.rows.length) }] : undefined} />
 
-      <nav className="seg seg-scroll" aria-label={r.boards}>
+      <ScrollNav className="seg seg-scroll" label={r.boards}>
         {boards.map((b) => <Link key={b.id} href={`/rankings/${encodeURIComponent(b.id)}`} aria-current={b.id === board ? "page" : undefined}>{b.label}</Link>)}
-      </nav>
+      </ScrollNav>
       <div><nav className="seg" aria-label={r.period}>
         {PERIODS.map((p) => <Link key={p} href={`/rankings/${encodeURIComponent(board)}${p === "all" ? "" : `?period=${p}`}`} aria-current={p === period ? "page" : undefined}>{r.periods[p]}</Link>)}
       </nav></div>

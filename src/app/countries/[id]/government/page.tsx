@@ -1,16 +1,13 @@
-import Link from "next/link";
 import { ApiErrorState } from "@/components/ApiErrorState";
 import { Icon } from "@/components/Icon";
 import { Provenance } from "@/components/Provenance";
 import { Tabs } from "@/components/Tabs";
 import { countryTabs } from "@/features/countries/tabs";
 import { CountryBadge, Metric } from "@/features/entities/entities";
-import { term } from "@/features/entities/display";
 import { getDisplay } from "@/features/entities/display.server";
 import { Parliament, type MemberDto } from "@/features/government/CongressView";
-import { RemoteImage } from "@/features/entities/RemoteImage";
+import { Leadership } from "@/features/government/Leadership";
 import { leadershipHolders } from "@/features/government/roles";
-import { PinButton } from "@/features/pins/PinButton";
 import { getLocale, getMessages } from "@/i18n";
 import { getGovernment } from "@/lib/data/world";
 import { formatDate, humanizeCode } from "@/lib/format";
@@ -44,19 +41,7 @@ export default async function GovernmentPage({ params }: { params: Promise<{ id:
       <section className="card">
         <h2><Icon name="landmark" size={18} />{g.leadership}</h2>
         {leaders.length === 0 ? <p className="empty-mini">{g.noLeadership}</p> : (
-          <div className="leaders">
-            {leaders.map(({ role, dto: p }) => (
-              <article key={`${role}-${p.id}`} className="leader" data-top={role === "president"}>
-                <RemoteImage src={p.avatar} size={role === "president" ? 88 : 64} round fallback={<span className="seat-fallback big">{p.name.slice(0, 2).toUpperCase()}</span>} />
-                <div>
-                  <span className="badge" data-tone="neutral">{term("role", role, d)}</span>
-                  <h3><Link href={`/players/${encodeURIComponent(p.id)}`} dir="auto">{p.name}</Link></h3>
-                  <span className="kv">{p.party && <span>{p.party.name}</span>}{p.level != null && <span>{g.level} {p.level}</span>}{p.sinceText && <span>{g.since}: {p.sinceText}</span>}</span>
-                  <PinButton labels={m.pins} target={{ type: "player", id: p.id, name: p.name, image: p.avatar, href: `/players/${encodeURIComponent(p.id)}` }} />
-                </div>
-              </article>
-            ))}
-          </div>
+          <Leadership leaders={leaders} d={d} m={m} />
         )}
       </section>
 

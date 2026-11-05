@@ -1,0 +1,24 @@
+.frame { container-type: inline-size; }
+.wrap { display: grid; gap: 0.9rem; }
+.pres { display: flex; align-items: center; gap: 1.2rem; padding: 1.2rem 1.4rem; border-radius: 16px; background: linear-gradient(120deg, rgba(245, 197, 66, 0.14), rgba(13, 21, 41, 0.9) 60%), #0d1529; border: 1px solid rgba(245, 197, 66, 0.4); min-inline-size: 0; }
+.others { display: grid; gap: 0.8rem; grid-template-columns: minmax(0, 1fr); }
+@container (min-width: 30rem) { .others { grid-template-columns: repeat(var(--ct), minmax(0, 1fr)); } }
+@container (min-width: 46rem) { .others { grid-template-columns: repeat(var(--cm), minmax(0, 1fr)); } }
+@container (min-width: 64rem) { .others { grid-template-columns: repeat(var(--cd), minmax(0, 1fr)); } }
+.card { display: flex; align-items: center; gap: 0.9rem; padding: 0.9rem 1rem; border-radius: 14px; background: #0d1529; border: 1px solid rgba(148, 163, 184, 0.16); min-inline-size: 0; }
+.avatar { flex: none; }
+.avatar :global(.img), .avatar :global(.seat-fallback) { border-radius: 50%; }
+.body { min-inline-size: 0; display: flex; flex-direction: column; gap: 0.15rem; flex: 1; }
+.role { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--rc, #8b97b3); }
+.pres .role { color: #f5c542; }
+.name { font-size: 1.05rem; font-weight: 700; color: #fff; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pres .name { font-size: 1.4rem; }
+.name:hover { color: #19c8ff; text-decoration: none; }
+.meta { display: flex; flex-wrap: wrap; gap: 0.1rem 0.8rem; font-size: 0.8rem; color: #8b97b3; }
+.meta span { overflow-wrap: anywhere; }
+.pin { flex: none; align-self: flex-start; }
+.card .pin :global(.pinbtn) { padding-inline: 0.55rem; min-block-size: 2rem; }
+.card .pin :global(.pinbtn span:not(.sr-only)) { display: none; }
+.card[data-role="vicePresident"] { --rc: #93c5fd; }
+.card[data-role^="minister"] { --rc: #a78bfa; }
+@media (max-width: 560px) { .pres { padding: 1rem; } .pres .name { font-size: 1.2rem; } }

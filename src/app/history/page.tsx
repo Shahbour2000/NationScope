@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ScrollNav } from "@/components/ScrollNav";
 import { ApiErrorState } from "@/components/ApiErrorState";
 import { PageHero } from "@/components/PageHero";
 import { Provenance } from "@/components/Provenance";
@@ -41,10 +42,10 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
       <PageHero icon="clock" kicker={u.kicker.history} title={h.title} sub={h.intro}
         kpis={res.rows.length ? [{ icon: "clock", label: u.events, value: nf.format(res.rows.length) }, ...top.map(([t, n], i) => ({ icon: (t === "battle" ? "battle" : t === "treaty" ? "scale" : t === "ownership" ? "map" : "landmark") as "battle" | "scale" | "map" | "landmark", label: names[t] ?? humanizeCode(t), value: nf.format(n), tone: (["red", "green", "gold"] as const)[i] }))] : undefined} />
 
-      <nav className="seg seg-scroll" aria-label={h.type}>
+      <ScrollNav className="seg seg-scroll" label={h.type}>
         <Link href="/history" aria-current={!type ? "page" : undefined}>{h.allTypes}<span className="tab-count">{nf.format(res.rows.length)}</span></Link>
         {TYPES.filter((t) => counts.has(t) || t === type).map((t) => <Link key={t} href={`/history?type=${t}`} aria-current={type === t ? "page" : undefined}>{names[t]}<span className="tab-count">{nf.format(counts.get(t) ?? 0)}</span></Link>)}
-      </nav>
+      </ScrollNav>
 
       {groups.length === 0 ? <p className="empty-mini panel">{h.noMatch}</p> : groups.map((g) => (
         <section key={g.day ?? "undated"} aria-label={g.day ?? u.noDate}>

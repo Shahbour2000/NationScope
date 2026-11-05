@@ -8,7 +8,7 @@ import { Tabs } from "@/components/Tabs";
 import { ApiError } from "@/lib/api/errors";
 import { LineChart } from "@/features/charts/charts";
 import { Suspense } from "react";
-import { OrgBuildsPanel } from "@/features/builds/BuildViews";
+import { BuildMixSkeleton, OrgBuildMix } from "@/features/builds/BuildMix";
 import { leadershipHolders } from "@/features/government/roles";
 import { PinButton } from "@/features/pins/PinButton";
 import { flagSrc } from "@/lib/flags";
@@ -66,7 +66,7 @@ export default async function CountryPage({ params }: { params: Promise<{ id: st
       </div>
       <Tabs items={tabs} label={p.name} />
 
-      <div className="with-aside">
+      <div style={{ margin: "0.2rem 0 1rem" }}><Suspense fallback={<BuildMixSkeleton m={m.builds} nl={d.nl} />}><OrgBuildMix countryIds={[p.id]} m={m.builds} nl={d.nl} /></Suspense></div>
       <dl className="metrics">
         <Metric icon="trend" label={c.development} value={p.development == null ? d.m.ui.missing : nf.format(p.development)} hint={p.worldSharePercent == null ? undefined : <>{p.worldSharePercent}% {c.worldShare} <Source kind="api" d={d} /></>} />
         <Metric icon="users" label={c.citizens} value={p.citizens?.total == null ? d.m.ui.missing : nf.format(p.citizens.total)} hint={p.citizens?.active == null ? undefined : `${nf.format(p.citizens.active)} ${c.activeOf} ${nf.format(p.citizens.total ?? 0)}`} />
@@ -75,8 +75,6 @@ export default async function CountryPage({ params }: { params: Promise<{ id: st
         {p.enemy && <Metric icon="war" label={c.enemyCountry} value={<span className="rival"><CountryBadge id={p.enemy.countryId} d={d} /></span>} />}
         <Metric icon="coins" label={c.revenueToday} value={<Money value={p.taxes?.revenueToday} d={d} />} hint={<>{c.revenueYesterday}: <Money value={p.taxes?.revenueYesterday} d={d} /></>} />
       </dl>
-      <Suspense fallback={<div className="skeleton" style={{ blockSize: "7rem" }} />}><OrgBuildsPanel countryIds={[p.id]} m={m.builds} nl={d.nl} title={`${m.builds.title} · ${m.overview.activeCitizens}`} /></Suspense>
-      </div>
 
       {hist.length >= 2 && (
         <section className="card">

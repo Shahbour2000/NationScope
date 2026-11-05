@@ -5,7 +5,7 @@ import { ApiErrorState } from "@/components/ApiErrorState";
 import { Icon } from "@/components/Icon";
 import { Provenance } from "@/components/Provenance";
 import { Tabs } from "@/components/Tabs";
-import { OrgBuildsPanel } from "@/features/builds/BuildViews";
+import { BuildMixSkeleton, OrgBuildMix } from "@/features/builds/BuildMix";
 import { allianceAggregate } from "@/features/economy/analytics";
 import { countryName, schemeColor } from "@/features/entities/display";
 import { getDisplay } from "@/features/entities/display.server";
@@ -39,6 +39,7 @@ export default async function AllianceDetail({ params }: { params: Promise<{ id:
       <div className="page-head"><h1><Icon name="shield" size={26} /><span dir="auto">{alliance.name}</span></h1><StatusBadge value={alliance.status} d={d} /><PinButton labels={m.pins} target={{ type: "alliance", id: alliance.id, name: alliance.name, image: null, href: base }} /></div>
       <Tabs items={tabs} label={alliance.name} />
       <section className={s.hero} style={{ ["--c" as string]: schemeColor(alliance.scheme) }}>
+        <Suspense fallback={<BuildMixSkeleton m={m.builds} nl={d.nl} />}><OrgBuildMix countryIds={agg.members.map((c) => c.id)} m={m.builds} nl={d.nl} /></Suspense>
         {alliance.leaderCountryId && <div className={s.lead} style={{ marginBlockStart: 0 }}>{a.leader}<Flag id={alliance.leaderCountryId} d={d} />{countryName(alliance.leaderCountryId, d.dir)}</div>}
         <dl className={s.kpis}>
           <div><dt>{a.development}</dt><dd>{alliance.development == null ? "—" : nf.format(alliance.development)}{alliance.sharePercent != null && <small>{nf.format(alliance.sharePercent)}% {a.share}</small>}</dd></div>
@@ -47,7 +48,7 @@ export default async function AllianceDetail({ params }: { params: Promise<{ id:
           <div><dt>{m.countriesPage.citizens}</dt><dd>{nf.format(agg.citizens)}<small>{nf.format(agg.activeCitizens)} · {nf.format(agg.regions)} {a.regions}</small></dd></div>
         </dl>
       </section>
-      <div className={s.layout}>
+      <div className={s.layout} style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
         <div>
           <section className={s.sec}>
             <h2>{a.memberCountries} <small>{nf.format(members.length)}</small></h2>
@@ -82,7 +83,6 @@ export default async function AllianceDetail({ params }: { params: Promise<{ id:
             )}
           </section>
         </div>
-        <Suspense fallback={<div className="skeleton" style={{ blockSize: "7rem" }} />}><OrgBuildsPanel countryIds={agg.members.map((c) => c.id)} m={m.builds} nl={d.nl} title={`${m.builds.title} · ${m.overview.activeCitizens}`} /></Suspense>
       </div>
       <Provenance meta={all.meta} m={m} />
     </>

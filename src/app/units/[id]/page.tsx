@@ -6,7 +6,7 @@ import { ProfileHeader } from "@/components/ProfileHeader";
 import { Provenance } from "@/components/Provenance";
 import { RankList } from "@/components/RankList";
 import { StateMessage } from "@/components/StateMessage";
-import { BuildsSummaryView } from "@/features/builds/BuildViews";
+import { BuildMixSkeleton, BuildMixView } from "@/features/builds/BuildMix";
 import { summarizeBuilds } from "@/features/builds/classify";
 import { CountryBadge, Flag, RegionLink, StatusBadge } from "@/features/entities/entities";
 import { getDisplay } from "@/features/entities/display.server";
@@ -28,7 +28,7 @@ const skeleton = (h: string) => <div className="skeleton" style={{ blockSize: h 
 /** Build mix; awaits the shared (cached, capped) census promise so each profile is requested once per render. */
 async function UnitBuilds({ unit, load, m, d }: { unit: UnitProfile; load: Promise<BuildLoad>; m: Messages; d: Display }) {
   const l = await load;
-  return <BuildsSummaryView counts={summarizeBuilds(unit.members.map((x) => x.id), l.results)} m={m.builds} nl={d.nl} />;
+  return <BuildMixView counts={summarizeBuilds(unit.members.map((x) => x.id), l.results)} m={m.builds} nl={d.nl} />;
 }
 
 async function UnitMembersSection({ unit, load, m, d }: { unit: UnitProfile; load: Promise<BuildLoad>; m: Messages; d: Display }) {
@@ -75,7 +75,8 @@ export default async function UnitProfilePage({ params }: { params: Promise<{ id
         ]}
       />
 
-      <div className="with-aside">
+      <div style={{ margin: "0.4rem 0 1rem" }}><Suspense fallback={<BuildMixSkeleton m={m.builds} nl={d.nl} />}><UnitBuilds unit={unit} load={load} m={m} d={d} /></Suspense></div>
+      <div>
         <section className="panel">
           <header><h2><Icon name="trophy" size={18} /> {u.topWeekly}</h2></header>
           {top.length === 0 ? <p className="empty-mini">{u.notProvided}</p> : (
@@ -85,7 +86,6 @@ export default async function UnitProfilePage({ params }: { params: Promise<{ id
                 tail: x.countryId ? <span className="rk-flag"><Flag id={x.countryId} d={d} /></span> : null }))} />
           )}
         </section>
-        <Suspense fallback={skeleton("10rem")}><UnitBuilds unit={unit} load={load} m={m} d={d} /></Suspense>
       </div>
 
       <section className="panel" style={{ marginBlockStart: "1rem" }} aria-labelledby="members-h">

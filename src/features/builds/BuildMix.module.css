@@ -1,0 +1,9 @@
+.mix { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 1.6rem; margin: 0; padding: 0; list-style: none; }
+.mix li { display: inline-flex; align-items: baseline; gap: 0.4rem; }
+.mix b { font-size: 1.7rem; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--c); }
+.mix span { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: #8b97b3; font-weight: 600; }
+.mix li[data-k="war"] { --c: #f87171; } .mix li[data-k="eco"] { --c: #fbbf24; } .mix li[data-k="hybrid"] { --c: #a78bfa; }
+.mix[data-state="pending"] b { color: #4b5775; }
+.mix[data-state="pending"] { animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.5; } }
+@media (prefers-reduced-motion: reduce) { .mix[data-state="pending"] { animation: none; } }

@@ -20,3 +20,10 @@ export async function getUnitDetail(id: string) {
   const { data, meta } = await getApiClient().get(e.path, { schema: z.unknown(), query: e.query });
   return { unit: parseUnitDetail(data, getConfig().origin), meta };
 }
+
+/** GET /countries/{id}/units: the units of one country, same row shape as /units. */
+export async function getCountryUnits(countryId: string) {
+  const e = endpoints.countryUnits(countryId);
+  const { data, meta } = await getApiClient().get(e.path, { schema: list, query: e.query });
+  return { ...parseUnits(data, getConfig().origin), meta };
+}

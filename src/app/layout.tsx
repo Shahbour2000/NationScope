@@ -9,6 +9,7 @@ import { PinMenu } from "@/features/pins/PinMenu";
 import { dirOf, getLocale, getMessages } from "@/i18n";
 import { diagnosticsEnabled } from "@/lib/diagnostics/probe";
 import "./globals.css";
+import "@/styles/polish.css";
 
 export const metadata: Metadata = {
   title: { default: "NationScope", template: "%s · NationScope" },
@@ -21,16 +22,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const m = getMessages(locale);
   const n = m.nav;
   const groups: NavGroup[] = [
+    { title: "", items: [{ href: "/", label: n.overview, icon: "home" }] },
     { title: n.world, items: [
-      { href: "/", label: n.overview, icon: "home" },
       { href: "/countries", label: n.countries, icon: "flag" },
       { href: "/alliances", label: n.alliances, icon: "shield" },
       { href: "/regions", label: n.regions, icon: "map" },
+      { href: "/history", label: n.history, icon: "clock" },
+    ] },
+    { title: n.politics, items: [
+      { href: "/parties", label: n.politicalParties, icon: "users" },
+      { href: "/laws", label: n.laws, icon: "contract" },
     ] },
     { title: n.military, items: [
       { href: "/units", label: n.units, icon: "unit" },
       { href: "/battles", label: n.battles, icon: "battle" },
       { href: "/wars", label: n.wars, icon: "war" },
+      { href: "/tournaments", label: n.tournaments, icon: "trophy" },
       { href: "/contracts", label: n.contracts, icon: "contract" },
     ] },
     { title: n.economy, items: [
@@ -42,12 +49,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       { href: "/company-stats", label: n.companyStats, icon: "chart" },
       { href: "/jobs", label: n.jobs, icon: "briefcase" },
     ] },
-    { title: n.records, items: [
-      { href: "/history", label: n.history, icon: "clock" },
-      { href: "/articles", label: n.articles, icon: "news" },
+    { title: n.community, items: [
       { href: "/rankings/playerDamage", label: n.rankingDamage, icon: "trophy" },
-      { href: "/tournaments", label: n.tournaments, icon: "trophy" },
-      { href: "/laws", label: n.laws, icon: "contract" },
+      { href: "/articles", label: n.articles, icon: "news" },
       { href: "/game", label: n.game, icon: "tool" },
     ] },
     { title: n.tools, items: [
