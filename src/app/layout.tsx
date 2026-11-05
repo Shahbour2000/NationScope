@@ -55,7 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       { href: "/game", label: n.game, icon: "tool" },
     ] },
     { title: n.tools, items: [
-      { href: "/tools/build-planner", label: n.planner, icon: "tool" },
+      { href: "/tools/build-optimizer", label: n.planner, icon: "tool" },
       ...(diagnosticsEnabled() ? [{ href: "/diagnostics", label: n.diagnostics, icon: "bug" as const }] : []),
     ] },
   ];
