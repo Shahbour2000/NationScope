@@ -60,18 +60,18 @@ describe('constraint resolution', () => {
     assert.deepEqual(r.bounds.armor, { lo: 2, hi: 2 }); assert.equal(r.minimumPointsRequired, 7 + 2);
   });
   it('conflicts', () => {
-    let r = resolveConstraints([m('a', { type: 'minLevel', skill: 'attack', level: 7 }), m('b', { type: 'maxLevel', skill: 'attack', level: 3 })], ctx);
-    assert.ok(!r.ok && r.conflicts[0]!.code === 'BOUNDS_CONTRADICT' && r.conflicts[0]!.constraintIds.includes('a') && r.conflicts[0]!.constraintIds.includes('b'));
-    r = resolveConstraints([m('x', { type: 'exactPoints', skill: 'attack', points: 5 })], ctx);
-    assert.ok(!r.ok && r.conflicts[0]!.code === 'EXACT_POINTS_UNATTAINABLE');
-    r = resolveConstraints([m('l', { type: 'minLevel', skill: 'dodge', level: 1 })], { playerLevel: 10, totalPoints: 100 });
-    assert.ok(!r.ok && r.conflicts[0]!.code === 'SKILL_LOCKED');
-    r = resolveConstraints([m('s', { type: 'minStat', skill: 'companySlots', value: 20 })], ctx);
-    assert.ok(!r.ok && r.conflicts[0]!.code === 'STAT_UNREACHABLE');
-    r = resolveConstraints([m('p', { type: 'minLevel', skill: 'attack', level: 10 }), m('q', { type: 'minLevel', skill: 'accuracy', level: 10 })], { playerLevel: 30, totalPoints: 90 });
-    assert.ok(!r.ok && r.conflicts[0]!.code === 'BUDGET_EXCEEDED' && r.conflicts[0]!.details!.shortfall === 8);
-    r = resolveConstraints([m('v', { type: 'minLevel', skill: 'attack', level: 11 })], ctx);
-    assert.ok(!r.ok && r.conflicts[0]!.code === 'INVALID_CONSTRAINT');
+    const bounds = resolveConstraints([m('a', { type: 'minLevel', skill: 'attack', level: 7 }), m('b', { type: 'maxLevel', skill: 'attack', level: 3 })], ctx);
+    assert.ok(!bounds.ok); if (!bounds.ok) { assert.equal(bounds.conflicts[0]!.code, 'BOUNDS_CONTRADICT'); assert.ok(bounds.conflicts[0]!.constraintIds.includes('a') && bounds.conflicts[0]!.constraintIds.includes('b')); }
+    const exactPoints = resolveConstraints([m('x', { type: 'exactPoints', skill: 'attack', points: 5 })], ctx);
+    assert.ok(!exactPoints.ok); if (!exactPoints.ok) assert.equal(exactPoints.conflicts[0]!.code, 'EXACT_POINTS_UNATTAINABLE');
+    const locked = resolveConstraints([m('l', { type: 'minLevel', skill: 'dodge', level: 1 })], { playerLevel: 10, totalPoints: 100 });
+    assert.ok(!locked.ok); if (!locked.ok) assert.equal(locked.conflicts[0]!.code, 'SKILL_LOCKED');
+    const stat = resolveConstraints([m('s', { type: 'minStat', skill: 'companySlots', value: 20 })], ctx);
+    assert.ok(!stat.ok); if (!stat.ok) assert.equal(stat.conflicts[0]!.code, 'STAT_UNREACHABLE');
+    const budget = resolveConstraints([m('p', { type: 'minLevel', skill: 'attack', level: 10 }), m('q', { type: 'minLevel', skill: 'accuracy', level: 10 })], { playerLevel: 30, totalPoints: 90 });
+    assert.ok(!budget.ok); if (!budget.ok) { assert.equal(budget.conflicts[0]!.code, 'BUDGET_EXCEEDED'); assert.equal(budget.conflicts[0]!.details!.shortfall, 8); }
+    const invalid = resolveConstraints([m('v', { type: 'minLevel', skill: 'attack', level: 11 })], ctx);
+    assert.ok(!invalid.ok); if (!invalid.ok) assert.equal(invalid.conflicts[0]!.code, 'INVALID_CONSTRAINT');
   });
   it('preferences never change bounds', () => {
     const r = resolveConstraints([{ id: 'p', strength: 'preference', spec: { type: 'minLevel', skill: 'attack', level: 10 } }], { playerLevel: 30, totalPoints: 0 });
@@ -95,7 +95,8 @@ describe('combat', () => {
   it('crit convention', () => {
     const d = computeHit(base({ conventions: { critMultiplier: 'direct' } }));
     approx(d.outcomes[2]!.damage, 130 * 1.0); // CD 100 => x1.0 under 'direct'
-    assert.equal(d.evidence, 'unverified');
+    assert.equal(d.evidence, 'unverified', 'a non-Wiki switch makes the result a what-if');
+    const w = computeHit(base()); approx(w.outcomes[2]!.damage, 130 * 2.0); assert.notEqual(w.evidence, 'unverified'); // Wiki default: a base crit (CD 100) adds +100%
   });
   it('overflow', () => {
     const h = computeHit(base({ levels: lv({ accuracy: 10, critChance: 10 }), gear: { ...knife, gloves: { kind: 'item', stats: { accuracy: 10 } } } }));
@@ -114,25 +115,26 @@ describe('combat', () => {
     approx(computeHit(base({ ammo: 'medium', rankBonusPct: 5, conventions: { stacking: 'multiplicative' } })).personalMultiplier, 1.25 * 1.05);
   });
   it('booster phases', () => {
-    // the Pill changes the Attack SKILL value only; ammo/rank multiplier is untouched
-    const skill = 100; // attack level 0
+    // Wiki 01-basics §3.6 (+50% / -50%) and 03-war §1.6 step 2: the stimulant is a personal boost SUMMED with ammo and rank.
     for (const [phase, pct] of [['none', 0], ['positive', 50], ['negative', -50]] as const) {
       const h = computeHit(base({ booster: phase }));
-      approx(h.pillPct, pct); approx(h.attackSkillEffective, skill * (1 + pct / 100)); approx(h.attackBase, skill * (1 + pct / 100) + 30); approx(h.personalMultiplier, 1);
+      approx(h.pillPct, pct); approx(h.attackSkillEffective, 100); approx(h.attackBase, 100 + 30); approx(h.personalMultiplier, 1 + pct / 100);
     }
   });
-  it('pill is attack-skill only', () => {
+  it('wiki: personal boosts are summed', () => {
+    // 03-war §1.6 step 2: ammo, stimulant and rank bonuses are summed and applied to (skill attack + weapon attack).
     const lev = lv({ attack: 10, accuracy: 10, critChance: 5, critDamage: 5, armor: 3, dodge: 3, lootChance: 4 });
     const gloves: GearInput = { ...knife, gloves: { kind: 'item', stats: { accuracy: 10 } }, chest: { kind: 'item', stats: { armor: 5 } } };
-    const none = computeHit(base({ levels: lev, gear: gloves, ammo: 'medium', rankBonusPct: 5 }));
-    const buff = computeHit(base({ levels: lev, gear: gloves, ammo: 'medium', rankBonusPct: 5, booster: 'positive' }));
-    const debuff = computeHit(base({ levels: lev, gear: gloves, ammo: 'medium', rankBonusPct: 5, booster: 'negative' }));
-    for (const k of ['accuracyTotal', 'critChanceTotal', 'critDamageTotal', 'cleanChance', 'critChance', 'personalMultiplier', 'battleMultiplier', 'healthLossPerHit', 'dodgeProbability'] as const) { approx(buff[k], none[k]); approx(debuff[k], none[k]); }
-    // accuracy overflow (skill 110 + gloves 10 = 120 -> +60 attack) is NOT the Attack skill: it is not scaled by the Pill
-    const S = 400, W = 30, OF = 60, M = 1 + (25 + 5) / 100;
-    approx(none.attackSkillEffective, S); approx(buff.attackSkillEffective, S * 1.5); approx(debuff.attackSkillEffective, S * 0.5);
-    approx(none.outcomes[1]!.damage, (S + W + OF) * M); approx(buff.outcomes[1]!.damage, (S * 1.5 + W + OF) * M); approx(debuff.outcomes[1]!.damage, (S * 0.5 + W + OF) * M);
+    const run = (booster: 'none' | 'positive' | 'negative') => computeHit(base({ levels: lev, gear: gloves, ammo: 'medium', rankBonusPct: 5, booster }));
+    const none = run('none'), buff = run('positive'), debuff = run('negative');
+    // nothing except the personal multiplier (and therefore damage) depends on the Pill
+    for (const k of ['accuracyTotal', 'critChanceTotal', 'critDamageTotal', 'cleanChance', 'critChance', 'battleMultiplier', 'healthLossPerHit', 'dodgeProbability', 'attackSkillEffective'] as const) { approx(buff[k], none[k]); approx(debuff[k], none[k]); }
+    const S = 400, W = 30, OF = 60; // attack skill level 10, knife 30, accuracy overflow (110 + 10 - 100) * 3
+    approx(none.personalMultiplier, 1 + (25 + 5) / 100); approx(buff.personalMultiplier, 1 + (25 + 50 + 5) / 100); approx(debuff.personalMultiplier, 1 + (25 - 50 + 5) / 100);
+    approx(none.outcomes[1]!.damage, (S + W + OF) * 1.3); approx(buff.outcomes[1]!.damage, (S + W + OF) * 1.8); approx(debuff.outcomes[1]!.damage, (S + W + OF) * 0.8);
     assert.ok(buff.usedFormulas.includes('combat.booster')); assert.ok(!none.usedFormulas.includes('combat.booster'));
+    // the 'multiplicative' what-if switch is the only place the three factors multiply
+    approx(computeHit(base({ levels: lev, gear: gloves, ammo: 'medium', rankBonusPct: 5, booster: 'positive', conventions: { stacking: 'multiplicative' } })).personalMultiplier, 1.25 * 1.5 * 1.05);
   });
   it('battle bonus caps', () => {
     const mod = (id: string, pct: number) => ({ id, label: id, pct, status: 'documented' as const, source: 'user' as const });
@@ -237,7 +239,9 @@ describe('registry', () => {
     for (const x of f) assert.ok(x.tests.length > 0, x.id);
     assert.equal(weakestStatus(['skills.cost']), 'documented');
     assert.equal(weakestStatus(['skills.value.linear']), 'estimated');
-    assert.equal(weakestStatus(['combat.critMultiplier']), 'unverified');
+    assert.equal(weakestStatus(['combat.critMultiplier']), 'documented', 'Wiki 01-basics §2.4 / 03-war §1.6 step 4: a crit adds the crit-damage percentage');
+    assert.equal(weakestStatus(['combat.luck.distribution']), 'unverified', 'the Wiki gives no luck distribution');
+    assert.equal(weakestStatus(['combat.rounding']), 'documented');
     assert.equal(weakestStatus(['skills.pointsEarned']), 'documented');
   });
 });

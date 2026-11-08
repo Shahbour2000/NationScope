@@ -63,6 +63,59 @@ describe('player state from the real profile shape', () => {
     assert.equal(rankFromDamage('4999').code, 'volunteer'); assert.equal(rankFromDamage('5000').code, 'fighter'); assert.equal(rankFromDamage('200000000').bonusPct, 12);
     const d = buildPlayerState({ profile: profile() }); assert.equal(d.rank.name.value, 'captain'); assert.equal(d.rank.bonusPct.value, 5); assert.equal(d.rank.bonusPct.source, 'derived'); // 2,549,826 lifetime damage
   });
+  it('uses the profile attack bonus when it matches the Wiki rank table, and keeps rank metadata', () => {
+    const dmg = (total: string | null) => ({ total, day: '0', week: '0', month: '0' });
+    // Wiki 01-basics §2.6: General starts at 50,000,000 lifetime damage and gives +8%
+    const s = buildPlayerState({ profile: profile({ rankCode: 'general', rankAttackBonusPercent: 8, rankMinDamage: 50000000, damage: dmg('50000000') }) });
+    assert.equal(s.rank.bonusPct.value, 8); assert.equal(s.rank.bonusPct.source, 'api'); assert.equal(s.rank.minDamage.value, 50000000);
+    assert.ok(!s.warnings.some((w) => w.includes('disagrees')));
+    const noDamage = buildPlayerState({ profile: profile({ rankCode: 'general', rankAttackBonusPercent: 9, damage: dmg(null) }) });
+    assert.equal(noDamage.rank.bonusPct.value, 9); assert.equal(noDamage.rank.bonusPct.source, 'api'); // nothing to check it against
+    assert.ok(noDamage.rank.bonusPct.note?.includes('not cross-checked'));
+    const fallback = buildPlayerState({ profile: profile({ rankCode: 'general', rankAttackBonusPercent: null, damage: dmg('50000000') }) });
+    assert.equal(fallback.rank.bonusPct.value, 8); assert.equal(fallback.rank.bonusPct.source, 'derived'); // local code table fallback
+  });
+  it('wiki: an API rank bonus that disagrees with the Wiki table does not redefine the mechanic', () => {
+    // 2,549,826 lifetime damage is Captain (>= 1,500,000, < 5,000,000): +5% in the Wiki table
+    const s = buildPlayerState({ profile: profile({ rankCode: 'captain', rankAttackBonusPercent: 9, damage: { total: '2549826', day: '0', week: '0', month: '0' } }) });
+    assert.equal(s.rank.bonusPct.value, 5); assert.equal(s.rank.bonusPct.source, 'derived');
+    assert.ok(s.warnings.some((w) => w.includes('9%') && w.includes('Wiki') && w.includes('5%')));
+    const r = toOptimizeRequest(s, { objective: { type: 'maxDamagePerHit' } }); assert.ok(r.ok); if (r.ok) assert.equal(r.request.combat.rankBonusPct, 5);
+    const overridden = buildPlayerState({ profile: profile({ rankCode: 'captain', rankAttackBonusPercent: 9, damage: { total: '2549826', day: '0', week: '0', month: '0' } }), user: { rankBonusPct: 9 } });
+    assert.equal(overridden.rank.bonusPct.value, 9); assert.equal(overridden.rank.bonusPct.source, 'user');
+  });
+  it('keeps API Prestige out of the unverified point formula while forwarding profile data', () => {
+    const s = buildPlayerState({ profile: profile({ prestige: 7 }) });
+    assert.equal(s.prestigeCount.value, 7); assert.equal(s.prestigeCount.source, 'api');
+    assert.equal(s.skillPoints.earned.value, 88); assert.equal(s.skillPoints.exact, false); // same lower-bound ledger as legacy profile
+    const req = toOptimizeRequest(s, { objective: { type: 'maxDamagePerHit' } });
+    assert.ok(req.ok); if (req.ok) { assert.equal(req.request.player.prestigeCount, undefined, 'API Prestige is display-only and must not reach the engine request'); assert.equal(req.request.player.totalPoints, 88); }
+    const u = toOptimizeRequest(buildPlayerState({ profile: profile({ prestige: 7 }), user: { prestigeCount: 2 } }), { objective: { type: 'maxDamagePerHit' } });
+    assert.ok(u.ok); if (u.ok) assert.equal(u.request.player.prestigeCount, 2, 'a user-supplied Prestige count is what the ledger used, so it is forwarded');
+  });
+  it('retains profile equipment separately and maps only recognized snapshot slots', () => {
+    const equipment: NonNullable<ProfileLike['equipment']> = [
+      { slot: 'weapon', itemCode: 'knife', rarity: 'rare', stats: { attack: 70, criticalChance: 10 }, durability: 82 },
+      { slot: 'helmet', itemCode: 'helm', rarity: 'common', stats: { criticalDamages: 12 }, durability: 90 },
+      { slot: 'gloves', itemCode: 'glove', rarity: 'common', stats: { precision: 3 }, durability: 90 },
+      { slot: 'chest', itemCode: 'chest', rarity: 'common', stats: { armor: 4 }, durability: 90 },
+      { slot: 'pants', itemCode: 'pants', rarity: 'common', stats: { armor: 2 }, durability: 90 },
+      { slot: 'boots', itemCode: 'boots', rarity: 'common', stats: { dodge: 1 }, durability: 90 },
+    ];
+    const s = buildPlayerState({ profile: profile({ equipment }) });
+    assert.equal(s.equipmentSnapshot.source, 'api'); assert.equal(s.equipmentSnapshot.value?.length, 6);
+    assert.equal(s.gear.source, 'api'); assert.deepEqual(s.gear.value?.weapon, { kind: 'item', stats: { attack: 70, critChance: 10, usesAmmo: false } });
+    assert.deepEqual(s.gear.value?.legs, { kind: 'item', stats: { armor: 2 } });
+    const request = toWarBuildRequest(s, { hits: 10, gearMode: 'fixed', objective: { type: 'maxDamage' } });
+    assert.ok(request.ok); if (request.ok && request.request.gear.mode === 'fixed') assert.deepEqual(request.request.gear.gear, s.gear.value);
+    assert.equal(s.economy.source, 'unavailable');
+  });
+  it('retains historical economy without treating it as a forecast input', () => {
+    const economy = { lifetime: { from: null, to: null, shiftsWorked: 20, employeeShifts: 2, unitsProduced: 3, wagesEarned: '1000', marketBuys: null, marketSells: null }, recent: null, companies: 1 };
+    const s = buildPlayerState({ profile: profile({ economy }) });
+    assert.equal(s.economy.value?.lifetime?.shiftsWorked, 20); assert.equal(s.economy.source, 'api');
+    assert.equal(toOptimizeRequest(s, { objective: { type: 'maxDamagePerHit' } }).ok, true);
+  });
   it('unavailable data stays unavailable (never zero)', () => {
     const s = buildPlayerState({ profile: profile({ skills: [], hasSkills: false, level: null }) });
     assert.equal(s.skills.levels.value, null); assert.equal(s.level.value, null); assert.ok(s.missing.includes('skills') && s.missing.includes('level'));

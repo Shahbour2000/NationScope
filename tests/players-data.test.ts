@@ -16,8 +16,16 @@ describe("parsePlayer", () => {
   });
   it("survives missing blocks and rejects non-players", () => {
     const p = parsePlayer({ id: "u", username: "x" }, "https://a")!;
-    expect(p).toMatchObject({ hasSkills: false, skills: [], unit: null, party: null, damage: { total: null } });
+    expect(p).toMatchObject({ hasSkills: false, skills: [], unit: null, party: null, damage: { total: null }, prestige: null, rankAttackBonusPercent: null, rankMinDamage: null, economy: null, equipment: null });
     expect(parsePlayer({ nope: 1 }, "https://a")).toBeNull();
+  });
+  it("preserves observed profile rank, Prestige, economy, and equipment fields", () => {
+    const p = parsePlayer({ id: "usr_dev_sample", username: "Player", level: 50, prestige: 7, rank: { code: "general", attackBonusPercent: 8, minDamage: 50000000 },
+      equipment: [{ slot: "weapon", itemCode: "knife", rarity: "rare", stats: { attack: 70, criticalChance: 10 }, durability: 82 }],
+      economy: { companies: 2, lifetime: { shiftsWorked: 10, marketBuys: { trades: 2, units: 3, value: "1000" } } } }, "https://a")!;
+    expect(p).toMatchObject({ prestige: 7, rankCode: "general", rankAttackBonusPercent: 8, rankMinDamage: 50000000 });
+    expect(p.equipment).toEqual([{ slot: "weapon", itemCode: "knife", rarity: "rare", stats: { attack: 70, criticalChance: 10 }, durability: 82 }]);
+    expect(p.economy?.lifetime?.marketBuys).toEqual({ trades: 2, units: 3, value: "1000" });
   });
 });
 

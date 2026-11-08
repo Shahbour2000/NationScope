@@ -1,0 +1,1 @@
+[{"id":"ann_c2r5gdrkb9x48034","countryId":"eg","authorId":"usr_r9s8exrd8arivqrq","authorName":"AbuDujana","body":"تجربة، تجربة","views":1,"createdAt":"2026-10-21T09:12:20.311Z","expiresAt":"2026-10-22T09:12:20.311Z","viewed":false}]

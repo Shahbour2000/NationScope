@@ -29,7 +29,7 @@ describe('request validation', () => {
     assert.ok(bad(raw({ war: { hits: 10, ammo: [] } })).includes('ammo'));
     assert.ok(bad(raw({ user: { prestigeCount: 1.5 } })).includes('whole number')); assert.ok(bad(raw({ user: { totalSkillPoints: -1 } })).includes('totalSkillPoints'));
     assert.ok(bad(raw({ constraints: [{ skill: 'attack', kind: 'min', level: 11 }] })).includes('level'));
-    assert.ok(bad(raw({ war: { hits: 10, ammo: ['none'], gearMode: 'fixed', fixedGear: { weapon: { equipped: false } } } })).includes('war.fixedGear.helmet'));
+    assert.ok(parseOptimizeInput(raw({ war: { hits: 10, ammo: ['none'], gearMode: 'fixed', fixedGear: { weapon: { equipped: false } } } })).ok, 'omitted slots may be filled from the profile; the run layer checks that every slot is resolved');
     assert.ok(bad(raw({ war: { hits: 10, ammo: ['none'], gearMode: 'fixed', fixedGear: { ...ALL6, weapon: { equipped: true, stat1: 50 } } } })).includes('stat2'));
     assert.ok(bad(raw({ war: { hits: 10, ammo: ['none'], ownedGear: { weapon: { equipped: true, stat1: 50, stat2: 5 } } } })).includes('durability'));
     assert.ok(bad(raw({ pill: { enabled: true, state: { kind: 'buff' }, battles: [{ startMinutes: 0, durationMinutes: 10, hits: 5 }], cost: { mode: 'owned' } } })).includes('minutes'));
@@ -58,7 +58,8 @@ describe('war build through the run layer (real recorded fixtures)', () => {
     const gear = { ...ALL6, weapon: { equipped: true, stat1: 60, stat2: 8, usesAmmo: true, durability: 80 }, chest: { equipped: true, stat1: 10, durability: 80 } };
     const r = await run({ war: { kind: 'fixedHits', hits: 30, gearMode: 'fixed', fixedGear: gear, ammo: ['light'], food: FOOD, objective: { kind: 'maxDamage' } } }); assert.ok(r.ok, JSON.stringify(r)); if (!r.ok) return; json(r);
     assert.equal(r.builds[0]!.cost!.acquisition, 0); assert.ok(r.current && r.current.damage! > 0); assert.ok(r.builds[0]!.combat!.damage >= r.current!.damage! - 1e-6);
-    const missing = parseOptimizeInput(raw({ war: { hits: 30, gearMode: 'fixed', ammo: ['none'], food: FOOD, fixedGear: { weapon: { equipped: false } } } })); assert.ok(!missing.ok);
+    const missing = await run({ war: { kind: 'fixedHits', hits: 30, gearMode: 'fixed', ammo: ['none'], food: FOOD, fixedGear: { weapon: { equipped: false } }, objective: { kind: 'maxDamage' } } });
+    assert.ok(!missing.ok); if (!missing.ok) assert.ok(JSON.stringify(missing).includes('unresolved') || JSON.stringify(missing).includes('every slot'), JSON.stringify(missing)); // the profile fixture reports no equipment: the other slots are unknown, not empty
   });
   it('objectives: best value and max net; unknown prices are refused or flagged', async () => {
     const bv = await run({ war: { kind: 'fixedHits', hits: 30, gearMode: 'optimize', ammo: ['none', 'light'], food: FOOD, objective: { kind: 'bestValue', minDamageSharePct: 60 } } }); assert.ok(bv.ok); if (bv.ok) json(bv);

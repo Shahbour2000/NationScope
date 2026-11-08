@@ -97,7 +97,7 @@ export function parseOptimizeInput(body: unknown): Parsed<OptimizeInput> {
     start: { healthPct: num('war.start.healthPct', st.healthPct, 1, 100), hunger: num('war.start.hunger', st.hunger, 0, 100) },
     objective: { kind: objKind, minDamageSharePct: num('war.objective.minDamageSharePct', o.minDamageSharePct, 1, 100), goldPerDamage: num('war.objective.goldPerDamage', o.goldPerDamage, 0, 1e6), crateValue: num('war.objective.crateValue', o.crateValue, 0, 1e9), budget: num('war.objective.budget', o.budget, 0, LIMITS.gold) },
   };
-  if (mode !== 'economic' && gearMode === 'fixed') for (const k of SLOT_KEYS) if (!fixedGear[k]) errors.push(`war.fixedGear.${k} is required for Fixed Gear (mark it empty if the slot is empty)`);
+  // Fixed Gear no longer requires all six slots in the request: the slots the user omits may come from the profile equipment snapshot. Whether every slot is resolved (an item or an explicit empty) is checked against the imported state in toWarBuildRequest, which names the unresolved slots; an unknown slot is never treated as empty.
   const e = isObj(body.economic) ? body.economic : {};
   const economic: OptimizeInput['economic'] = {
     marketTaxPct: num('economic.marketTaxPct', e.marketTaxPct, 0, 45), incomeTaxPct: num('economic.incomeTaxPct', e.incomeTaxPct, 0, 45), productionTaxPct: num('economic.productionTaxPct', e.productionTaxPct, 0, 45),

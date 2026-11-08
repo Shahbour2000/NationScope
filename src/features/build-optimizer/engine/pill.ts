@@ -6,10 +6,10 @@ import { RECIPES } from './economy';
 export const PILL = { buffMinutes: 360, debuffMinutes: 720, buffPct: 50, debuffPct: -50 } as const;
 
 defineFormula({ id: 'pill.timeline', version: 1, status: 'documented',
-  summary: 'After use: Attack skill +50% for 360 min, then -50% for the next 720 min, then no effect. A new Pill cannot be used until both phases end. The modifier depends on WHEN each hit happens, never a permanent bonus.',
-  source: 'project owner 2026-10-31 and 2026-11-01; wiki 01-basics §3.6', inputs: ['state', 'useAtMin', 'battle window'], outputs: ['phase share'], dependsOn: [], tests: ['pill timeline'] });
+  summary: 'After use: attack +50% for 360 min, then -50% for the next 720 min, then no effect (Wiki 01-basics §3.6). The percentage is one of the personal boosts summed with ammo and rank (03-war §1.6 step 2). A new Pill cannot be used until both phases end. The modifier depends on WHEN each hit happens, never a permanent bonus.',
+  source: 'wiki 01-basics §3.6; wiki 03-war §1.6 step 2 (timeline also described by the project owner 2026-10-31)', inputs: ['state', 'useAtMin', 'battle window'], outputs: ['phase share'], dependsOn: [], tests: ['pill timeline'] });
 defineFormula({ id: 'pill.plan', version: 1, status: 'estimated',
-  summary: 'Expected damage per battle = sum over phases (share of hits in phase x expected damage with that phase\'s Attack-skill modifier). Hits are spread uniformly over the battle window unless explicit hit times are given. Exact in expectation because expected damage is linear in the effective Attack skill.',
+  summary: 'Expected damage per battle = sum over phases (share of hits in phase x per-hit damage computed with that phase\'s stimulant percentage in the full hit model). Hits are spread uniformly over the battle window unless explicit hit times are given.',
   source: 'engine design', inputs: ['combat', 'schedule', 'plan'], outputs: ['damage', 'delta', 'cost'], dependsOn: ['pill.timeline', 'combat.hitOutcomes', 'combat.booster'], tests: ['pill plans'] });
 
 export type PillState =
@@ -102,7 +102,7 @@ export function analysePill(input: PillPlanInput): PillAnalysisResult {
   const cost = pillCost(input.cost);
   const gpd = input.goldPerDamage ?? 0;
 
-  // Expected damage per hit in each phase: only the Attack skill differs between phases.
+  // Per-hit damage in each phase: only the stimulant percentage in the personal-boost sum differs between phases.
   const hits = (booster: 'none' | 'positive' | 'negative') => computeHit({ ...input.combat, booster });
   const hn = hits('none'), hb = hits('positive'), hd = hits('negative');
   const E = { none: hn.expected, buff: hb.expected, debuff: hd.expected };

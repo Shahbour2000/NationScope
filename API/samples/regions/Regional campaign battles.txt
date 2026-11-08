@@ -1,0 +1,1 @@
+{"battles":[{"id":"btl_ta72c39dwcrczcdq","type":"territorial","status":"active","attackerCountryId":"es","defenderCountryId":"uk","sourceRegionId":"uk-london","winner":null,"attackerRounds":0,"defenderRounds":0,"sourceLost":false,"startedAt":"2026-10-21T07:40:27.573Z","endedAt":null}],"ownership":[],"launchedFromHere":[]}

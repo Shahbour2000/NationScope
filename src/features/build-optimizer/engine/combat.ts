@@ -32,9 +32,9 @@ export interface WarContext {
   bounty?: Bounty;
 }
 export interface Conventions {
-  /** 'onePlus': crit hit = A*(1+CD/100). 'direct': A*(CD/100). UNVERIFIED -> needs one in-game calibration. */
+  /** 'onePlus' (Wiki default): a critical hit adds the critical-damage percentage, A*(1+CD/100) (01-basics §2.4 "extra damage", 03-war §1.6 step 4). 'direct' (A*CD/100) is NOT what the Wiki states; kept only as an explicit what-if switch. */
   critMultiplier: 'onePlus' | 'direct';
-  /** How AMMO and RANK combine (the Pill is NOT part of this: it modifies the Attack skill only). Wiki 03-war §1.6 says they are summed ('additive'). */
+  /** How the personal boosts (ammo, stimulant/Pill, rank) combine. Wiki 03-war §1.6 step 2 says they are SUMMED ('additive', the default); 'multiplicative' is a what-if switch only. */
   stacking: 'additive' | 'multiplicative';
 }
 export const DEFAULT_CONVENTIONS: Conventions = { critMultiplier: 'onePlus', stacking: 'additive' };
@@ -50,27 +50,44 @@ export interface CombatInput {
   conventions?: Partial<Conventions>;
 }
 
-defineFormula({ id: 'combat.overflow', version: 1, status: 'documented',
-  summary: 'Accuracy above 100 -> +3 Attack per point; crit chance above 100 -> +3 crit damage per point. Applied once to skill+gear totals. Whether it occurs before personal boosts is unverified (we apply to base attack).',
-  source: 'wiki 01-basics §2.4', inputs: ['accuracyTotal', 'critChanceTotal'], outputs: ['bonusAttack', 'bonusCritDamage'], dependsOn: ['skills.value.endpoints'], tests: ['overflow'] });
+defineFormula({ id: 'combat.overflow', version: 2, status: 'documented',
+  summary: 'Accuracy above 100 -> +3 Attack per point; crit chance above 100 -> +3 crit damage per point (Wiki). Computed on the skill+gear totals and applied once.',
+  source: 'wiki 01-basics §2.4 "Skill caps and diminishing returns"', inputs: ['accuracyTotal', 'critChanceTotal'], outputs: ['bonusAttack', 'bonusCritDamage'], dependsOn: ['skills.value.endpoints'], tests: ['overflow'] });
+defineFormula({ id: 'combat.overflow.order', version: 1, status: 'unverified',
+  summary: 'The Wiki says the excess accuracy "becomes Attack" but does not say where it enters the damage pipeline. It is treated as part of the Attack stat (step 1, before the personal boosts of step 2). UNRESOLVED: not stated by the Wiki.',
+  source: 'wiki 01-basics §2.4 (rate) / 03-war §1.6 (order not stated)', inputs: ['accuracyTotal'], outputs: ['attackBase'], dependsOn: ['combat.overflow'], tests: ['overflow'] });
 defineFormula({ id: 'combat.weaponAmmo', version: 1, status: 'documented',
-  summary: 'Firearms without ammo contribute nothing (attack and crit chance); knife needs no ammo.', source: 'wiki 01-basics §3.5', inputs: ['weapon', 'ammo'], outputs: ['weaponActive'], dependsOn: [], tests: ['weapon needs ammo'] });
-defineFormula({ id: 'combat.personalBoost', version: 2, status: 'documented',
-  summary: 'Ammo and rank bonuses are SUMMED and applied to (effective Attack skill + weapon attack + accuracy-overflow attack). The Pill is NOT part of this sum.',
-  source: 'wiki 03-war §1.6 step 2', inputs: ['ammo', 'rank'], outputs: ['personalMultiplier'], dependsOn: [], tests: ['personal boosts additive'] });
-defineFormula({ id: 'combat.booster', version: 3, status: 'documented',
-  summary: 'Pill (stimulant): a direct modifier to the ATTACK SKILL value only: +50% during the first 6 h after use, -50% during the next 12 h, none afterwards. It does not modify weapon attack, ammo, rank, crit chance, crit damage, accuracy, armor, dodge, loot chance or any other skill, and it does not stack additively or multiplicatively with ammo or rank: it changes the skill value before the weapon is added and before ammo/rank are applied.',
-  source: 'project owner 2026-11-01 (supersedes the earlier "+-50% attack modifier" reading); wiki 01-basics §3.6', inputs: ['phase', 'attack skill'], outputs: ['effective attack skill'], dependsOn: [], tests: ['booster phases', 'pill is attack-skill only'] });
-defineFormula({ id: 'combat.hitOutcomes', version: 1, status: 'documented',
-  summary: 'Accuracy% = clean-hit chance; graze = 50% damage and no crit; crit only on clean hits; luck +-10%; floor, min 1.', source: 'wiki 03-war §1.6', inputs: ['accuracy', 'critChance'], outputs: ['outcomes'], dependsOn: ['combat.overflow', 'combat.personalBoost'], tests: ['hit outcomes'] });
-defineFormula({ id: 'combat.critMultiplier', version: 1, status: 'unverified',
-  summary: 'Crit multiplier = 1 + critDamage/100 (default) or critDamage/100. Wiki: "extra damage dealt by a critical hit".', source: 'wiki 01-basics §2.4', inputs: ['critDamageTotal'], outputs: ['multiplier'], dependsOn: [], tests: ['crit convention'] });
-defineFormula({ id: 'combat.luck', version: 1, status: 'unverified',
-  summary: 'Luck +-10%; distribution unknown. Expected value assumes symmetric luck (mean 1); range reports the 0.9/1.1 extremes.', source: 'wiki 03-war §1.6 step 5', inputs: [], outputs: ['mean', 'range'], dependsOn: [], tests: ['hit outcomes'] });
-defineFormula({ id: 'combat.battleBonus', version: 1, status: 'estimated',
-  summary: 'Positives summed and capped at +100%, penalties summed and capped at -50% (documented); net = capped positives + capped penalties (combination unverified).', source: 'wiki 03-war §1.7', inputs: ['modifiers'], outputs: ['netPct'], dependsOn: [], tests: ['battle bonus caps'] });
-defineFormula({ id: 'combat.sustain', version: 1, status: 'estimated',
-  summary: 'Health loss/hit = (1-dodge%) * max(1, 10*(1-armorEff%)). Armor>45 and dodge>36 count 50% beyond the threshold (documented); dodge as a % chance and threshold on skill+gear totals are assumptions.', source: 'wiki 01-basics §2.2/2.4, 03-war §1.5', inputs: ['armor', 'dodge', 'health'], outputs: ['healthLossPerHit', 'hitsPerFullHealth'], dependsOn: ['skills.value.linear'], tests: ['sustain'] });
+  summary: 'Firearms without ammo contribute nothing (attack and crit chance) and do not wear; the knife needs no ammo.', source: 'wiki 01-basics §3.5', inputs: ['weapon', 'ammo'], outputs: ['weaponActive'], dependsOn: [], tests: ['weapon needs ammo'] });
+defineFormula({ id: 'combat.personalBoost', version: 3, status: 'documented',
+  summary: 'Step 1: Attack = Attack skill + weapon attack (+ accuracy overflow). Step 2: the ammo, stimulant (Pill) and rank bonuses are SUMMED and applied to that attack: A = (skill + weapon) * (1 + (ammo% + stimulant% + rank%)/100).',
+  source: 'wiki 03-war §1.6 steps 1-2', inputs: ['ammo', 'stimulant', 'rank'], outputs: ['personalMultiplier'], dependsOn: [], tests: ['personal boosts additive', 'wiki: personal boosts are summed'] });
+defineFormula({ id: 'combat.booster', version: 4, status: 'documented',
+  summary: 'Stimulant (Pill): +50% attack during the first 6 h, then -50% attack for 12 h, none afterwards (01-basics §3.6). Per 03-war §1.6 step 2 the stimulant is one of the personal boosts that are summed with ammo and rank. NOTE: an earlier project-owner description (2026-11-01) modelled it as an Attack-skill-only modifier outside that sum; the Wiki takes priority, so the sum is used. The old reading is not available as a switch.',
+  source: 'wiki 01-basics §3.6; wiki 03-war §1.6 step 2', inputs: ['phase'], outputs: ['pillPct'], dependsOn: [], tests: ['booster phases', 'wiki: personal boosts are summed'] });
+defineFormula({ id: 'combat.hitOutcomes', version: 2, status: 'documented',
+  summary: 'Accuracy% = clean-hit chance (capped at 100); a miss is a graze: 50% damage and no crit. Crit only on clean hits, with probability = crit chance (capped at 100), and adds the critical-damage percentage.',
+  source: 'wiki 03-war §1.6 steps 3-4', inputs: ['accuracy', 'critChance'], outputs: ['outcomes'], dependsOn: ['combat.overflow', 'combat.personalBoost'], tests: ['hit outcomes', 'wiki: hit pipeline'] });
+defineFormula({ id: 'combat.critMultiplier', version: 2, status: 'documented',
+  summary: 'A critical hit multiplies damage by 1 + critDamage/100 (critical damage is "extra damage dealt by a critical hit": 100 at skill level 0, so a base crit deals double).',
+  source: 'wiki 01-basics §2.4 (skill table), 03-war §1.6 step 4', inputs: ['critDamageTotal'], outputs: ['multiplier'], dependsOn: [], tests: ['crit convention', 'wiki: hit pipeline'] });
+defineFormula({ id: 'combat.rounding', version: 1, status: 'documented',
+  summary: 'After all bonuses the result is rounded DOWN, with a minimum damage of 1. The per-hit figure used for scoring is the probability-weighted sum of these floored outcomes.',
+  source: 'wiki 03-war §1.6 step 7', inputs: ['outcome damage'], outputs: ['floored damage'], dependsOn: [], tests: ['wiki: rounding and minimum damage'] });
+defineFormula({ id: 'combat.luck', version: 2, status: 'documented',
+  summary: 'Luck varies damage by up to 10% up or down (the documented RANGE). minPerHit/maxPerHit report the floored 0.9x / 1.1x extremes.',
+  source: 'wiki 03-war §1.6 step 5', inputs: [], outputs: ['range'], dependsOn: [], tests: ['wiki: luck range only'] });
+defineFormula({ id: 'combat.luck.distribution', version: 1, status: 'unverified',
+  summary: 'The Wiki gives the luck range but NOT its probability distribution, so no distribution is assumed. The central per-hit figure is computed with luck fixed at 1.0 (no luck effect); it is NOT an expected value over luck. UNRESOLVED: distribution not stated by the Wiki.',
+  source: 'wiki 03-war §1.6 step 5 (silent)', inputs: [], outputs: [], dependsOn: ['combat.luck'], tests: ['wiki: luck range only'] });
+defineFormula({ id: 'combat.battleBonus', version: 2, status: 'documented',
+  summary: 'Battle bonuses are summed and capped at +100%; penalties are summed and capped at -50%; the two capped totals are combined (literal reading of "maximum total of bonuses +100%, of penalties -50%"). Eligibility of each bonus is supplied by the caller.',
+  source: 'wiki 03-war §1.7', inputs: ['modifiers'], outputs: ['netPct'], dependsOn: [], tests: ['battle bonus caps', 'wiki: battle bonus caps'] });
+defineFormula({ id: 'combat.sustain', version: 2, status: 'estimated',
+  summary: 'Health loss per hit = 10 reduced by armor, minimum 1 (Wiki); armor above 45 and dodge above 36 count at 50% (Wiki). NOT stated by the Wiki and therefore assumed: that an armor point equals one percentage point of reduction, that dodge points are a percentage chance, and that the health cost is not rounded.',
+  source: 'wiki 01-basics §2.2/§2.4, 03-war §1.5', inputs: ['armor', 'dodge', 'health'], outputs: ['healthLossPerHit', 'hitsPerFullHealth'], dependsOn: ['skills.value.linear'], tests: ['sustain', 'wiki: health cost per hit'] });
+defineFormula({ id: 'combat.conventions.whatif', version: 1, status: 'unverified',
+  summary: 'The critMultiplier "direct" and stacking "multiplicative" switches are NOT what the Wiki states. A result computed with either is a what-if and is labelled Unverified.',
+  source: 'wiki 01-basics §2.4, 03-war §1.6 (the defaults follow the Wiki)', inputs: ['conventions'], outputs: [], dependsOn: ['combat.critMultiplier', 'combat.personalBoost'], tests: ['crit convention', 'wiki: personal boosts are summed'] });
 defineFormula({ id: 'combat.bounty', version: 1, status: 'documented',
   summary: 'Bounty pays ratePer1000 gold per 1,000 damage on the eligible side, capped by remaining budget; ineligible players earn nothing.', source: 'wiki 03-war §3.1', inputs: ['damage', 'bounty'], outputs: ['gold'], dependsOn: [], tests: ['bounty'] });
 
@@ -79,7 +96,12 @@ export interface HitModel {
   accuracyTotal: number; critChanceTotal: number; critDamageTotal: number;
   cleanChance: number; critChance: number;
   outcomes: { kind: 'graze' | 'clean' | 'crit'; probability: number; damage: number }[];
-  expected: number; expectedFloored: number; minPerHit: number; maxPerHit: number;
+  /** Central per-hit damage per the Wiki: probability-weighted sum of floored (min 1) outcomes with luck fixed at 1.0. NOT an expectation over luck (the Wiki gives no luck distribution). */
+  expected: number;
+  /** Same weighting WITHOUT rounding; diagnostic only, never used for scoring. */
+  expectedUnrounded: number;
+  /** Floored (min 1) extremes of the documented +-10% luck range. */
+  minPerHit: number; maxPerHit: number;
   healthLossPerHit: number; hitsPerFullHealth: number; dodgeProbability: number;
   missing: string[]; assumptions: string[]; usedFormulas: string[]; evidence: EvidenceStatus;
 }
@@ -108,7 +130,7 @@ export function battleModifierPct(mods: BattleModifier[]): number {
 export function computeHit(input: CombatInput): HitModel {
   const conv = { ...DEFAULT_CONVENTIONS, ...input.conventions };
   const missing: string[] = [], assumptions: string[] = [];
-  const used = ['skills.value.linear', 'combat.overflow', 'combat.weaponAmmo', 'combat.personalBoost', 'combat.hitOutcomes', 'combat.critMultiplier', 'combat.luck', 'combat.sustain'];
+  const used = ['skills.value.linear', 'combat.overflow', 'combat.weaponAmmo', 'combat.personalBoost', 'combat.hitOutcomes', 'combat.critMultiplier', 'combat.rounding', 'combat.luck', 'combat.sustain'];
   const v = (id: keyof Levels) => skillValue(id, input.levels[id]);
 
   const w = input.gear.weapon;
@@ -123,16 +145,19 @@ export function computeHit(input: CombatInput): HitModel {
   const accExcess = Math.max(0, accuracyTotal - 100), critExcess = Math.max(0, critChanceTotal - 100);
   const critDamageTotal = critDamageBase + 3 * critExcess;
   const pillPct = input.booster === 'positive' ? 50 : input.booster === 'negative' ? -50 : 0;
-  // Pill: modifies the Attack SKILL value only (before the weapon is added and before ammo/rank are applied)
-  const attackSkillEffective = v('attack') * (1 + pillPct / 100);
+  // Wiki 03-war §1.6 step 1: Attack = Attack skill + weapon attack (accuracy overflow counts as Attack).
+  const attackSkillEffective = v('attack');
   const attackBase = attackSkillEffective + (weaponActive ? weapon!.attack : 0) + 3 * accExcess;
 
   const ammoPct = input.ammo === 'none' ? 0 : AMMO[input.ammo].pct;
   if (input.rankBonusPct === undefined) { missing.push('rankBonusPct'); assumptions.push('Rank bonus unknown: 0% used (flagged missing).'); }
-  if (input.booster !== 'none') used.push('combat.booster');
   const rankPct = input.rankBonusPct ?? 0;
-  const personalMultiplier = conv.stacking === 'additive' ? 1 + (ammoPct + rankPct) / 100 : (1 + ammoPct / 100) * (1 + rankPct / 100);
+  // Wiki 03-war §1.6 step 2: ammo, stimulant (Pill) and rank bonuses are summed and applied.
+  const personalMultiplier = Math.max(0, conv.stacking === 'additive' ? 1 + (ammoPct + pillPct + rankPct) / 100 : (1 + ammoPct / 100) * (1 + pillPct / 100) * (1 + rankPct / 100));
   if (input.booster !== 'none') used.push('combat.booster');
+  if (conv.critMultiplier !== 'onePlus' || conv.stacking !== 'additive') { used.push('combat.conventions.whatif'); assumptions.push('A non-Wiki convention switch is active (crit multiplier or stacking): this result is a what-if.'); }
+  if (accExcess > 0) used.push('combat.overflow.order'); // the Wiki does not state where excess accuracy enters the pipeline
+  assumptions.push('Luck: the Wiki gives only a +-10% range, no distribution. The per-hit figure is computed with luck fixed at 1.0 (no luck effect) and is not an expectation over luck; min/max show the documented range.');
 
   let battlePct = 0;
   if (input.war) {
@@ -151,8 +176,9 @@ export function computeHit(input: CombatInput): HitModel {
     { kind: 'crit' as const, probability: p * c, damage: raw.crit },
   ];
   const fl = (x: number) => Math.max(1, Math.floor(x));
-  const expected = outcomes.reduce((s, o) => s + o.probability * o.damage, 0);
-  const expectedFloored = outcomes.reduce((s, o) => s + o.probability * fl(o.damage), 0);
+  // Wiki 03-war §1.6 step 7: round down, minimum damage 1. Scoring uses the rounded outcomes (luck-neutral).
+  const expectedUnrounded = outcomes.reduce((s, o) => s + o.probability * o.damage, 0);
+  const expected = outcomes.reduce((s, o) => s + o.probability * fl(o.damage), 0);
   const active = outcomes.filter((o) => o.probability > 0);
   const minPerHit = Math.min(...active.map((o) => fl(o.damage * 0.9)));
   const maxPerHit = Math.max(...active.map((o) => fl(o.damage * 1.1)));
@@ -163,7 +189,7 @@ export function computeHit(input: CombatInput): HitModel {
   const hitsPerFullHealth = v('health') / healthLossPerHit;
 
   return { attackBase, attackSkillEffective, pillPct, personalMultiplier, battleMultiplier, accuracyTotal, critChanceTotal, critDamageTotal,
-    cleanChance: p, critChance: c, outcomes, expected, expectedFloored, minPerHit, maxPerHit,
+    cleanChance: p, critChance: c, outcomes, expected, expectedUnrounded, minPerHit, maxPerHit,
     healthLossPerHit, hitsPerFullHealth, dodgeProbability: Math.min(dodgeEff, 100) / 100, missing: [...new Set(missing)], assumptions, usedFormulas: used, evidence: weakestStatus(used) };
 }
 

@@ -74,12 +74,13 @@ export function toOptimizeRequest(state: PlayerState, sc: Scenario): ScenarioRes
     };
   }
   const lead = sc.market ? sc.market.ask[marketCodeOf('lead')] : undefined;
-  if (state.gear.value === null) notes.push('Equipped gear unknown: gear slots are reported missing and contribute 0.');
+  if (state.gear.value === null) notes.push(`Equipped gear unknown (${state.equipment.resolved.completeness}; unresolved slots: ${state.equipment.resolved.unresolved.join(', ')}). No partial loadout is used: gear slots are reported missing and contribute 0.`);
   if (state.rank.bonusPct.value === null) notes.push('Rank bonus unknown.');
   const request: OptimizeRequest = {
     player: {
       level: state.level.value!, currentLevels: state.skills.levels.value!, totalPoints: state.skillPoints.earned.value ?? undefined,
-      prestigeCount: state.prestigeCount.value ?? undefined, firstResetFree: state.firstResetFree.value ?? undefined,
+      // Only a user-supplied Prestige count is forwarded (it is what the point ledger used). API Prestige stays display-only: forwarding it would let the engine recompute points the ledger deliberately did not.
+      prestigeCount: state.prestigeCount.source === 'user' ? state.prestigeCount.value ?? undefined : undefined, firstResetFree: state.firstResetFree.value ?? undefined,
     },
     objective: sc.objective, constraints, allowReset: sc.allowReset ?? true,
     combat: { gear: state.gear.value ?? {}, ammo, booster: sc.booster ?? 'none', rankBonusPct: state.rank.bonusPct.value ?? undefined, war: sc.war },
@@ -112,7 +113,7 @@ export function toWarBuildRequest(state: PlayerState, sc: WarScenario): WarScena
   if (state.level.value === null) missing.push('level');
   if (state.skills.levels.value === null) missing.push('skills');
   if (state.skillPoints.consistent === false) missing.push('consistent skill data (supplied skill-point information contradicts the invested points)');
-  if (sc.gearMode === 'fixed' && state.gear.value === null) missing.push('equipped gear (Fixed Gear needs the real equipment; user input)');
+  if (sc.gearMode === 'fixed' && state.gear.value === null) missing.push(`equipped gear for every slot (Fixed Gear needs all six; profile equipment is ${state.equipment.resolved.completeness}; unresolved slots, unknown and not empty: ${state.equipment.resolved.unresolved.join(', ')}; enter them or mark them empty)`);
   if (sc.gearMode === 'optimize' && !sc.candidates && !sc.owned) missing.push('equipment candidates (market offers or owned items)');
   if (state.skillPoints.earned.value === null) missing.push('earned skill points');
   if (missing.length) return { ok: false, missing };

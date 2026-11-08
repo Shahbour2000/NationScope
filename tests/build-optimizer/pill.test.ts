@@ -10,6 +10,8 @@ const approx = (a: number, b: number, e = 1e-6) => assert.ok(Math.abs(a - b) < e
 const battle = (startMinutes: number, durationMinutes: number, hits: number): Battle => ({ startMinutes, durationMinutes, hits });
 const E2 = (c: Omit<CombatInput, 'booster'>, booster: 'none' | 'positive' | 'negative') => computeHit({ ...c, booster }).expected;
 const E = (booster: 'none' | 'positive' | 'negative') => computeHit({ ...combat, booster }).expected;
+/** Wiki formula without the per-hit rounding (03-war §1.6 step 7), for exact ratio checks. */
+const U = (c: Omit<CombatInput, 'booster'>, booster: 'none' | 'positive' | 'negative') => computeHit({ ...c, booster }).expectedUnrounded;
 
 describe('pill timeline', () => {
   it('pill timeline', () => {
@@ -54,9 +56,9 @@ describe('pill plans', () => {
     const p = r.plans.find((x) => x.useAtMinutes === 0)!;
     approx(p.damagePerBattle[1]!, 100 * E('negative')); assert.ok(p.damagePerBattle[1]! < r.baseline.damagePerBattle[1]!);
     assert.equal(p.hitsInDebuff, 100);
-    // with symmetric +50/-50 and equal hits, the net damage over both battles is ~0 under additive stacking
+    // with symmetric +50/-50 and equal hits the gain and the loss cancel; because every hit is rounded down (Wiki step 7) they cancel only up to rounding (< 1 damage per hit)
     approx(p.deltaDamage, 100 * (E('positive') - E('none')) + 100 * (E('negative') - E('none')));
-    approx(p.deltaDamage, 0, 1e-6);
+    assert.ok(Math.abs(p.deltaDamage) <= 200, String(p.deltaDamage));
     // using it at minute 0 is pointless (+50% then -50% cancels), but saving it for battle B gives that battle the buff
     const late = r.plans.find((x) => x.useAtMinutes === 480)!;
     assert.equal(r.best.useAtMinutes, 480); assert.ok(late.deltaDamage > 0); assert.ok(late.deltaDamage > p.deltaDamage);
@@ -77,22 +79,22 @@ describe('pill plans', () => {
     const u = analysePill({ ...base, cost: { mode: 'buy' }, state: { kind: 'none' }, schedule: [battle(0, 60, 1000)] }); assert.ok(u.ok);
     if (u.ok) { assert.equal(u.plans[0]!.goldCost, null); assert.equal(u.plans[0]!.net, null); }
   });
-  it('the Pill is not a stackable bonus: ammo and rank are unaffected, only the Attack skill moves', () => {
+  it('the Pill is a third summand with ammo and rank (Wiki 03-war §1.6 step 2)', () => {
     const ammoCombat = { ...combat, levels: { ...emptyLevels(), attack: 10 }, ammo: 'heavy' as const, gear: { ...gear, weapon: { kind: 'item' as const, stats: { attack: 50, critChance: 4, usesAmmo: true } } }, rankBonusPct: 8 };
     const r = analysePill({ combat: ammoCombat, state: { kind: 'none' }, schedule: [battle(0, 60, 100)], cost: { mode: 'owned' } }); assert.ok(r.ok); if (!r.ok) return;
-    const mult = 1 + (45 + 8) / 100; // ammo + rank, no Pill term
-    const e = (b: 'none' | 'positive' | 'negative') => computeHit({ ...ammoCombat, booster: b }).expected;
-    approx(e('positive') / e('none'), (400 * 1.5 + 50) / (400 + 50)); // only the 400-point Attack skill scales
-    approx(e('negative') / e('none'), (400 * 0.5 + 50) / (400 + 50));
-    approx(computeHit({ ...ammoCombat, booster: 'positive' }).personalMultiplier, mult);
-    assert.equal(r.evidence, 'unverified'); // weakest link: the unverified crit multiplier inside the damage numbers
+    const sum = (pill: number) => 1 + (45 + pill + 8) / 100; // ammo + pill + rank, summed
+    approx(U(ammoCombat, 'positive') / U(ammoCombat, 'none'), sum(50) / sum(0));
+    approx(U(ammoCombat, 'negative') / U(ammoCombat, 'none'), sum(-50) / sum(0));
+    approx(computeHit({ ...ammoCombat, booster: 'positive' }).personalMultiplier, sum(50));
+    assert.equal(r.evidence, 'estimated'); // weakest link: interpolated skill values / sustain mapping, not the Pill
     assert.ok(!('byStacking' in r));
   });
   it('positive phase, negative phase, expired phase and a battle spanning phases', () => {
     const lev = { ...emptyLevels(), attack: 10 }; // attack skill 400, knife +30
     const c = { ...combat, levels: lev };
     const Epos = E2(c, 'positive'), Eneg = E2(c, 'negative'), Enone = E2(c, 'none');
-    approx(Epos / Enone, 630 / 430); approx(Eneg / Enone, 230 / 430);
+    approx(U(c, 'positive') / U(c, 'none'), 1.5); approx(U(c, 'negative') / U(c, 'none'), 0.5); // no ammo/rank: the stimulant alone scales the whole attack
+    assert.ok(Math.abs(Epos - U(c, 'positive')) < 1 && Math.abs(Enone - U(c, 'none')) < 1);
     const pos = analysePill({ combat: c, state: { kind: 'buff', remainingMinutes: 120 }, schedule: [battle(10, 60, 50)], cost: { mode: 'owned' } }); assert.ok(pos.ok);
     if (pos.ok) { approx(pos.baseline.totalDamage, 50 * Epos); assert.equal(pos.baseline.hitsInBuff, 50); }
     const neg = analysePill({ combat: c, state: { kind: 'debuff', remainingMinutes: 120 }, schedule: [battle(10, 60, 50)], cost: { mode: 'owned' } }); assert.ok(neg.ok);

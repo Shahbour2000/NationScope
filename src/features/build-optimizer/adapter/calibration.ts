@@ -5,7 +5,7 @@ import { emptyLevels } from '../engine/skills';
 /**
  * Bridge to NationScope's existing evidence gate (features/planner/evidence.ts): candidate formulas for the one remaining unresolved
  * combination, AMMO + RANK (summed per the wiki, product as the alternative), as `CandidateFormula`s so assessFormula/rankFormulas can decide
- * from real observations. The Pill is deliberately NOT an input: it is owner-confirmed to modify the Attack skill only (see combat.booster).
+ * from real observations. The Pill is deliberately NOT an input here: per the Wiki it is a third summand of the personal boosts (see combat.booster), and these observations are taken without one.
  * Observation inputs (numbers): attackSkill, weaponAttack, ammoPct, rankPct. Observed = a CLEAN, NON-CRITICAL hit's damage with luck removed.
  */
 const clean = (stacking: 'additive' | 'multiplicative'): CandidateFormula['predict'] => (i) => {

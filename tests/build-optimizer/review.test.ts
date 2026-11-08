@@ -84,7 +84,7 @@ describe('Pill on/off', () => {
     const off = optimizeWarBuild(war({ ...args, pill: { include: false } })), on = optimizeWarBuild(war({ ...args, pill: { include: true, state: { kind: 'none' }, schedule: [{ startMinutes: 0, durationMinutes: 20, hits: 20 }], cost: { mode: 'buy', marketPrice: 50 } } }));
     assert.ok(off.ok && on.ok); if (!off.ok || !on.ok) return;
     assert.deepEqual(on.builds.map((b) => [b.levels, b.gear, b.ammo, b.cost, b.expectedDamage]), off.builds.map((b) => [b.levels, b.gear, b.ammo, b.cost, b.expectedDamage]));
-    assert.equal(off.pill, null); assert.ok(on.pill!.every((p) => p.ok && p.evidence === 'unverified')); // weakest link: the unverified crit multiplier inside the damage numbers
+    assert.equal(off.pill, null); assert.ok(on.pill!.every((p) => p.ok && p.evidence === 'estimated')); // weakest link: interpolated skill values and the sustain mapping
   });
 });
 
@@ -94,7 +94,7 @@ describe('sustainable combat', () => {
   it('sustainable session: health and hunger limit', () => {
     const r = sustainableCombat(base);
     assert.equal(r.lossPerHit, 10); assert.equal(r.sustainableHits, 47); assert.equal(r.limitingFactor, 'health-and-hunger'); // (160 + 8*40 - 10) / 10
-    assert.equal(r.mealsTotal, 8); assert.equal(r.hungerLeft, 0); assert.equal(r.meals[0]!.type, 'cookedFish'); assert.equal(r.evidence, 'unverified'); // weakest link: the crit multiplier convention
+    assert.equal(r.mealsTotal, 8); assert.equal(r.hungerLeft, 0); assert.equal(r.meals[0]!.type, 'cookedFish'); assert.equal(r.evidence, 'estimated'); // weakest link: interpolated skill values / sustain mapping
     assert.ok(r.assumptions.some((a) => a.includes('Starting health assumed full')) && r.assumptions.some((a) => a.includes('Food stock unknown')));
     approx(r.expectedDamage, 47 * r.hit.expected);
     const half = sustainableCombat({ ...base, start: { healthFraction: 0.5, hunger: 4 } }); assert.equal(half.sustainableHits, Math.floor((80 + 4 * 40 - 10) / 10));

@@ -59,9 +59,9 @@ defineFormula({
   dependsOn: [], tests: ['points earned', 'skill point ledger'],
 });
 defineFormula({
-  id: 'skills.pointsEarned.prestigeInteraction', version: 1, status: 'unverified',
-  summary: 'How the level that drops after a Prestige combines with the +4 points per Prestige (earned = 4*(currentLevel-1) + 4*prestige) is not confirmed in game; supply the real total when a player has prestiged.',
-  source: 'wiki 01-basics §2.8', inputs: ['playerLevel', 'prestigeCount'], outputs: ['earned'], dependsOn: ['skills.pointsEarned'], tests: ['skill point ledger'],
+  id: 'skills.pointsEarned.prestigeInteraction', version: 2, status: 'unverified',
+  summary: 'UNRESOLVED (Wiki is silent): the Wiki says a Prestige drops the level to match the remaining XP, returns all skill points and grants +4 additional points per Prestige, but it does not state the earned-points total after the level drop. 4*(currentLevel-1) + 4*prestige is therefore only a lower-bound estimate; supply the real total when a player has prestiged.',
+  source: 'wiki 01-basics §2.1, §2.8 (total after the level drop not stated)', inputs: ['playerLevel', 'prestigeCount'], outputs: ['earned'], dependsOn: ['skills.pointsEarned'], tests: ['skill point ledger', 'wiki: prestige points are not guessed'],
 });
 defineFormula({
   id: 'skills.resetCost', version: 1, status: 'documented',

@@ -2,6 +2,7 @@ import { MONEY_SCALE, parseMoney } from '@/lib/money';
 import type { AnyItem, Candidates } from '../engine/loadout';
 import type { WeaponStats } from '../engine/combat';
 import { marketCodeOf, MARKET_CODE, SLOT_STAT } from './codes';
+import { AMMO_EXEMPT_ITEM_CODES } from './equipment-snapshot';
 import type { EconomyInput } from '../engine/economy';
 
 export interface MarketRowLike { itemCode: string; bestAsk?: string | null; bestBid?: string | null; last?: string | null }
@@ -44,7 +45,6 @@ export function offersToCandidates(offers: readonly OfferLike[], o: CandidateOpt
   const skipped: CandidateBuild['skipped'] = [];
   const assumptions = ['Offers are priced at their listed gold price and treated as not owned.'];
   const bySlot = new Map<string, { item: AnyItem; vec: number[]; price: number }[]>();
-  let knife = false;
   for (const f of offers) {
     const gear = SLOT_STAT[f.slot ?? '']?.gear;
     if (!gear) { skipped.push({ offerId: f.offerId, reason: `unknown slot ${f.slot}` }); continue; }
@@ -53,17 +53,17 @@ export function offersToCandidates(offers: readonly OfferLike[], o: CandidateOpt
     if (f.durability == null || f.durability < (o.minDurability ?? 1)) { skipped.push({ offerId: f.offerId, reason: 'durability unknown or too low' }); continue; }
     const price = goldFromMoney(f.price);
     let stats: unknown;
-    if (gear === 'weapon') { const usesAmmo = f.itemCode !== 'knife'; if (!usesAmmo) knife = true; stats = { attack: st.attack!, critChance: st.criticalChance!, usesAmmo } satisfies WeaponStats; }
+    if (gear === 'weapon') { const usesAmmo = !AMMO_EXEMPT_ITEM_CODES.includes(f.itemCode); stats = { attack: st.attack!, critChance: st.criticalChance!, usesAmmo } satisfies WeaponStats; }
     else if (gear === 'helmet') stats = { critDamage: st.criticalDamages! };
     else if (gear === 'gloves') stats = { accuracy: st.precision! };
     else if (gear === 'boots') stats = { dodge: st.dodge! };
     else stats = { armor: st.armor! };
     const item = { id: f.offerId, stats, durability: f.durability, price } as AnyItem;
-    const vec = [...keys.map((k) => st[k]!), f.durability];
+    // Dominance dimensions. For weapons "needs no ammo" is an advantage: a firearm must never prune an ammo-free weapon (and vice versa the ammo-free weapon may prune a worse firearm).
+    const vec = [...keys.map((k) => st[k]!), f.durability, ...(gear === 'weapon' ? [(stats as WeaponStats).usesAmmo ? 0 : 1] : [])];
     (bySlot.get(gear) ?? bySlot.set(gear, []).get(gear)!).push({ item, vec, price });
   }
   assumptions.push('Weapons are assumed to need ammo unless the item code is "knife" (knife code assumed).');
-  void knife;
   const front = (xs: { item: AnyItem; vec: number[]; price: number }[]) => {
     const kept = xs.filter((a) => !xs.some((b) => b !== a && b.price <= a.price && b.vec.every((v, i) => v >= a.vec[i]!) && (b.price < a.price || b.vec.some((v, i) => v > a.vec[i]!))));
     kept.sort((a, b) => a.price - b.price || a.item.id.localeCompare(b.item.id));

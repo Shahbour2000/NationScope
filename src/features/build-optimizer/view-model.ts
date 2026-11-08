@@ -100,8 +100,16 @@ export { finite };
 
 // ---------------------------------------------------------------- import preview
 import type { BuildImport } from './adapter/import';
+import { EQUIPMENT_API_SLOTS, type EquipmentCompleteness, type EquipmentSlotStatus, type GearKey } from './adapter/equipment-snapshot';
 import { recipeForMarketCode } from './adapter/codes';
 export type SourceTag = 'api' | 'derived' | 'user' | 'unavailable';
+/** Values the Data panel can copy into the gear form for one slot ('Use these values'). Durability is passed through as reported. */
+export interface EquipmentFillVM { stat1: number; stat2?: number; usesAmmo?: boolean; durability?: number }
+export interface EquipmentSlotVM { gear: GearKey; status: EquipmentSlotStatus; itemCode: string | null; rarity: string | null; durability: number | null; problems: string[]; fill: EquipmentFillVM | null }
+export interface EquipmentVM {
+  reported: boolean; completeness: EquipmentCompleteness; slots: EquipmentSlotVM[];
+  rejected: { index: number; slot: string | null; reason: string }[]; unrecognized: string[];
+}
 export interface ImportVM {
   player: { id: string; name: string; countryId: string | null; level: number | null; damageTotal: string | null; rankName: string | null; rankBonusPct: number | null };
   provenance: { level: SourceTag; skills: SourceTag; rank: SourceTag; companies: SourceTag; stats: SourceTag; gear: SourceTag; pill: SourceTag; prestige: SourceTag };
@@ -110,7 +118,33 @@ export interface ImportVM {
   companies: { count: number | null; products: { code: string; count: number; modelled: boolean }[] };
   market: { loaded: boolean; items: number };
   offers: { total: number; perSlot: Record<string, number> } | null;
+  /** Profile equipment snapshot, slot by slot (player-owned data only; market offers are in `offers`). */
+  equipment: EquipmentVM;
+  /** Imported data that is kept and shown but not used as a calculation input in this version. */
+  retained: ('economy' | 'companyUpgrades' | 'stats')[];
   failures: Record<string, string>; warnings: string[]; missing: string[]; inferredMappings: string[];
+}
+function retainedOf(imp: BuildImport): ImportVM['retained'] {
+  const st = imp.state, out: ImportVM['retained'] = [];
+  if (st.economy.value !== null) out.push('economy');
+  if (st.companies.items.some((c) => (c.storageLevel ?? 1) > 1 || (c.engineLevel ?? 1) > 1 || (c.breakRoomLevel ?? 1) > 1)) out.push('companyUpgrades');
+  if (st.stats.value !== null) out.push('stats');
+  return out;
+}
+function equipmentVM(imp: BuildImport): EquipmentVM {
+  const snap = imp.state.equipment.snapshot;
+  const slots = EQUIPMENT_API_SLOTS.map((api): EquipmentSlotVM => {
+    const st = snap.slots[api]; const only = st.entries.length === 1 ? st.entries[0]! : null;
+    let fill: EquipmentFillVM | null = null;
+    const item = st.item;
+    if (st.status === 'present' && item && item.kind === 'item') {
+      const v = st.durability ?? undefined;
+      if (st.gear === 'weapon') { const w = item.stats as { attack: number; critChance: number; usesAmmo: boolean }; fill = { stat1: w.attack, stat2: w.critChance, usesAmmo: w.usesAmmo, durability: v }; }
+      else { const x = Object.values(item.stats as Record<string, number>)[0]!; fill = { stat1: x, durability: v }; }
+    }
+    return { gear: st.gear, status: st.status, itemCode: only?.itemCode ?? null, rarity: only?.rarity ?? null, durability: st.durability, problems: st.problems, fill };
+  });
+  return { reported: snap.reported, completeness: snap.completeness, slots, rejected: snap.rejected.map((r) => ({ index: r.index, slot: r.slot, reason: r.reason })), unrecognized: snap.unrecognized.map((u) => u.slot) };
 }
 export function importViewModel(imp: BuildImport): ImportVM {
   const s = imp.state; const levels = s.skills.levels.value;
@@ -126,6 +160,8 @@ export function importViewModel(imp: BuildImport): ImportVM {
     companies: { count: s.companies.count, products: [...counts.entries()].map(([code, count]) => ({ code, count, modelled: recipeForMarketCode(code) !== null })) },
     market: { loaded: imp.market !== null, items: imp.market ? Object.keys(imp.market.ask).length : 0 },
     offers: imp.candidates ? { total: Object.values(perSlot).reduce((a, b) => a + b, 0), perSlot } : null,
+    equipment: equipmentVM(imp),
+    retained: retainedOf(imp),
     failures: imp.failures, warnings: s.warnings, missing: s.missing, inferredMappings: s.skills.inferredMappings,
   };
 }

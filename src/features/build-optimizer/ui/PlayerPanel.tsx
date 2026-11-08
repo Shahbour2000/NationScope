@@ -111,6 +111,7 @@ export function PlayerPanel({ t, numLocale, imp, state, error, onSelect }: { t: 
           ) : <Notice tone="bad" title={p.noSkillsTitle}>{p.noSkills}</Notice>}
 
           {Object.keys(imp.failures).length > 0 ? <Notice tone="warn" title={p.failuresTitle}><ul>{Object.entries(imp.failures).map(([k, v]) => <li key={k}><code>{k}</code>: {v}</li>)}</ul></Notice> : null}
+          {imp.retained.length > 0 ? <p className="hint">{p.retained} {imp.retained.map((k) => p.retainedItems[k]).join(", ")}</p> : null}
           {imp.warnings.length > 0 ? <Notice tone="warn" title={p.warningsTitle}><ul>{imp.warnings.map((w) => <li key={w}>{w}</li>)}</ul></Notice> : null}
           {imp.inferredMappings.length > 0 ? <p className="hint">{p.inferred}: {imp.inferredMappings.join(", ")}</p> : null}
         </div>

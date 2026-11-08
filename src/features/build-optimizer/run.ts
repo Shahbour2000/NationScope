@@ -20,6 +20,12 @@ const slotToGear = (k: SlotKey, s: ApiSlot): GearInput[keyof GearInput] => {
   if (k === 'boots') return { kind: 'item', stats: { dodge: a } } as GearInput[keyof GearInput];
   return { kind: 'item', stats: { armor: a } } as GearInput[keyof GearInput];
 };
+/** Slot-level view: every slot the user actually provided (an item or an explicit empty); omitted slots stay unknown. Never a complete loadout by itself. */
+export function partialGearFromSlots(slots: Partial<Record<SlotKey, ApiSlot>>): GearInput | undefined {
+  const g: Record<string, unknown> = {};
+  for (const k of SLOT_KEYS) { const s = slots[k]; if (s) g[k] = slotToGear(k, s); }
+  return Object.keys(g).length ? (g as unknown as GearInput) : undefined;
+}
 /** All six slots present -> a complete GearInput; otherwise null (unknown gear is never half-filled). */
 export function gearFromSlots(slots: Partial<Record<SlotKey, ApiSlot>>): GearInput | null {
   if (!SLOT_KEYS.every((k) => slots[k])) return null;
@@ -50,7 +56,7 @@ export function pillStateOf(i: OptimizeInput): PillState | undefined {
   return { kind: 'unknown' };
 }
 export function userInputsOf(i: OptimizeInput): UserInputs {
-  return { ...i.user, gear: i.mode === 'economic' ? undefined : gearFromSlots(i.war.fixedGear) ?? undefined, pill: pillStateOf(i) };
+  return { ...i.user, gear: i.mode === 'economic' ? undefined : partialGearFromSlots(i.war.fixedGear), pill: pillStateOf(i) };
 }
 export function constraintsOf(i: OptimizeInput): Constraint[] {
   return i.constraints.map((c) => ({ id: `user:${c.skill}:${c.kind}`, strength: 'mandatory' as const, spec: c.kind === 'min' ? { type: 'minLevel' as const, skill: c.skill, level: c.level } : c.kind === 'max' ? { type: 'maxLevel' as const, skill: c.skill, level: c.level } : { type: 'exactLevel' as const, skill: c.skill, level: c.level } }));
@@ -152,7 +158,18 @@ function runWar(imp: BuildImport, input: OptimizeInput): ResultVM {
   }
   const w = r.request;
   const durab: Partial<Record<'weapon' | 'helmet' | 'gloves' | 'chest' | 'legs' | 'boots', number>> = {};
-  for (const k of SLOT_KEYS) { const d = input.war.fixedGear[k]?.durability; if (input.war.gearMode === 'fixed' && d !== undefined) durab[k] = d; }
+  if (input.war.gearMode === 'fixed') {
+    const resolved = state.equipment.resolved; const fromProfile: string[] = [];
+    for (const k of SLOT_KEYS) {
+      const typed = input.war.fixedGear[k]?.durability; // the user's value always wins for its slot
+      // Profile durability is used only for a slot that was resolved from the profile snapshot (never for a slot the user replaced) and only when it is a positive number: per Wiki 01-basics §3.4 an item at 0 durability is gone.
+      const slot = resolved.slots[k]; const prof = slot.source === 'api' && slot.durability !== null && slot.durability > 0 ? slot.durability : undefined;
+      const d = typed ?? prof;
+      if (d !== undefined) durab[k] = d;
+      if (typed === undefined && prof !== undefined) fromProfile.push(`${k} ${prof}`);
+    }
+    if (fromProfile.length) notes.push(`Durability taken from the profile equipment (wear per hit follows Wiki 01-basics §3.4): ${fromProfile.join(', ')}.`);
+  }
   const req: SustainableRequest = {
     player: w.player, constraints: w.constraints, allowReset: w.allowReset,
     gear: w.gear.mode === 'fixed' ? { ...w.gear, durabilities: durab } : { ...w.gear, maxConfigs: SUSTAINABLE_MAX_CONFIGS },

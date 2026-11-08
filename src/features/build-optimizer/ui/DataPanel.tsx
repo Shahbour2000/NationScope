@@ -1,5 +1,6 @@
 "use client";
 import { Check, Field, Num, Section, Seg } from "./controls";
+import { EquipmentStatus } from "./EquipmentStatus";
 import { SKILL_OPTIONS, sectionsFor, type AmmoKey, type FoodKey, type FormIssue, type FormState, type SlotForm } from "./form";
 import { SLOT_KEYS, type SlotKey } from "../api-schema";
 import type { ImportVM } from "../view-model";
@@ -46,6 +47,7 @@ export function DataPanel({ t, form, update, imp, issues }: { t: BuilderMessages
       {sec.gear && form.mode === "war" ? (
         <Section title={fixed ? d.gearFixedTitle : d.gearOwnedTitle} hint={fixed ? d.gearFixedHint : d.gearOwnedHint}>
           {bad("gear") ? <p className="bo-err" role="alert">{fixed ? d.needGearStats : d.needCandidates}</p> : null}
+          <EquipmentStatus t={t} eq={imp.equipment} form={form.gear} onUse={(k, v) => gearSlot(k, { equipped: true, stat1: String(v.stat1), stat2: v.stat2 === undefined ? "" : String(v.stat2), usesAmmo: v.usesAmmo ?? true, durability: v.durability === undefined ? "" : String(v.durability) })} />
           <div className="bo-gear">
             {SLOT_KEYS.map((k) => { const s = form.gear[k]; return (
               <div key={k} className="bo-slot" data-on={s.equipped ? "true" : undefined}>
