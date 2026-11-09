@@ -40,7 +40,7 @@ export const statsTotalsSchema = z.object({ companies: n, investedMoney: money.n
 
 export const jobOfferSchema = z.object({
   offerId: s, companyId: s.nullish(), companyName: s.nullish(), itemCode: s, regionId: s.nullish(), countryId: s.nullish(),
-  ownerId: s.nullish(), ownerName: s.nullish(), slots: n.nullish(), minLevel: n.nullish(), incomeTax: n.nullish(),
+  ownerId: s.nullish(), ownerName: s.nullish(), currency: s.nullish(), slots: n.nullish(), minLevel: n.nullish(), incomeTax: n.nullish(),
   grossPerPoint: money.nullish(), netPerPoint: money.nullish(), taxPerPoint: money.nullish(), moneyAvailable: z.boolean().nullish(), own: z.boolean().nullish(),
 }).passthrough();
 export type JobOffer = z.infer<typeof jobOfferSchema>;

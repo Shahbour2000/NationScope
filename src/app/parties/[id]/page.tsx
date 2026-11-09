@@ -55,7 +55,7 @@ export default async function PartyPage({ params }: { params: Promise<{ id: stri
       </section>
       {res.members.length > 0 && (
         <>
-          <div className={s.mix}><Suspense fallback={<BuildMixSkeleton m={m.builds} nl={d.nl} />}><BuildMix ids={res.members.map((x) => x.id)} m={m.builds} nl={d.nl} /></Suspense></div>
+          <div className={s.mix}><Suspense fallback={<BuildMixSkeleton m={m.builds} nl={d.nl} />}><BuildMix ids={res.members.map((x) => x.id)} m={m.builds} nl={d.nl} link={{ entity: "party", id }} /></Suspense></div>
           <section className={s.sec}>
             <h2>{t.memberList} <small>{nf.format(res.members.length)}</small></h2>
             <ul className={s.members}>

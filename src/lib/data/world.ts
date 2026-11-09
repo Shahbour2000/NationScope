@@ -329,14 +329,27 @@ export async function getRevolution(countryId: string) {
   };
 }
 
-/** The API has no world-wide parties list (only /countries/{id}/parties), so the largest countries by population are queried (cached, capped). */
-export const PARTY_COUNTRY_CAP = 20;
-export async function getWorldParties() {
+/**
+ * The API has no world-wide parties list (only /countries/{id}/parties), so every country with citizens is queried. Results are kept per country for
+ * 10 minutes and at most PARTY_FETCH_CAP countries are requested per render (the request budget is shared with the rest of the site), so a first visit may
+ * be PARTIAL: the page reports exactly which countries are still missing and completes on the next visits.
+ */
+export const PARTY_FETCH_CAP = 30;
+const PARTY_TTL = 10 * 60_000;
+type CountryParties = Awaited<ReturnType<typeof getCountryParties>>["parties"];
+const partyCache = new Map<string, { at: number; parties: CountryParties }>();
+export const _resetPartyCache = () => partyCache.clear();
+
+export async function getWorldParties(fetcher: (id: string) => Promise<{ parties: CountryParties }> = getCountryParties) {
   const { countries, meta } = await getCountries();
-  const picked = [...countries].filter((c) => (c.citizens ?? 0) > 0).sort((a, b) => (b.citizens ?? 0) - (a.citizens ?? 0)).slice(0, PARTY_COUNTRY_CAP);
-  const settled = await Promise.allSettled(picked.map((c) => getCountryParties(c.id)));
-  const rows = settled.flatMap((r, i) => (r.status === "fulfilled" ? r.value.parties.map((p) => ({ ...p, countryId: picked[i]!.id })) : []));
-  return { rows, covered: picked.length, failed: settled.filter((r) => r.status === "rejected").length, meta };
+  const eligible = [...countries].filter((c) => (c.citizens ?? 0) > 0).sort((a, b) => (b.citizens ?? 0) - (a.citizens ?? 0));
+  const now = Date.now();
+  const batch = eligible.filter((c) => { const h = partyCache.get(c.id); return !h || now - h.at >= PARTY_TTL; }).slice(0, PARTY_FETCH_CAP);
+  const settled = await Promise.allSettled(batch.map((c) => fetcher(c.id)));
+  settled.forEach((r, i) => { if (r.status === "fulfilled") partyCache.set(batch[i]!.id, { at: Date.now(), parties: r.value.parties }); });
+  const rows = eligible.flatMap((c) => (partyCache.get(c.id)?.parties ?? []).map((p) => ({ ...p, countryId: c.id })));
+  const missing = eligible.filter((c) => !partyCache.has(c.id)).map((c) => c.id);
+  return { rows, covered: eligible.length - missing.length, total: eligible.length, missing, failed: settled.filter((r) => r.status === "rejected").length, meta };
 }
 
 /** GET /parties/{id}. The response shape is not recorded: accept an object (or {party: {...}}) that has the verified list fields, otherwise return null. */
@@ -352,4 +365,12 @@ export async function getPartyDetail(partyId: string) {
     return id && name ? [{ id, name, level: typeof r.level === "number" ? r.level : null, role: typeof r.role === "string" ? r.role : null }] : [];
   });
   return { party: parsed.success ? { ...parsed.data, countryId: typeof body.countryId === "string" ? body.countryId : null } : null, members, raw: data, meta };
+}
+
+/** GET /alliances/{id}/laws: same proposal shape and paging as a country's laws (the endpoint is documented with identical filter/limit/offset parameters). */
+export async function getAllianceLawProposals(allianceId: string, o: { filter?: "open" | "closed" | "all"; offset?: number; limit?: number } = {}) {
+  const { data, meta } = await get(endpoints.allianceLaws(allianceId, { filter: o.filter ?? "all", offset: o.offset, limit: o.limit ?? 30 }));
+  const obj = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
+  const parsed = parseRows(Array.isArray(obj.proposals) ? obj.proposals : [], lawProposal);
+  return { proposals: parsed.rows, skipped: parsed.skipped, recognised: Array.isArray(obj.proposals), hasMore: obj.hasMore === true, meta };
 }

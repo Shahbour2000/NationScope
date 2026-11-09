@@ -66,7 +66,7 @@ export default async function CountryPage({ params }: { params: Promise<{ id: st
       </div>
       <Tabs items={tabs} label={p.name} />
 
-      <div style={{ margin: "0.2rem 0 1rem" }}><Suspense fallback={<BuildMixSkeleton m={m.builds} nl={d.nl} />}><OrgBuildMix countryIds={[p.id]} m={m.builds} nl={d.nl} /></Suspense></div>
+      <div style={{ margin: "0.2rem 0 1rem" }}><Suspense fallback={<BuildMixSkeleton m={m.builds} nl={d.nl} />}><OrgBuildMix countryIds={[p.id]} m={m.builds} nl={d.nl} link={{ entity: "country", id: p.id }} /></Suspense></div>
       <dl className="metrics">
         <Metric icon="trend" label={c.development} value={p.development == null ? d.m.ui.missing : nf.format(p.development)} hint={p.worldSharePercent == null ? undefined : <>{p.worldSharePercent}% {c.worldShare} <Source kind="api" d={d} /></>} />
         <Metric icon="users" label={c.citizens} value={p.citizens?.total == null ? d.m.ui.missing : nf.format(p.citizens.total)} hint={p.citizens?.active == null ? undefined : `${nf.format(p.citizens.active)} ${c.activeOf} ${nf.format(p.citizens.total ?? 0)}`} />

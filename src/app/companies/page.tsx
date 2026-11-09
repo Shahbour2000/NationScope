@@ -4,8 +4,9 @@ import { PageHero } from "@/components/PageHero";
 import { Provenance } from "@/components/Provenance";
 import { QueryPager } from "@/components/QueryPager";
 import { BarList } from "@/features/charts/charts";
-import { companyUpgradeTotal, statsWithShare } from "@/features/economy/analytics";
-import { CountryBadge, ItemChip, PlayerChip, RegionLink, Source } from "@/features/entities/entities";
+import { statsWithShare } from "@/features/economy/analytics";
+import { CompanyCards } from "@/features/economy/CompanyCards";
+import { ItemChip, Source } from "@/features/entities/entities";
 import { itemName } from "@/features/entities/display";
 import { getDisplay } from "@/features/entities/display.server";
 import { parseOffset } from "@/features/explorer/catalog";
@@ -58,33 +59,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
         <div>
           {res.total != null ? <p className="res-note">{u.results.replace("{n}", nf.format(res.total))}{res.rows.length ? ` · ${u.showing.replace("{a}", nf.format(offset + 1)).replace("{b}", nf.format(offset + res.rows.length))}` : ""}</p> : null}
           {res.rows.length === 0 ? <p className="empty-mini panel">{c.noMatch}</p> : (
-            <ul className="itemcards">
-              {res.rows.map((x) => {
-                const up: [string, number | null | undefined][] = [[c.storage, x.storageLevel], [c.engine, x.engineLevel], [c.breakRoom, x.breakRoomLevel]];
-                const topLvl = Math.max(1, ...up.map(([, v]) => v ?? 0));
-                return (
-                  <li key={x.id} className="icard">
-                    <div className="ic-head">
-                      <Link className="ic-title" href={`/companies/${encodeURIComponent(x.id)}`} dir="auto" title={x.name}>{x.name}</Link>
-                      <ItemChip code={x.itemCode} d={d} href={`/market/${encodeURIComponent(x.itemCode)}`} />
-                    </div>
-                    <div className="ic-sub">
-                      {x.owner ? <PlayerChip id={x.owner.id} name={x.owner.username} avatar={x.owner.avatarUrl} d={d} /> : null}
-                      {x.regionId ? <RegionLink id={x.regionId} d={d} /> : null}
-                      {x.countryId ? <CountryBadge id={x.countryId} d={d} /> : null}
-                    </div>
-                    <div className="ic-nums">
-                      <div><b>{x.level == null ? "—" : nf.format(x.level)}</b><small>{c.level}</small></div>
-                      <div><b>{x.workers == null ? "—" : nf.format(x.workers)}</b><small>{c.workers}</small></div>
-                      <div><b>{x.investedSteel == null ? "—" : nf.format(x.investedSteel)}</b><small>{c.investedSteel}</small></div>
-                    </div>
-                    <div className="upgr" aria-label={`${c.upgrades}: ${u.upgradeLevels} ${companyUpgradeTotal(x)}`}>
-                      {up.map(([label, v]) => <div key={label}><span>{label}</span><span className="sbar" aria-hidden="true"><span style={{ inlineSize: `${Math.round(((v ?? 0) / topLvl) * 100)}%` }} /></span><b>{v == null ? "—" : v}</b></div>)}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+            <CompanyCards rows={res.rows} d={d} m={m} />
           )}
         </div>
         {top.length > 0 ? (

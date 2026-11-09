@@ -50,12 +50,12 @@ export function PartiesBoard({ rows, d, m }: { rows: WorldParty[]; d: Display; m
                 <div className={s.logo}><RemoteImage src={r.logoSrc} size={52} cls="" fallback={<span aria-hidden="true">{r.name.slice(0, 1).toUpperCase()}</span>} /></div>
                 <div className={s.who}>
                   <span className={s.name} dir="auto" title={r.name}>{r.name}</span>
-                  <span className={s.sub}><Flag id={r.countryId} d={d} /><span>{countryName(r.countryId, d.dir)}</span></span>
+                  <span className={s.sub}><Flag id={r.countryId} d={d} />{idOk(r.countryId) ? <Link className="xlink" href={`/countries/${encodeURIComponent(r.countryId)}`}>{countryName(r.countryId, d.dir)}</Link> : <span>{countryName(r.countryId, d.dir)}</span>}</span>
                 </div>
                 {r.ruling && <span className={s.rul}>{m.ruling}</span>}
               </div>
               {r.ethics && r.ethics.length > 0 && <div className={s.eth}>{r.ethics.slice(0, 3).map((e) => <span key={e}>{ethicLabel(e, m.ethic, humanizeCode)}</span>)}</div>}
-              <div className={s.foot}><span className={s.sub}>{r.leaderName ? <span dir="auto">{m.leader}: {r.leaderName}</span> : null}</span><span><b>{nf.format(r.members ?? 0)}</b> {m.members}</span></div>
+              <div className={s.foot}><span className={s.sub}>{r.leaderName ? <span dir="auto">{m.leader}: {r.leaderId && idOk(r.leaderId) ? <Link className="xlink" href={`/players/${encodeURIComponent(r.leaderId)}`}>{r.leaderName}</Link> : r.leaderName}</span> : null}</span><span><b>{nf.format(r.members ?? 0)}</b> {m.members}</span></div>
             </article>
           ))}
         </div>

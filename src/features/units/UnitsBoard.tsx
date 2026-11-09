@@ -61,7 +61,7 @@ export function UnitsBoard({ rows, m, noneLabel, allLabel, numberLocale, d, more
                   <div className={s.logo}><RemoteImage src={r.logoSrc} size={48} cls="" fallback={<span aria-hidden="true">{r.name.slice(0, 1).toUpperCase()}</span>} /></div>
                   <div className={s.who}>
                     <span className={s.name} dir="auto">{r.name}</span>
-                    <span className={s.sub}>{r.countryId && <Flag id={r.countryId} d={d} />}<span dir="auto">{r.ownerName ?? (r.countryId ? countryName(r.countryId, d.dir) : noneLabel)}</span></span>
+                    <span className={s.sub}>{r.countryId && <Flag id={r.countryId} d={d} />}{r.ownerName && r.ownerId && idOk(r.ownerId) ? <Link className="xlink" href={`/players/${encodeURIComponent(r.ownerId)}`} dir="auto">{r.ownerName}</Link> : <span dir="auto">{r.ownerName ?? (r.countryId ? countryName(r.countryId, d.dir) : noneLabel)}</span>}</span>
                   </div>
                 </div>
                 <div className={s.dmg}>

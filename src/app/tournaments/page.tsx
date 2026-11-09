@@ -26,6 +26,7 @@ export default async function TournamentsPage() {
   const nameOf = (id: string | null | undefined) => (id ? cur?.entrants.find((e) => e.entrantId === id)?.name ?? null : null);
   const state = cur ? (cur.status === "running" ? "running" : cur.finishedAt || cur.status === "finished" ? "finished" : cur.registrationOpen ? "registration" : "upcoming") : null;
   const stateLabel = state === "running" ? t.running : state === "finished" ? t.finished : state === "registration" ? t.registration : t.upcoming;
+  const completed = [...res.history, ...(cur && state === "finished" && !res.history.some((h) => h.id === cur.id) ? [cur] : [])].sort((a, b) => Date.parse(b.finishedAt ?? b.startsAt ?? "") - Date.parse(a.finishedAt ?? a.startsAt ?? ""));
   const nextStart = res.next?.startsAt ? Date.parse(res.next.startsAt) : NaN;
   const nextOpen = res.next?.registrationOpensAt ? Date.parse(res.next.registrationOpensAt) : NaN;
   return (
@@ -51,9 +52,10 @@ export default async function TournamentsPage() {
               {res.prizes.participant && <div className={s.prize}><span>{t.participant}</span><b><Money value={res.prizes.participant} d={d} /></b></div>}
             </div>
           )}
+          {safe(cur.id) && <Link className={s.cta} href={`/tournaments/${encodeURIComponent(cur.id)}`}>{t.viewDetails} →</Link>}
         </section>
       ) : <p className={s.empty}>{t.noCurrent}</p>}
-      {cur && cur.entrants.length > 0 && (
+      {cur && state !== "finished" && cur.entrants.length > 0 && (
         <section className={s.section}>
           <h2>{t.entrants} <small>{cur.entrants.length}</small></h2>
           <ul className={s.entrants}>
@@ -85,16 +87,21 @@ export default async function TournamentsPage() {
           </div>
         </section>
       )}
-      {res.history.length > 0 && (
-        <section className={s.section}>
-          <h2>{t.history}</h2>
+      <section className={s.section}>
+        <h2>{t.completed} <small>{completed.length}</small></h2>
+        {completed.length === 0 ? <p className={s.empty}>{t.noCompleted}</p> : (
           <ul className={s.hist}>
-            {res.history.map((h) => (
-              <li key={h.id}><b dir="auto">{h.name ?? h.periodKey ?? h.id}</b><span>{formatDate(h.finishedAt ?? h.startsAt, d.nl) ?? ""}{nameOf(h.winnerId) ? ` · ${t.winner}: ${nameOf(h.winnerId)}` : ""}</span></li>
+            {completed.map((h) => (
+              <li key={h.id}>
+                <Link className={s.histlink} href={`/tournaments/${encodeURIComponent(h.id)}`}>
+                  <b dir="auto">{h.name ?? h.periodKey ?? h.id}</b>
+                  <span>{kindLabel(h.kind)} · {formatDate(h.finishedAt ?? h.startsAt, d.nl) ?? ""}{nameOf(h.winnerId) ? ` · ${t.winner}: ${nameOf(h.winnerId)}` : ""}</span>
+                </Link>
+              </li>
             ))}
           </ul>
-        </section>
-      )}
+        )}
+      </section>
       <Provenance meta={res.meta} m={m} />
     </>
   );

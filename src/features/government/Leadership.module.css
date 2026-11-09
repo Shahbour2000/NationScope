@@ -1,6 +1,6 @@
 .frame { container-type: inline-size; }
 .wrap { display: grid; gap: 0.9rem; }
-.pres { display: flex; align-items: center; gap: 1.2rem; padding: 1.2rem 1.4rem; border-radius: 16px; background: linear-gradient(120deg, rgba(245, 197, 66, 0.14), rgba(13, 21, 41, 0.9) 60%), #0d1529; border: 1px solid rgba(245, 197, 66, 0.4); min-inline-size: 0; }
+.pres { display: flex; align-items: center; gap: 1.2rem; padding: 1.2rem 1.4rem; border-radius: 16px; background: linear-gradient(120deg, rgba(245, 197, 66, 0.14), rgba(245, 197, 66, 0) 60%), #0d1529; border: 1px solid rgba(245, 197, 66, 0.4); min-inline-size: 0; }
 .others { display: grid; gap: 0.8rem; grid-template-columns: minmax(0, 1fr); }
 @container (min-width: 30rem) { .others { grid-template-columns: repeat(var(--ct), minmax(0, 1fr)); } }
 @container (min-width: 46rem) { .others { grid-template-columns: repeat(var(--cm), minmax(0, 1fr)); } }
@@ -21,4 +21,9 @@
 .card .pin :global(.pinbtn span:not(.sr-only)) { display: none; }
 .card[data-role="vicePresident"] { --rc: #93c5fd; }
 .card[data-role^="minister"] { --rc: #a78bfa; }
-@media (max-width: 560px) { .pres { padding: 1rem; } .pres .name { font-size: 1.2rem; } }
+@media (max-width: 560px) {
+  .pres { padding: 1rem; gap: 0.8rem; background: linear-gradient(180deg, rgba(245, 197, 66, 0.14), rgba(245, 197, 66, 0) 75%), #0d1529; }
+  .pres .name { font-size: 1.2rem; white-space: normal; overflow-wrap: anywhere; }
+  .pres .pin :global(.pinbtn) { padding-inline: 0.55rem; min-block-size: 2rem; }
+  .pres .pin :global(.pinbtn span:not(.sr-only)) { display: none; }
+}

@@ -39,7 +39,7 @@ export default async function AllianceDetail({ params }: { params: Promise<{ id:
       <div className="page-head"><h1><Icon name="shield" size={26} /><span dir="auto">{alliance.name}</span></h1><StatusBadge value={alliance.status} d={d} /><PinButton labels={m.pins} target={{ type: "alliance", id: alliance.id, name: alliance.name, image: null, href: base }} /></div>
       <Tabs items={tabs} label={alliance.name} />
       <section className={s.hero} style={{ ["--c" as string]: schemeColor(alliance.scheme) }}>
-        <Suspense fallback={<BuildMixSkeleton m={m.builds} nl={d.nl} />}><OrgBuildMix countryIds={agg.members.map((c) => c.id)} m={m.builds} nl={d.nl} /></Suspense>
+        <Suspense fallback={<BuildMixSkeleton m={m.builds} nl={d.nl} />}><OrgBuildMix countryIds={agg.members.map((c) => c.id)} m={m.builds} nl={d.nl} link={{ entity: "alliance", id }} /></Suspense>
         {alliance.leaderCountryId && <div className={s.lead} style={{ marginBlockStart: 0 }}>{a.leader}<Flag id={alliance.leaderCountryId} d={d} />{countryName(alliance.leaderCountryId, d.dir)}</div>}
         <dl className={s.kpis}>
           <div><dt>{a.development}</dt><dd>{alliance.development == null ? "—" : nf.format(alliance.development)}{alliance.sharePercent != null && <small>{nf.format(alliance.sharePercent)}% {a.share}</small>}</dd></div>

@@ -27,3 +27,37 @@
 .shell[data-collapsed="true"] .side-toggle { display: none; }
 .shell[data-collapsed="true"] .side-group[data-open="false"] .side-items { display: block; }
 @media (max-width: 48rem) { .shell[data-collapsed="true"] .side-toggle { display: flex; } .shell[data-collapsed="true"] .side-group[data-open="false"] .side-items { display: none; } }
+
+/* Scrollbar contexts: sidebar nav (vertical) and tab bars (horizontal). A `scrollbar-width` declaration would make Chromium ignore the
+   ::-webkit-scrollbar styling above, so these containers must not set it. Tab bars stay visible and touch-scrollable. */
+.side-nav, .tabs, .scroll-x { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.tabs { scroll-padding-inline: 0.75rem; }
+@supports selector(::-webkit-scrollbar) {
+  .side-nav::-webkit-scrollbar { inline-size: 8px; }
+  .tabs::-webkit-scrollbar { block-size: 8px; }
+}
+
+/* Sort indicator + compact rows (shared). Long names never grow a row: one line, ellipsis, full name in the title tooltip. */
+.sortbtn[data-active] { color: var(--ink); }
+.sort-ind { margin-inline-start: 0.3rem; font-size: 0.7em; opacity: 0.45; }
+.sortbtn[data-active] .sort-ind { opacity: 1; color: var(--cyan); }
+.pname { display: inline-block; max-inline-size: min(22ch, 100%); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+.pline { display: inline-flex; align-items: center; gap: 0.5rem; min-inline-size: 0; max-inline-size: 100%; }
+.pline > .img, .pline > .img-fallback { flex: none; }
+.table td, .table th { vertical-align: middle; }
+.table td .ichip, .table td .cbadge { max-inline-size: 100%; min-inline-size: 0; white-space: nowrap; }
+.table td .ichip > span:last-child, .table td .cname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-inline-size: 0; max-inline-size: 24ch; }
+
+.jobs-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1rem; margin-block: 1rem; }
+.jobs-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-block: 1rem 0.75rem; }
+.jobs-filters .field { min-inline-size: 9rem; flex: 1 1 9rem; }
+
+/* Links inside a whole-card "cover" link: lift them above the cover so the name/flag/leader are separately clickable. */
+.xlink { position: relative; z-index: 2; color: inherit; }
+.xlink:hover, .xlink:focus-visible { color: var(--cyan); }
+
+/* Discoverability: the nav/tab scrollbars get a slightly thicker, more opaque thumb than the page default. */
+@supports selector(::-webkit-scrollbar) {
+  .side-nav::-webkit-scrollbar-thumb, .tabs::-webkit-scrollbar-thumb { background: rgba(25, 200, 255, 0.38); border: 1px solid transparent; background-clip: padding-box; }
+  .side-nav::-webkit-scrollbar-thumb:hover, .tabs::-webkit-scrollbar-thumb:hover { background: rgba(25, 200, 255, 0.6); background-clip: padding-box; }
+}
