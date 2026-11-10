@@ -113,3 +113,33 @@
   .bo-sec > summary { padding-inline: 1rem; }
   .bo-sec > .note, .bo-sec-body { padding-inline: 1rem; }
 }
+
+/* Skill Builder grid (pins). Logical properties only, so RTL mirrors without extra rules. */
+.bo-pin-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem 1rem; }
+.bo-pin-head h2 { margin: 0; }
+.bo-pin-points { font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bo-pin-points[data-over="true"] { color: var(--bad, #ff6b81); font-weight: 600; }
+.bo-pin-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-block: 0.5rem 0.75rem; }
+.bo-pins { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+.bo-pin { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name state" "segs segs" "cur btns"; align-items: center; gap: 0.3rem 0.6rem; font-size: 0.9rem; padding-block: 0.15rem; }
+.bo-pin-name { grid-area: name; font-weight: 600; overflow-wrap: anywhere; }
+.bo-pin-state { grid-area: state; color: var(--muted); font-size: 0.8rem; text-align: end; }
+.bo-pin[data-pinned="true"] .bo-pin-state { color: var(--cyan); font-weight: 600; }
+.bo-segs { grid-area: segs; display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; }
+.bo-seg10 { display: block; block-size: 1.5rem; min-inline-size: 0; padding: 0; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-3); cursor: pointer; }
+span.bo-seg10 { cursor: default; }
+.bo-seg10[data-have="true"] { background: var(--grad); border-color: transparent; }
+.bo-seg10[data-pin="true"] { outline: 2px solid var(--cyan); outline-offset: -2px; }
+.bo-seg10[data-edge="true"] { outline-width: 3px; }
+.bo-seg10:disabled { opacity: 0.4; cursor: not-allowed; }
+.bo-seg10:focus-visible, .bo-step-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.bo-pin-cur { grid-area: cur; color: var(--muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.bo-pin-btns { grid-area: btns; display: inline-flex; gap: 0.3rem; justify-self: end; }
+.bo-step-btn { min-inline-size: 2.25rem; min-block-size: 2.25rem; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2, var(--surface-3)); color: inherit; cursor: pointer; font-size: 1rem; line-height: 1; }
+.bo-step-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.bo-pin-rule { grid-column: 1 / -1; font-size: 0.78rem; color: var(--muted); }
+.bo-pin[data-locked="true"] .bo-pin-name, .bo-pin[data-readonly="true"] .bo-pin-name { color: var(--muted); font-weight: 500; }
+@media (min-width: 40.01rem) {
+  .bo-pin { grid-template-columns: minmax(7rem, 30%) minmax(0, 1fr) 3rem auto; grid-template-areas: "name segs cur btns" "state state state state"; }
+  .bo-pin-state { text-align: start; }
+}

@@ -1,8 +1,7 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon } from "@/components/Icon";
 import type { ImportVM, SourceTag } from "../view-model";
-import { SKILL_IDS } from "../engine/skills";
 import { Notice } from "./controls";
 import { fmt } from "./format";
 import type { BuilderMessages } from "./messages";
@@ -11,7 +10,7 @@ interface Suggestion { type: string; id: string; name: string; sub: string | nul
 export type ImportState = "idle" | "loading" | "error";
 const SRC_KIND: Record<SourceTag, string> = { api: "api", derived: "estimate", user: "calc", unavailable: "" };
 
-export function PlayerPanel({ t, numLocale, imp, state, error, onSelect }: { t: BuilderMessages; numLocale: string; imp: ImportVM | null; state: ImportState; error: string | null; onSelect: (id: string) => void }) {
+export function PlayerPanel({ t, numLocale, imp, state, error, onSelect, skillsSlot }: { skillsSlot?: ReactNode; t: BuilderMessages; numLocale: string; imp: ImportVM | null; state: ImportState; error: string | null; onSelect: (id: string) => void }) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Suggestion[]>([]);
   const [busy, setBusy] = useState(false);
@@ -96,19 +95,7 @@ export function PlayerPanel({ t, numLocale, imp, state, error, onSelect }: { t: 
             </section>
           </div>
 
-          {imp.skills ? (
-            <section className="card" aria-labelledby="bo-skills">
-              <h2 id="bo-skills"><Icon name="war" size={18} />{p.skillsTitle}</h2>
-              <div className="bo-skillgrid">
-                {(["war", "economic"] as const).map((g) => (
-                  <div key={g}><h3>{p.groups[g]}</h3>
-                    <ul className="bo-skills">{SKILL_IDS.filter((id) => imp.skills!.find((s) => s.id === id)!.group === g).map((id) => { const s = imp.skills!.find((x) => x.id === id)!; return (
-                      <li key={id}><span>{t.skills[id]}</span><span className="progress" aria-hidden="true"><span style={{ inlineSize: `${s.proposed * 10}%` }} /></span><b>{s.proposed}/10</b></li>); })}</ul>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ) : <Notice tone="bad" title={p.noSkillsTitle}>{p.noSkills}</Notice>}
+          {imp.skills ? skillsSlot : <Notice tone="bad" title={p.noSkillsTitle}>{p.noSkills}</Notice>}
 
           {Object.keys(imp.failures).length > 0 ? <Notice tone="warn" title={p.failuresTitle}><ul>{Object.entries(imp.failures).map(([k, v]) => <li key={k}><code>{k}</code>: {v}</li>)}</ul></Notice> : null}
           {imp.retained.length > 0 ? <p className="hint">{p.retained} {imp.retained.map((k) => p.retainedItems[k]).join(", ")}</p> : null}

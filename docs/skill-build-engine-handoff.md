@@ -1,0 +1,18 @@
+# Skill Build Engine — Handoff (current state)
+
+Last updated: 2026-11-10, after batch 1. Baseline ZIP: `NationScope-main (2).zip` (no git metadata; earlier proposed changes are not assumed integrated).
+
+## State
+- Roadmap: `docs/skill-build-engine-roadmap.md` (phases A-F). Batch 0 = audit/docs. Batch 1 = Phase E part 1: Skill Builder grid with pins. Engine mechanics, formulas, adapter and API untouched.
+- Batch 1 changes: `ui/skill-pins.ts` (pure helpers), `ui/SkillPinGrid.tsx` (component), `ui/PlayerPanel.tsx` (new `skillsSlot` prop replaces the read-only skills card), `ui/BuilderApp.tsx` (renders the grid in that slot), `ui/messages.en.ts` / `messages.ar.ts` (new `player.pin*` keys, same keys in both), `builder.css` (appended `.bo-pin*` rules, logical properties), `tests/build-optimizer/skill-pins.test.ts` (11 tests).
+- How pins work: a pin is a mandatory minimum stored as a `min` entry in `form.constraints` (max/exact rules stay in the step-3 rules section and are only flagged in the grid). Max 14 rules per request (api-schema limit) is respected. Verified by test: war, economic and hybrid runs honour pins (economic with an Attack pin of 10 returned Attack 10; hybrid with Armor pin 3 returned 3). Note: in economic goal a combat pin consumes points, i.e. it does change the result.
+- Test status (be precise): 208/208 pass under a STAND-IN describe/it runner (tsx, JSX automatic runtime). This is preliminary and NOT equal to a real Vitest run. Not run: real Vitest, full `tsc` (only the pure-TS files and the en/ar dictionaries were type-checked, with environment-only errors for missing @types/node and @types/react), ESLint, `next build`. No browser/visual check of the new grid (RTL, 360px, 768px, 1280px) was possible.
+
+## Known limitations / unresolved (unchanged)
+- Intermediate skill values are linear interpolation (Estimated); the grid shows exact levels and says stat values between 0 and 10 are estimated. Earned points may be a lower bound (Prestige unknown): the over-budget warning appears only when the earned total is exact.
+- Player level unknown => skills are neither locked nor claimed unlocked.
+- Everything in `docs/build-optimizer-audit.md` still applies.
+
+## Exact next task (Batch 2)
+1. On a machine with dependencies: `npm ci`, real Vitest, `tsc --noEmit`, ESLint, `next build`; fix anything the real tools report for batch 1 files; look at the grid in a browser (LTR/RTL, phone width).
+2. Then Phase E part 2: gear and consumable tiles (weapon, helmet, gloves, chest, legs, boots, ammo, food, pill) that drive the existing `form.gear` / `ammo` / `food` / `pill` state (all already supported by `OptimizeInput`); confirm each control's effect before adding it.

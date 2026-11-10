@@ -6,6 +6,7 @@ import { GoalPanel } from "./GoalPanel";
 import { PlayerPanel, type ImportState } from "./PlayerPanel";
 import { ResultsPanel } from "./ResultsPanel";
 import { Ev, Notice } from "./controls";
+import { SkillPinGrid } from "./SkillPinGrid";
 import { ADVISORY, defaultForm, toRequestBody, validate, type FormState } from "./form";
 import type { BuilderMessages } from "./messages";
 
@@ -67,7 +68,8 @@ export function BuilderApp({ t, numLocale, initialPlayer }: { t: BuilderMessages
         <p className="hint">{t.legend.note}</p>
       </aside>
 
-      <PlayerPanel t={t} numLocale={numLocale} imp={imp} state={impState} error={impError} onSelect={(id) => void selectPlayer(id)} />
+      <PlayerPanel t={t} numLocale={numLocale} imp={imp} state={impState} error={impError} onSelect={(id) => void selectPlayer(id)}
+        skillsSlot={imp ? <SkillPinGrid t={t} numLocale={numLocale} imp={imp} constraints={form.constraints} onChange={(constraints) => set({ constraints })} /> : null} />
 
       {imp && imp.skills ? (
         <>
