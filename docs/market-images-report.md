@@ -1,6 +1,6 @@
 # Market / Economy item images — technical report
 
-Status date: 2026-11-08. Scope: item icons shown on Market, Economy, Companies, Jobs and Equipment pages.
+Status date: 2026-11-10 (updated; first version 2026-11-08). Scope: item icons shown on Market, Economy, Companies, Jobs and Equipment pages.
 
 ## 1. Summary (read this first)
 
@@ -23,6 +23,18 @@ Unverified hypotheses (ranked by how well they fit "some images load, some do no
 | H3 | Some assets do not exist on the host (items added to the API before their artwork) | Typical for newer items | Game developer | HTTP 404 on the exact URL |
 | H4 | The host rejects requests without a Referer (hotlink protection) | NationScope sends `no-referrer` | NationScope (switch the image referrer policy) or the host (allow cross-origin embedding) | If a failing URL loads when opened directly in a browser but not inside NationScope, this is the cause |
 | H5 | The host answers 200 with an HTML page for unknown paths (SPA fallback), which an image tag cannot decode | Common for SPA hosting | Game developer | The script flags 200 responses whose Content-Type is not an image |
+
+## 1b. Verification attempt on 2026-11-10 (what was and was not established)
+
+| Check | Result | Meaning |
+|---|---|---|
+| DNS / HTTP to `https://ageofnations.world/items/tank.webp` and `https://app.ageofnations.world/api/v1/game` | `curl: (6) Could not resolve host` for both | The environment has no route to the game's hosts. **No HTTP status for any image or live API response was obtained.** |
+| `node scripts/check-item-icons.mjs` over all 45 item codes found in the real API responses | 45 network errors (`ENOTFOUND`), 0 HTTP responses | Says **nothing** about whether the images exist. The script now reports network errors separately from HTTP failures so this cannot be misread as "45 missing images". |
+| Same script against a local stand-in server (3 codes served, 1 returns HTML with 200, rest 404) | 3 OK, 42 HTTP failures; the 200/`text/html` response is flagged as non-image | Confirms the script's classification logic only. It is not evidence about the game. |
+| Scan of all 44 real API samples in `API/samples` for image-like fields (icon, image, asset, sprite, thumb, picture, logo, avatar, media) | Only `avatarUrl` (players) and `logoUrl` (parties/countries) exist; **no item sample has any image field** | Verified, not assumed: the API gives NationScope no item image reference, so the `/items/<code>.webp` pattern remains an assumption. |
+| Official OpenAPI reference | No asset manifest, no item catalogue, no image description | Same conclusion. |
+
+Still unknown (needs a machine that can reach the host, or the game developer): which of the 45 codes return a real image, which return 404, and whether any return an HTML fallback. Nothing in the app guesses alternative file names.
 
 ## 2. What the developer / maintainer should run
 

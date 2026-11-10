@@ -303,8 +303,10 @@ export async function getCountryBattles(countryId: string) {
 }
 
 /** World events that involve one country (cursor-paged by the API). */
-export async function getCountryHistory(countryId: string, cursor?: string) {
-  const { data, meta } = await get(endpoints.countryHistory(countryId, { cursor }));
+export const HISTORY_TYPES = ["ownership", "treaty", "battle", "election", "law", "tournament"] as const;
+export type HistoryFilter = (typeof HISTORY_TYPES)[number];
+export async function getCountryHistory(countryId: string, cursor?: string, type?: HistoryFilter) {
+  const { data, meta } = await get(endpoints.countryHistory(countryId, { cursor, type }));
   const o = asRecord(data);
   return { ...parseRows(o.items, historyItemSchema), nextCursor: typeof o.nextCursor === "string" ? o.nextCursor : null, meta };
 }
@@ -331,17 +333,17 @@ export async function getRevolution(countryId: string) {
 
 /**
  * The API has no world-wide parties list (only /countries/{id}/parties), so every country with citizens is queried. Results are kept per country for
- * 10 minutes and at most PARTY_FETCH_CAP countries are requested per render (the request budget is shared with the rest of the site), so a first visit may
+ * 30 minutes and at most PARTY_FETCH_CAP (12) countries are requested per render (the request budget is shared with the rest of the site), so a first visit may
  * be PARTIAL: the page reports exactly which countries are still missing and completes on the next visits.
  */
-export const PARTY_FETCH_CAP = 30;
-const PARTY_TTL = 10 * 60_000;
+export const PARTY_FETCH_CAP = 12;
+const PARTY_TTL = 30 * 60_000;
 type CountryParties = Awaited<ReturnType<typeof getCountryParties>>["parties"];
 const partyCache = new Map<string, { at: number; parties: CountryParties }>();
 export const _resetPartyCache = () => partyCache.clear();
 
-export async function getWorldParties(fetcher: (id: string) => Promise<{ parties: CountryParties }> = getCountryParties) {
-  const { countries, meta } = await getCountries();
+export async function getWorldParties(fetcher: (id: string) => Promise<{ parties: CountryParties }> = getCountryParties, loadCountries: () => Promise<{ countries: Awaited<ReturnType<typeof getCountries>>["countries"]; meta: Awaited<ReturnType<typeof getCountries>>["meta"] }> = getCountries) {
+  const { countries, meta } = await loadCountries();
   const eligible = [...countries].filter((c) => (c.citizens ?? 0) > 0).sort((a, b) => (b.citizens ?? 0) - (a.citizens ?? 0));
   const now = Date.now();
   const batch = eligible.filter((c) => { const h = partyCache.get(c.id); return !h || now - h.at >= PARTY_TTL; }).slice(0, PARTY_FETCH_CAP);
@@ -352,25 +354,69 @@ export async function getWorldParties(fetcher: (id: string) => Promise<{ parties
   return { rows, covered: eligible.length - missing.length, total: eligible.length, missing, failed: settled.filter((r) => r.status === "rejected").length, meta };
 }
 
-/** GET /parties/{id}. The response shape is not recorded: accept an object (or {party: {...}}) that has the verified list fields, otherwise return null. */
-export async function getPartyDetail(partyId: string) {
-  const { data, meta } = await get(endpoints.party(partyId));
-  const o = asRecord(data);
-  const body = o.party && typeof o.party === "object" ? asRecord(o.party) : o;
-  const parsed = partySchema.safeParse({ ...body, members: typeof body.members === "number" ? body.members : Array.isArray(body.members) ? body.members.length : null });
-  const members = (Array.isArray(body.members) ? body.members : []).flatMap((m) => {
-    const r = asRecord(m);
-    const id = typeof r.userId === "string" ? r.userId : typeof r.id === "string" ? r.id : null;
-    const name = typeof r.username === "string" ? r.username : typeof r.name === "string" ? r.name : null;
-    return id && name ? [{ id, name, level: typeof r.level === "number" ? r.level : null, role: typeof r.role === "string" ? r.role : null }] : [];
-  });
-  return { party: parsed.success ? { ...parsed.data, countryId: typeof body.countryId === "string" ? body.countryId : null } : null, members, raw: data, meta };
+const numMap = (v: unknown): Record<string, number> => Object.fromEntries(Object.entries(asRecord(v)).filter(([, x]) => typeof x === "number")) as Record<string, number>;
+const str = (v: unknown): string | null => (typeof v === "string" && v ? v : null);
+const int = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+
+export interface PartyMember { id: string; name: string; level: number | null; role: string | null; joinedAt: string | null; avatarUrl: string | null }
+export interface PartyEthicsChoice { axis: string; level: number | null; code: string; fanatic: boolean; effects: Record<string, number> }
+export interface PartyExtras {
+  status: string | null;
+  treasury: string | null;
+  councilSeats: number | null;
+  councilMotionHours: number | null;
+  nextElection: { candidacyOpensAt: string | null; votingOpensAt: string | null; closesAt: string | null } | null;
+  ethics: { choices: PartyEthicsChoice[]; effects: Record<string, number>; cooldownDays: number | null; changedAt: string | null; nextChangeAt: string | null } | null;
 }
 
-/** GET /alliances/{id}/laws: same proposal shape and paging as a country's laws (the endpoint is documented with identical filter/limit/offset parameters). */
-export async function getAllianceLawProposals(allianceId: string, o: { filter?: "open" | "closed" | "all"; offset?: number; limit?: number } = {}) {
-  const { data, meta } = await get(endpoints.allianceLaws(allianceId, { filter: o.filter ?? "all", offset: o.offset, limit: o.limit ?? 30 }));
+/**
+ * GET /parties/{id}. Shape verified against the captured sample (API/samples/parties/Party details.txt): id, name, logoUrl, countryId, status, leaderId, ruling,
+ * members[{userId, role, joinedAt, username, avatarUrl, level}], ethics{levels, choices[], effects, cooldownDays, changedAt, nextChangeAt}, treasury, nextElection, council{seats, motionHours, motions}.
+ * Fields that are absent stay null; elections[] and council.motions[] were empty in the sample, so their item shape is NOT modelled.
+ */
+export function parsePartyDetail(data: unknown) {
+  const o = asRecord(data);
+  const body = o.party && typeof o.party === "object" ? asRecord(o.party) : o;
+  const members: PartyMember[] = (Array.isArray(body.members) ? body.members : []).flatMap((m) => {
+    const r = asRecord(m);
+    const id = str(r.userId) ?? str(r.id), name = str(r.username) ?? str(r.name);
+    return id && name ? [{ id, name, level: int(r.level), role: str(r.role), joinedAt: str(r.joinedAt), avatarUrl: str(r.avatarUrl) }] : [];
+  });
+  const eth = body.ethics && typeof body.ethics === "object" && !Array.isArray(body.ethics) ? asRecord(body.ethics) : null;
+  // The LIST endpoint returns ethics as string[]; the DETAIL endpoint returns an object whose `codes` is that same array. The leader's name is only in members[].
+  const ethicCodes = Array.isArray(body.ethics) ? body.ethics : eth && Array.isArray(eth.codes) ? eth.codes : null;
+  const leader = members.find((m) => m.id === body.leaderId) ?? members.find((m) => m.role === "leader");
+  const parsed = partySchema.safeParse({ ...body, ethics: ethicCodes, leaderName: str(body.leaderName) ?? leader?.name ?? null, members: typeof body.members === "number" ? body.members : Array.isArray(body.members) ? body.members.length : null });
+  const ne = body.nextElection && typeof body.nextElection === "object" ? asRecord(body.nextElection) : null;
+  const council = body.council && typeof body.council === "object" ? asRecord(body.council) : null;
+  const extras: PartyExtras = {
+    status: str(body.status),
+    treasury: typeof body.treasury === "string" && /^-?\d+$/.test(body.treasury) ? body.treasury : null,
+    councilSeats: council ? int(council.seats) : null,
+    councilMotionHours: council ? int(council.motionHours) : null,
+    nextElection: ne ? { candidacyOpensAt: str(ne.candidacyOpensAt), votingOpensAt: str(ne.votingOpensAt), closesAt: str(ne.closesAt) } : null,
+    ethics: eth ? {
+      choices: (Array.isArray(eth.choices) ? eth.choices : []).flatMap((c) => { const r = asRecord(c); const axis = str(r.axis), code = str(r.code); return axis && code ? [{ axis, level: int(r.level), code, fanatic: r.fanatic === true, effects: numMap(r.effects) }] : []; }),
+      effects: numMap(eth.effects), cooldownDays: int(eth.cooldownDays), changedAt: str(eth.changedAt), nextChangeAt: str(eth.nextChangeAt),
+    } : null,
+  };
+  return { party: parsed.success ? { ...parsed.data, countryId: str(body.countryId) } : null, members, extras, raw: data };
+}
+
+export async function getPartyDetail(partyId: string) {
+  const { data, meta } = await get(endpoints.party(partyId));
+  return { ...parsePartyDetail(data), meta };
+}
+
+/** Parses a laws response ({ proposals, hasMore }) as returned by both /countries/{id}/laws and /alliances/{id}/laws (verified against both captured samples). */
+export function parseLawResponse(data: unknown) {
   const obj = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
   const parsed = parseRows(Array.isArray(obj.proposals) ? obj.proposals : [], lawProposal);
-  return { proposals: parsed.rows, skipped: parsed.skipped, recognised: Array.isArray(obj.proposals), hasMore: obj.hasMore === true, meta };
+  return { proposals: parsed.rows, skipped: parsed.skipped, recognised: Array.isArray(obj.proposals), hasMore: obj.hasMore === true };
+}
+
+/** GET /alliances/{id}/laws. Same envelope as a country's laws; items have scope "alliance" and codes such as alliance_admit / alliance_expel with params { country }. */
+export async function getAllianceLawProposals(allianceId: string, o: { filter?: "open" | "closed" | "all"; offset?: number; limit?: number } = {}) {
+  const { data, meta } = await get(endpoints.allianceLaws(allianceId, { filter: o.filter ?? "all", offset: o.offset, limit: o.limit ?? 30 }));
+  return { ...parseLawResponse(data), meta };
 }

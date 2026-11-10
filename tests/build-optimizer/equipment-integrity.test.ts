@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import {
-  buildEquipmentSnapshot, buildPlayerState, importForBuild, resolveEquipment, toOptimizeRequest, toWarBuildRequest,
+  buildEquipmentSnapshot, buildPlayerState, importForBuild, toOptimizeRequest, toWarBuildRequest,
   type CompanyLike, type ImportDeps, type MarketRowLike, type OfferLike, type PlayerEquipmentLike, type ProfileLike,
 } from '@/features/build-optimizer';
 import { parseOptimizeInput, type OptimizeInput } from '@/features/build-optimizer/api-schema';

@@ -7,7 +7,21 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "tests", "fixtures", "real");
+const samplesDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "API", "samples");
 const port = Number(process.argv[2] ?? 4060);
+// Real captured responses from API/samples take precedence where they exist (they are the newest captures). [regex on the path, sample file]
+const sampleRoutes = [
+  [/^\/alliances$/, "alliances/All alliances.txt"], [/^\/alliances\/[^/]+\/laws$/, "alliances/Alliance laws.txt"], [/^\/alliances\/[^/]+$/, "alliances/Alliance details.txt"],
+  [/^\/parties\/[^/]+$/, "parties/Party details.txt"], [/^\/countries\/eg\/parties$/, "politics/Country parties.txt"], [/^\/countries\/eg\/revolution$/, "politics/Revolution status.txt"],
+  [/^\/laws\/law_[^/]+$/, "politics/Law proposal details.txt"], [/^\/countries\/eg\/history$/, "countries/Country history.txt"], [/^\/countries\/eg\/units$/, "countries/Country units.txt"],
+  [/^\/countries\/eg\/battles$/, "countries/Country battles.txt"], [/^\/countries\/eg\/wars$/, "countries/Country wars.txt"], [/^\/countries\/eg\/companies$/, "countries/Country companies.txt"],
+  [/^\/countries\/eg\/companies\/stats$/, "countries/Country company statistics.txt"], [/^\/jobs$/, "jobs/Open job offers.txt"], [/^\/countries\/eg\/announcements$/, "countries/Announcements.txt"],
+];
+function sampleFor(u) {
+  const hit = sampleRoutes.find(([re]) => re.test(u));
+  if (!hit) return null;
+  try { const t = fs.readFileSync(path.join(samplesDir, hit[1]), "utf8"); JSON.parse(t); return t; } catch { return null; }
+}
 const routes = [
   ["/search", "search"],  ["/battles/btl_k6beibh5n4s42y81", "battle-detail"],
   ["/units/mu_xk3dx9x6bhf6s47c", "unit-detail"],
@@ -34,6 +48,8 @@ http.createServer((req, res) => {
   const u = req.url.split("?")[0].replace("/api/v1", "");
   const pm = /^\/players\/(usr_[A-Za-z0-9_-]+)$/.exec(u);
   if (pm) { res.setHeader("x-mock", "synthetic"); return res.end(JSON.stringify(syntheticPlayer(pm[1]))); }
+  const sample = sampleFor(u);
+  if (sample) { res.setHeader("x-mock", "real-sample"); return res.end(sample); }
   const hit = routes.find(([p]) => p === u);
   if (!hit) { res.statusCode = 404; return res.end('{"error":"not captured"}'); }
   res.end(fs.readFileSync(path.join(dir, hit[1] + ".json")));

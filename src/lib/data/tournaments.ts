@@ -38,37 +38,39 @@ export interface TournamentDetail {
 }
 
 /** GET /tournaments/{id}; falls back to the edition inside GET /tournaments (current or history) when the detail endpoint fails or has an unrecognised shape. */
-export async function getTournamentDetail(id: string): Promise<TournamentDetail & { meta: Awaited<ReturnType<typeof get>>["meta"] | null }> {
+export async function getTournamentDetail(id: string): Promise<TournamentDetail & { meta: Awaited<ReturnType<typeof get>>["meta"] | null; error: unknown }> {
+  let detailErr: unknown = null;
   try {
     const { data, meta } = await get(endpoints.tournament(id));
     const edition = parseEdition(data);
     if (edition) {
       const known = new Set([...Object.keys(editionSchema.shape), "edition", "tournament"]);
-      return { edition, source: "detail", unknownKeys: Object.keys(rec(data)).filter((k) => !known.has(k)), meta };
+      return { edition, source: "detail", unknownKeys: Object.keys(rec(data)).filter((k) => !known.has(k)), meta, error: null };
     }
-  } catch { /* fall back to the list */ }
+  } catch (e) { detailErr = e; /* fall back to the list */ }
   try {
     const list = await getTournaments();
     const hit: Record<string, unknown> | undefined = [list.current, ...list.history].find((x) => x && x.id === id) as Record<string, unknown> | undefined;
     if (hit) {
       // `current` already carries parsed entrants; history rows carry raw `registrations` (possibly none).
       const edition = parseEdition({ ...hit, registrations: Array.isArray(hit.registrations) ? hit.registrations : [] });
-      if (edition) return { edition: { ...edition, entrants: Array.isArray(hit.entrants) ? (hit.entrants as TournamentEdition["entrants"]) : edition.entrants }, source: "list", unknownKeys: [], meta: list.meta };
+      if (edition) return { edition: { ...edition, entrants: Array.isArray(hit.entrants) && hit.entrants.length > 0 ? (hit.entrants as TournamentEdition["entrants"]) : edition.entrants }, source: "list", unknownKeys: [], meta: list.meta, error: null };
     }
-    return { edition: null, source: null, unknownKeys: [], meta: list.meta };
-  } catch { return { edition: null, source: null, unknownKeys: [], meta: null }; }
+    return { edition: null, source: null, unknownKeys: [], meta: list.meta, error: detailErr };
+  } catch (e) { return { edition: null, source: null, unknownKeys: [], meta: null, error: e }; }
 }
 
 /**
  * Tournament battles (type=tournament) whose two sides are both entrants of the edition and that started inside its window.
  * The API puts no edition id on a battle, so this link is DERIVED from participants and dates (and labelled as such on the page); it is not a bracket.
  */
-export async function getEditionBattles(edition: TournamentEdition): Promise<{ battles: Battle[]; derived: true }> {
+export async function getEditionBattles(edition: TournamentEdition): Promise<{ battles: Battle[]; derived: true; checked: number; truncated: boolean }> {
   const ids = new Set(edition.entrants.map((e) => e.entrantId));
-  if (ids.size === 0) return { battles: [], derived: true };
+  if (ids.size === 0) return { battles: [], derived: true, checked: 0, truncated: false };
   const [a, f] = await Promise.allSettled([get(endpoints.battles({ type: "tournament", limit: 100 })), get(endpoints.battles({ type: "tournament", status: "finished", limit: 100 }))]);
   const rows: Battle[] = [];
-  for (const r of [a, f]) if (r.status === "fulfilled") { const d = r.value.data; rows.push(...parseRows(Array.isArray(d) ? d : rec(d).battles, battleSchema).rows); }
+  let truncated = false;
+  for (const r of [a, f]) if (r.status === "fulfilled") { const d = r.value.data; const list = Array.isArray(d) ? d : rec(d).battles; const parsed = parseRows(list, battleSchema).rows; if (parsed.length >= 100) truncated = true; rows.push(...parsed); }
   const start = edition.startsAt ? Date.parse(edition.startsAt) : NaN, end = edition.finishedAt ? Date.parse(edition.finishedAt) : Infinity;
   const seen = new Set<string>();
   const battles = rows.filter((b) => {
@@ -80,5 +82,5 @@ export async function getEditionBattles(edition: TournamentEdition): Promise<{ b
     return Number.isFinite(t) ? t >= (Number.isFinite(start) ? start : -Infinity) && t <= end : false;
   });
   battles.sort((p, q) => Date.parse(p.startedAt ?? "") - Date.parse(q.startedAt ?? ""));
-  return { battles, derived: true };
+  return { battles, derived: true, checked: seen.size, truncated };
 }

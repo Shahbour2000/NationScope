@@ -28,8 +28,12 @@ for (const code of [...codes].sort()) {
   } catch (e) { status = "ERR"; note = String(e.cause?.code ?? e.message); }
   rows.push({ code, url, status, type, note });
 }
-const bad = rows.filter((r) => r.status !== "200" || r.note);
+const netErr = rows.filter((r) => r.status === "ERR");
+const httpBad = rows.filter((r) => r.status !== "ERR" && (r.status !== "200" || r.note));
+const ok = rows.length - netErr.length - httpBad.length;
 console.log(`| Item code | URL requested | HTTP | Content-Type | Note |\n|---|---|---|---|---|`);
 for (const r of rows) console.log(`| ${r.code} | ${r.url} | ${r.status} | ${r.type} | ${r.note} |`);
-console.log(`\n${rows.length - bad.length} of ${rows.length} icons OK; ${bad.length} failing.`);
-if (bad.length) console.log("Failing codes: " + bad.map((r) => r.code).join(", "));
+console.log(`\nSummary: ${ok} OK image responses, ${httpBad.length} HTTP failures or non-image responses, ${netErr.length} network errors (no response received).`);
+if (httpBad.length) console.log("Failing (HTTP) codes: " + httpBad.map((r) => r.code).join(", "));
+if (netErr.length) console.log(`NOTE: ${netErr.length} request(s) never reached the host (${[...new Set(netErr.map((r) => r.note))].join(", ")}). A network error says NOTHING about whether those images exist; rerun from a machine that can reach ${new URL(base).host}.`);
+process.exitCode = httpBad.length || netErr.length ? 1 : 0;

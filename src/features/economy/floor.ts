@@ -1,8 +1,11 @@
 import type { FloorRow } from "@/lib/domain/economy";
 import { RARITY_ORDER, SLOT_ORDER } from "./analytics";
 
-/** The six rarity codes the API returns, lowest to highest. The colour of each is a display mapping (white, green, blue, purple, gold, red); the code itself always comes from the API. */
-export const RARITY_COLORS: Record<string, string> = { common: "#e5e7eb", uncommon: "#4ade80", rare: "#60a5fa", epic: "#c084fc", legendary: "#facc15", mythic: "#f87171" };
+/**
+ * Tier of a rarity code: its position in the documented order (Wiki 01-basics §3.3: common < uncommon < rare < epic < legendary < mythic), 0-based, or -1 when the API returns a code
+ * NationScope does not know. NO colour is attached to a rarity: no source documents the game's rarity colours, so the UI uses one neutral hue and the tier/label only.
+ */
+export const rarityRank = (r: string): number => RARITY_ORDER.indexOf(r);
 export const isKnownRarity = (r: string): boolean => RARITY_ORDER.includes(r);
 
 export interface FloorCell { slot: string; rarity: string; low: string; offers: number; lowest: boolean }

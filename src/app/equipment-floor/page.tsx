@@ -3,7 +3,7 @@ import { ApiErrorState } from "@/components/ApiErrorState";
 import { Icon } from "@/components/Icon";
 import { Provenance } from "@/components/Provenance";
 import { RARITY_ORDER, SLOT_ORDER } from "@/features/economy/analytics";
-import { RARITY_COLORS, floorGroups, isKnownRarity } from "@/features/economy/floor";
+import { floorGroups, isKnownRarity, rarityRank } from "@/features/economy/floor";
 import { term } from "@/features/entities/display";
 import { getDisplay } from "@/features/entities/display.server";
 import { ItemIcon, Money } from "@/features/entities/entities";
@@ -48,7 +48,7 @@ export default async function FloorPage({ searchParams }: { searchParams: Promis
     const t = q.toString();
     return t ? `/equipment-floor?${t}` : "/equipment-floor";
   };
-  const color = (r: string) => RARITY_COLORS[r] ?? "#94a3b8";
+  const tierPips = (r: string) => { const k = rarityRank(r); return k < 0 ? null : <span className={s.pips} role="img" aria-label={`${e.floorTier} ${k + 1} / ${RARITY_ORDER.length}`}>{RARITY_ORDER.map((_, i) => <i key={i} data-on={i <= k} />)}</span>; };
   return (
     <>
       <div className="page-head"><h1><Icon name="box" size={26} />{e.floorTitle}</h1></div>
@@ -60,7 +60,7 @@ export default async function FloorPage({ searchParams }: { searchParams: Promis
         </div>
         <div className={s.fgroup} role="group" aria-label={e.rarity}>
           <Link className={s.chip} href={href({ slot })} aria-current={!rarity}>{e.floorAllRarities}</Link>
-          {allRarities.map((x) => <Link key={x} className={s.chip} href={href({ slot, rarity: x })} aria-current={rarity === x} style={{ ["--r" as string]: color(x) }}><span className={s.dot} />{term("rarity", x, d)}</Link>)}
+          {allRarities.map((x) => <Link key={x} className={s.chip} href={href({ slot, rarity: x })} aria-current={rarity === x} >{tierPips(x)}{term("rarity", x, d)}</Link>)}
         </div>
       </div>
       {groups.map((g) => (
@@ -70,15 +70,15 @@ export default async function FloorPage({ searchParams }: { searchParams: Promis
             {g.cells.map((c) => {
               const known = isKnownRarity(c.rarity);
               const label = known ? term("rarity", c.rarity, d) : `${e.floorUnknownRarity}: ${humanizeCode(c.rarity)}`;
-              const style = { ["--r" as string]: color(c.rarity) };
-              if ("empty" in c) return <div key={c.rarity} className={s.tile} data-empty="true" style={style}><span className={s.rar}>{label}</span><span className={s.empty}>{e.floorNoOffers}</span></div>;
+              const style = { ["--rank" as string]: String(Math.max(0, rarityRank(c.rarity))) };
+              if ("empty" in c) return <div key={c.rarity} className={s.tile} data-empty="true" style={style}><span className={s.rar}>{label}{tierPips(c.rarity)}</span><span className={s.empty}>{e.floorNoOffers}</span></div>;
               const o = offers.get(`${c.slot}|${c.rarity}`);
               const stats = o?.stats ? Object.entries(o.stats) : [];
               return (
                 <Link key={c.rarity} className={s.tile} href={`/equipment?slot=${encodeURIComponent(c.slot)}&rarity=${encodeURIComponent(c.rarity)}`} style={style} title={`${e.floorView}: ${term("slot", c.slot, d)} · ${label}`}>
                   <div className={s.top}>
                     <span className={s.img}>{o ? <ItemIcon code={o.itemCode} size={44} /> : <Icon name="box" size={22} />}</span>
-                    <span className={s.rar}>{label}</span>
+                    <span className={s.rar}>{label}{tierPips(c.rarity)}</span>
                   </div>
                   <div className={s.price}><Money value={c.low} d={d} /></div>
                   {c.lowest && <span className={s.low}>{e.floorLowest}</span>}

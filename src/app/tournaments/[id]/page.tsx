@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ApiErrorState } from "@/components/ApiErrorState";
 import { Icon } from "@/components/Icon";
+import { ApiError } from "@/lib/api/errors";
 import { Provenance } from "@/components/Provenance";
 import { countryName } from "@/features/entities/display";
 import { getDisplay } from "@/features/entities/display.server";
 import { Dt, Money } from "@/features/entities/entities";
 import { getLocale, getMessages } from "@/i18n";
 import { getEditionBattles, getTournamentDetail } from "@/lib/data/tournaments";
+import { getUnitDetail } from "@/lib/data/units";
 import { getTournaments } from "@/lib/data/world";
 import s from "../tournaments.module.css";
 
@@ -20,12 +23,19 @@ export default async function TournamentDetailPage({ params }: { params: Promise
   const t = m.tournamentsPage;
   const detail = await getTournamentDetail(id);
   if (!detail.edition) {
+    // Only a genuine 404 (or no error at all) means "not found"; a rate limit, timeout or network failure must be reported as such.
+    const e = detail.error;
+    const isMissing = !e || (e instanceof ApiError && e.kind === "http" && e.status === 404);
+    if (!isMissing) return <><nav className={s.back}><Link href="/tournaments">← {t.back}</Link></nav><ApiErrorState error={e} retryLabel={m.common.retry} /></>;
     return <><nav className={s.back}><Link href="/tournaments">← {t.back}</Link></nav><p className={s.empty}>{t.notFound}</p></>;
   }
   const ed = detail.edition;
   const d = await getDisplay();
   const rules = await getTournaments().then((r) => ({ prizes: r.prizes, entryFee: r.entryFee })).catch(() => null);
-  const { battles } = await getEditionBattles(ed).catch(() => ({ battles: [] }));
+  const { battles, checked, truncated } = await getEditionBattles(ed).catch(() => ({ battles: [], checked: 0, truncated: false }));
+  // History rows carry ids only: resolve winner / runner-up unit names (confirmed data) instead of printing raw ids.
+  const unitNames = new Map<string, string>();
+  if (ed.kind === "mu") await Promise.all([ed.winnerId, ed.runnerUpId].filter((x): x is string => !!x && !ed.entrants.some((e) => e.entrantId === x && e.name)).map(async (uid) => { const r = await getUnitDetail(uid).catch(() => null); if (r?.unit?.name) unitNames.set(uid, r.unit.name); }));
   const finished = ed.status === "finished" || !!ed.finishedAt;
   const state = finished ? "finished" : ed.status === "running" ? "running" : ed.registrationOpen ? "registration" : "upcoming";
   const stateLabel = ed.status === "cancelled" ? t.cancelled : state === "running" ? t.running : state === "finished" ? t.finished : state === "registration" ? t.registration : t.upcoming;
@@ -34,7 +44,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
   const entrantName = (eid: string | null | undefined): string => {
     if (!eid) return "—";
     const e = ed.entrants.find((x) => x.entrantId === eid);
-    return e?.name ?? (isUnit ? eid : countryName(eid, d.dir));
+    return e?.name ?? unitNames.get(eid) ?? (isUnit ? t.unitUnknown.replace("{id}", eid) : countryName(eid, d.dir));
   };
   const href = (eid: string) => (isUnit ? `/units/${encodeURIComponent(eid)}` : `/countries/${encodeURIComponent(eid)}`);
   const entityLink = (eid: string | null | undefined) => (eid && safe(eid) ? <Link href={href(eid)} dir="auto">{entrantName(eid)}</Link> : <span>{entrantName(eid)}</span>);
@@ -90,7 +100,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
         )}
       </section>
       <section className={s.section}>
-        <h2>{t.matchups} <small>{nf.format(battles.length)}</small></h2>
+        <h2>{t.matchups} <small>{nf.format(battles.length)}</small> <span className={s.inferred}>{t.inferred}</span></h2>
         {battles.length === 0 ? <p className={s.empty}>{t.noMatchups}</p> : (
           <ul className={s.matches}>
             {battles.map((b) => {
@@ -110,12 +120,15 @@ export default async function TournamentDetailPage({ params }: { params: Promise
             })}
           </ul>
         )}
-        <p className="note">{t.matchupsNote}</p>
+        <p className="note">{t.matchupsNote} {checked > 0 ? t.checkedNote.replace("{n}", nf.format(checked)) : ""} {truncated ? t.truncatedBattles : ""}</p>
       </section>
       <section className={s.gap}>
-        <b>{t.gapsTitle}</b>
+        <b>{t.sourceTitle}</b>
+        <p>{detail.source === "detail" ? t.srcDetail : t.srcList}</p>
+        <p>{t.srcEntrants} {t.srcResult}</p>
+        <p>{t.srcBattles}</p>
+        <b style={{ display: "block", marginBlockStart: "0.6rem" }}>{t.gapsTitle}</b>
         <p>{t.gapBracket}</p>
-        <p>{t.gapSeeds}</p>
       </section>
       {detail.meta && <Provenance meta={detail.meta} m={m} />}
     </>

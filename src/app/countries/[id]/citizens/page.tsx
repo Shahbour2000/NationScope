@@ -47,6 +47,7 @@ export default async function CitizensPage({ params, searchParams }: { params: P
           </tbody>
         </table>
       </div>
+      <p className="hint">{m.countrySubs.apiOrder}</p>
       <Pager basePath={`${base}/citizens`} offset={offset} pageSize={PAGE} rowCount={res.hasMore ? PAGE : res.rows.length} prev={m.explorer.prev} next={m.explorer.next} />
       <Provenance meta={res.meta} m={m} />
     </>

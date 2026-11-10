@@ -115,24 +115,26 @@ describe('combat', () => {
     approx(computeHit(base({ ammo: 'medium', rankBonusPct: 5, conventions: { stacking: 'multiplicative' } })).personalMultiplier, 1.25 * 1.05);
   });
   it('booster phases', () => {
-    // the Pill changes the Attack SKILL value only; ammo/rank multiplier is untouched
+    // Wiki 01-basics §3.6 / 03-war §1.6 step 2: the Pill (stimulant) is one of the SUMMED personal boosts; it does not rescale the Attack skill itself
     const skill = 100; // attack level 0
     for (const [phase, pct] of [['none', 0], ['positive', 50], ['negative', -50]] as const) {
       const h = computeHit(base({ booster: phase }));
-      approx(h.pillPct, pct); approx(h.attackSkillEffective, skill * (1 + pct / 100)); approx(h.attackBase, skill * (1 + pct / 100) + 30); approx(h.personalMultiplier, 1);
+      approx(h.pillPct, pct); approx(h.attackSkillEffective, skill); approx(h.attackBase, skill + 30); approx(h.personalMultiplier, 1 + pct / 100);
     }
   });
   it('pill is attack-skill only', () => {
+    // (name kept because the formula registry references it) The Pill only enters the summed personal multiplier; every other stat is unaffected.
     const lev = lv({ attack: 10, accuracy: 10, critChance: 5, critDamage: 5, armor: 3, dodge: 3, lootChance: 4 });
     const gloves: GearInput = { ...knife, gloves: { kind: 'item', stats: { accuracy: 10 } }, chest: { kind: 'item', stats: { armor: 5 } } };
     const none = computeHit(base({ levels: lev, gear: gloves, ammo: 'medium', rankBonusPct: 5 }));
     const buff = computeHit(base({ levels: lev, gear: gloves, ammo: 'medium', rankBonusPct: 5, booster: 'positive' }));
     const debuff = computeHit(base({ levels: lev, gear: gloves, ammo: 'medium', rankBonusPct: 5, booster: 'negative' }));
-    for (const k of ['accuracyTotal', 'critChanceTotal', 'critDamageTotal', 'cleanChance', 'critChance', 'personalMultiplier', 'battleMultiplier', 'healthLossPerHit', 'dodgeProbability'] as const) { approx(buff[k], none[k]); approx(debuff[k], none[k]); }
-    // accuracy overflow (skill 110 + gloves 10 = 120 -> +60 attack) is NOT the Attack skill: it is not scaled by the Pill
-    const S = 400, W = 30, OF = 60, M = 1 + (25 + 5) / 100;
-    approx(none.attackSkillEffective, S); approx(buff.attackSkillEffective, S * 1.5); approx(debuff.attackSkillEffective, S * 0.5);
-    approx(none.outcomes[1]!.damage, (S + W + OF) * M); approx(buff.outcomes[1]!.damage, (S * 1.5 + W + OF) * M); approx(debuff.outcomes[1]!.damage, (S * 0.5 + W + OF) * M);
+    for (const k of ['accuracyTotal', 'critChanceTotal', 'critDamageTotal', 'cleanChance', 'critChance', 'battleMultiplier', 'healthLossPerHit', 'dodgeProbability'] as const) { approx(buff[k], none[k]); approx(debuff[k], none[k]); }
+    // accuracy overflow (skill 110 + gloves 10 = 120 -> +60 attack); ammo (+25) and rank (+5) are summed with the Pill (+50 / -50)
+    const S = 400, W = 30, OF = 60, M = (pill: number) => 1 + (25 + pill + 5) / 100;
+    approx(none.attackSkillEffective, S); approx(buff.attackSkillEffective, S); approx(debuff.attackSkillEffective, S);
+    approx(none.personalMultiplier, M(0)); approx(buff.personalMultiplier, M(50)); approx(debuff.personalMultiplier, M(-50));
+    approx(none.outcomes[1]!.damage, (S + W + OF) * M(0)); approx(buff.outcomes[1]!.damage, (S + W + OF) * M(50)); approx(debuff.outcomes[1]!.damage, (S + W + OF) * M(-50));
     assert.ok(buff.usedFormulas.includes('combat.booster')); assert.ok(!none.usedFormulas.includes('combat.booster'));
   });
   it('battle bonus caps', () => {
@@ -238,7 +240,7 @@ describe('registry', () => {
     for (const x of f) assert.ok(x.tests.length > 0, x.id);
     assert.equal(weakestStatus(['skills.cost']), 'documented');
     assert.equal(weakestStatus(['skills.value.linear']), 'estimated');
-    assert.equal(weakestStatus(['combat.critMultiplier']), 'unverified');
+    assert.equal(weakestStatus(['combat.critMultiplier']), 'documented'); // Wiki 01-basics §2.4 / 03-war §1.6 step 4 (docs/build-optimizer-audit.md)
     assert.equal(weakestStatus(['skills.pointsEarned']), 'documented');
   });
 });

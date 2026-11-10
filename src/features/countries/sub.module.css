@@ -81,3 +81,7 @@
 .facts dd { margin: 0; font-size: 1.2rem; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
 .flags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-block-start: 1rem; }
 .flags span { font-size: 0.8rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 999px; border: 1px solid rgba(248, 113, 113, 0.4); color: #fca5a5; }
+.refs { display: flex; flex-wrap: wrap; gap: 0.2rem 0.8rem; margin-block-start: 0.25rem; font-size: 0.78rem; }
+.refs a { color: #8fb4d9; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; }
+.refs a:hover, .refs a:focus-visible { color: #19c8ff; text-decoration: underline; }
+.refs :global(.cflag-img), .refs :global(.cflag) { inline-size: 1.1rem; block-size: 0.82rem; border-radius: 2px; }

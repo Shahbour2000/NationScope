@@ -20,7 +20,10 @@ export default async function PartiesPage() {
   return (
     <>
       <div className="page-head"><h1><Icon name="users" size={26} />{t.title}</h1></div>
-      <p style={{ color: "#8b97b3", margin: "-0.3rem 0 1.2rem", maxInlineSize: "62rem" }}>{t.intro} {res.missing.length === 0 ? t.coverageAll.replace("{n}", String(res.total)) : t.coveragePartial.replace("{c}", String(res.covered)).replace("{n}", String(res.total)).replace("{names}", res.missing.slice(0, 8).map((id) => countryName(id, d.dir)).join(", ") + (res.missing.length > 8 ? "…" : ""))}</p>
+      <p style={{ color: "#8b97b3", margin: "-0.3rem 0 0.6rem", maxInlineSize: "62rem" }}>{t.intro}</p>
+      <p role="status" data-partial={res.missing.length > 0} style={{ margin: "0 0 1.2rem", padding: "0.5rem 0.8rem", borderRadius: 10, maxInlineSize: "62rem", fontSize: "0.85rem", border: `1px ${res.missing.length > 0 ? "solid rgba(245, 197, 66, 0.55)" : "solid rgba(74, 222, 128, 0.35)"}`, color: res.missing.length > 0 ? "#f5d77a" : "#8fd9ae", background: res.missing.length > 0 ? "rgba(245, 197, 66, 0.07)" : "rgba(74, 222, 128, 0.05)" }}>
+        {res.missing.length === 0 ? t.coverageAll.replace("{n}", String(res.total)) : t.coveragePartial.replace("{c}", String(res.covered)).replace("{n}", String(res.total)).replace("{names}", res.missing.slice(0, 8).map((id) => countryName(id, d.dir)).join(", ") + (res.missing.length > 8 ? "…" : ""))}
+      </p>
       {rows.length === 0 ? <p style={{ color: "#7b87a3", textAlign: "center", padding: "2.5rem 0" }}>{t.empty}</p> : <PartiesBoard rows={rows} d={d} m={{ ...t, ethic: m.partiesPage.ethic }} />}
       <Provenance meta={res.meta} m={m} />
     </>

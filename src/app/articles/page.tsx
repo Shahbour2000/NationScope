@@ -27,7 +27,7 @@ export default async function ArticlesPage() {
               <h2 style={{ margin: 0 }}><Link href={`/articles/${encodeURIComponent(x.id)}`} dir="auto">{x.title}</Link></h2>
               {x.excerpt ? <p className="hint" dir="auto">{x.excerpt}</p> : null}
               <p className="kv">
-                {x.authorName ? <span className="ichip"><Avatar path={x.authorAvatarUrl} d={d} /><span>{a.by} {x.authorName}</span></span> : null}
+                {x.authorName ? (typeof x.authorId === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(x.authorId) ? <Link className="ichip" href={`/players/${encodeURIComponent(x.authorId)}`}><Avatar path={x.authorAvatarUrl} d={d} /><span>{a.by} {x.authorName}</span></Link> : <span className="ichip"><Avatar path={x.authorAvatarUrl} d={d} /><span>{a.by} {x.authorName}</span></span>) : null}
                 {x.countryId ? <CountryBadge id={x.countryId} d={d} /> : null}
                 {x.official ? <span className="badge" data-tone="good">{a.official}</span> : null}
               </p>

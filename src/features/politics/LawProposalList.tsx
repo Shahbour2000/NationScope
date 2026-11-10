@@ -24,11 +24,12 @@ export function LawProposalList({ proposals, label, status, t, d }: { proposals:
             <div className={s.title}>
               {safe(p.id) ? <Link href={`/laws/${encodeURIComponent(p.id)}`}>{label(p.lawCode)}</Link> : <b>{label(p.lawCode)}</b>}
               {entries.map(([k, v]) => (k === "country" && typeof v === "string"
-                ? <span key={k} className={s.chip}><Flag id={v} d={d} />{countryName(v, d.dir)}</span>
+                ? (safe(v) ? <Link key={k} href={`/countries/${encodeURIComponent(v)}`} className={s.chip}><Flag id={v} d={d} />{countryName(v, d.dir)}</Link> : <span key={k} className={s.chip}><Flag id={v} d={d} />{countryName(v, d.dir)}</span>)
                 : <span key={k} className={s.chip}>{humanizeCode(String(v))}</span>))}
               <span className={s.pill} data-s={p.status ?? undefined}>{status(p.status)}</span>
             </div>
             <span className={s.meta}>{p.proposerName ? <>{t.by} {p.proposerId && safe(p.proposerId) ? <Link href={`/players/${encodeURIComponent(p.proposerId)}`} dir="auto">{p.proposerName}</Link> : p.proposerName} · </> : ""}{formatDate(p.opensAt, d.nl) ?? ""}{p.paperCost != null ? ` · ${nf.format(p.paperCost)} ${t.cost}` : ""}</span>
+            {p.failureReason ? <span className={s.meta} dir="auto"> · {p.failureReason}</span> : null}
           </div>
           <div className={s.votes} aria-label={`${yes} ${t.yes}, ${no} ${t.no}`}>
             <div className={s.votebar}><i style={{ inlineSize: `${pct(yes)}%` }} /><i style={{ inlineSize: `${pct(no)}%` }} /></div>

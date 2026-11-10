@@ -19,3 +19,20 @@ export function countByType(rows: readonly Dated[]): Map<string, number> {
   for (const r of rows) m.set(r.type, (m.get(r.type) ?? 0) + 1);
   return m;
 }
+
+export interface EventLike { key: string; type: string; link?: string | null; regionId?: string | null; countryIds?: string[] | null }
+const SAFE = /^[A-Za-z0-9_-]{1,80}$/;
+export interface EventTargets { battleId: string | null; lawId: string | null; regionId: string | null; countryIds: string[] }
+
+/**
+ * Entities an event refers to, taken only from fields the API really returns: the typed key ("battle:<id>", "law:<id>"), the game's own link for conquests
+ * ("/war/battle/<id>"), regionId and countryIds. Anything else (e.g. treaty ids, which have no page) is not linked.
+ */
+export function eventTargets(e: EventLike): EventTargets {
+  const [prefix, ...rest] = e.key.split(":");
+  const keyId = rest.join(":");
+  const linkBattle = /^\/war\/battle\/([A-Za-z0-9_-]{1,80})$/.exec(e.link ?? "")?.[1] ?? null;
+  const battleId = prefix === "battle" && SAFE.test(keyId) ? keyId : linkBattle;
+  const lawId = prefix === "law" && SAFE.test(keyId) ? keyId : null;
+  return { battleId, lawId, regionId: e.regionId && SAFE.test(e.regionId) ? e.regionId : null, countryIds: (e.countryIds ?? []).filter((c) => SAFE.test(c)) };
+}
