@@ -1,20 +1,20 @@
 "use client";
 import { Check, Field, Num, Section, Seg } from "./controls";
+import { ConsumableTiles } from "./ConsumableTiles";
 import { EquipmentStatus } from "./EquipmentStatus";
-import { SKILL_OPTIONS, sectionsFor, type AmmoKey, type FoodKey, type FormIssue, type FormState, type SlotForm } from "./form";
-import { SLOT_KEYS, type SlotKey } from "../api-schema";
+import { GearTiles } from "./GearTiles";
+import { SKILL_OPTIONS, sectionsFor, type FormIssue, type FormState } from "./form";
 import type { ImportVM } from "../view-model";
 import type { BuilderMessages } from "./messages";
 
 type Patch = (fn: (f: FormState) => FormState) => void;
-const STAT_UNIT: Record<SlotKey, string> = { weapon: "attack", helmet: "critDamage", gloves: "accuracy", chest: "armor", legs: "armor", boots: "dodge" };
 
 /** Step 3: only the inputs the chosen goal can use, grouped in collapsible sections. */
 export function DataPanel({ t, form, update, imp, issues }: { t: BuilderMessages; form: FormState; update: Patch; imp: ImportVM; issues: FormIssue[] }) {
   const d = t.data; const sec = sectionsFor(form);
   const bad = (field: string) => issues.some((i) => i.field === field);
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => update((f) => ({ ...f, [k]: v }));
-  const gearSlot = (k: SlotKey, patch: Partial<SlotForm>) => update((f) => ({ ...f, gear: { ...f.gear, [k]: { ...f.gear[k], ...patch } } }));
+  const gearSlot = (k: import("../api-schema").SlotKey, patch: Partial<import("./form").SlotForm>) => update((f) => ({ ...f, gear: { ...f.gear, [k]: { ...f.gear[k], ...patch } } }));
   const fixed = form.mode === "war" && form.gearMode === "fixed";
   return (
     <section className="bo-step" aria-labelledby="bo-step-data">
@@ -48,20 +48,7 @@ export function DataPanel({ t, form, update, imp, issues }: { t: BuilderMessages
         <Section title={fixed ? d.gearFixedTitle : d.gearOwnedTitle} hint={fixed ? d.gearFixedHint : d.gearOwnedHint}>
           {bad("gear") ? <p className="bo-err" role="alert">{fixed ? d.needGearStats : d.needCandidates}</p> : null}
           <EquipmentStatus t={t} eq={imp.equipment} form={form.gear} onUse={(k, v) => gearSlot(k, { equipped: true, stat1: String(v.stat1), stat2: v.stat2 === undefined ? "" : String(v.stat2), usesAmmo: v.usesAmmo ?? true, durability: v.durability === undefined ? "" : String(v.durability) })} />
-          <div className="bo-gear">
-            {SLOT_KEYS.map((k) => { const s = form.gear[k]; return (
-              <div key={k} className="bo-slot" data-on={s.equipped ? "true" : undefined}>
-                <Check checked={s.equipped} onChange={(v) => gearSlot(k, { equipped: v })} label={t.slots[k]} />
-                {s.equipped ? (
-                  <div className="bo-row">
-                    <Field label={t.stats[STAT_UNIT[k]] ?? STAT_UNIT[k]} htmlFor={`bo-${k}-1`}><Num id={`bo-${k}-1`} value={s.stat1} onChange={(v) => gearSlot(k, { stat1: v })} /></Field>
-                    {k === "weapon" ? <Field label={t.stats.critChance ?? ""} htmlFor="bo-weapon-2"><Num id="bo-weapon-2" value={s.stat2} onChange={(v) => gearSlot(k, { stat2: v })} /></Field> : null}
-                    <Field label={d.durability} hint={fixed ? d.durabilityHintFixed : d.durabilityHintOwned} htmlFor={`bo-${k}-d`}><Num id={`bo-${k}-d`} value={s.durability} onChange={(v) => gearSlot(k, { durability: v })} /></Field>
-                    {k === "weapon" ? <Check checked={s.usesAmmo} onChange={(v) => gearSlot(k, { usesAmmo: v })} label={d.usesAmmo} /> : null}
-                  </div>
-                ) : <p className="hint">{fixed ? d.slotEmpty : d.slotNone}</p>}
-              </div>); })}
-          </div>
+          <GearTiles t={t} gear={form.gear} fixed={fixed} update={update} hasError={bad("gear")} />
           {!fixed ? (
             <div className="bo-optrow">
               <Check checked={form.useMarket} onChange={(v) => set("useMarket", v)} label={d.useMarket.replace("{n}", String(imp.offers?.total ?? 0))} />
@@ -74,27 +61,7 @@ export function DataPanel({ t, form, update, imp, issues }: { t: BuilderMessages
 
       {sec.consumables ? (
         <Section title={d.consumablesTitle} hint={d.consumablesHint}>
-          <h3>{d.ammoTitle}</h3>
-          <div className="bo-chips" role="group" aria-label={d.ammoTitle}>
-            {(["none", "light", "medium", "heavy"] as AmmoKey[]).map((a) => <Check key={a} checked={form.ammo[a]} onChange={(v) => update((f) => ({ ...f, ammo: { ...f.ammo, [a]: v } }))} label={d.ammo[a]} />)}
-          </div>
-          {bad("ammo") ? <p className="bo-err" role="alert">{d.needAmmo}</p> : null}
-          <div className="bo-row">
-            <Field label={d.leadStock} hint={d.leadStockHint} htmlFor="bo-lead"><Num id="bo-lead" value={form.leadStock} onChange={(v) => set("leadStock", v)} /></Field>
-            <Check checked={form.buyAmmo} onChange={(v) => set("buyAmmo", v)} label={d.buyAmmo} />
-          </div>
-          <h3>{d.foodTitle}</h3>
-          {bad("food") ? <p className="bo-err" role="alert">{d.needFoodPrices}</p> : null}
-          <div className="bo-foods">
-            {(["bread", "steak", "cookedFish"] as FoodKey[]).map((k) => { const x = form.food[k]; return (
-              <div key={k} className="bo-food">
-                <Check checked={x.use} onChange={(v) => update((f) => ({ ...f, food: { ...f.food, [k]: { ...f.food[k], use: v } } }))} label={d.food[k]} />
-                {x.use ? <div className="bo-row">
-                  <Field label={d.price} htmlFor={`bo-f-${k}-p`}><Num id={`bo-f-${k}-p`} value={x.price} onChange={(v) => update((f) => ({ ...f, food: { ...f.food, [k]: { ...f.food[k], price: v } } }))} unit={d.gold} /></Field>
-                  <Field label={d.stock} hint={form.warKind === "sustainable" ? d.foodStockHint : undefined} htmlFor={`bo-f-${k}-s`}><Num id={`bo-f-${k}-s`} value={x.stock} onChange={(v) => update((f) => ({ ...f, food: { ...f.food, [k]: { ...f.food[k], stock: v } } }))} /></Field>
-                </div> : null}
-              </div>); })}
-          </div>
+          <ConsumableTiles t={t} form={form} update={update} showPill={sec.pill} ammoError={bad("ammo")} foodError={bad("food")} />
         </Section>
       ) : null}
 
@@ -114,7 +81,7 @@ export function DataPanel({ t, form, update, imp, issues }: { t: BuilderMessages
 
       {sec.pill ? (
         <Section title={d.pillTitle} hint={d.pillHint} open={form.pill.enabled}>
-          <Check checked={form.pill.enabled} onChange={(v) => update((f) => ({ ...f, pill: { ...f.pill, enabled: v } }))} label={d.pillEnable} />
+          {!form.pill.enabled ? <p className="hint">{d.tilePillHelp}</p> : null}
           {form.pill.enabled ? (
             <>
               <Field label={d.pillState} hint={d.pillStateHint} error={bad("pill.state")}>

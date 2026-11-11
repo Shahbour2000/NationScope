@@ -1,14 +1,14 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon } from "@/components/Icon";
-import type { ImportVM, SourceTag } from "../view-model";
+import type { ImportVM } from "../view-model";
+import { CompanyStrip } from "./CompanyStrip";
 import { Notice } from "./controls";
 import { fmt } from "./format";
 import type { BuilderMessages } from "./messages";
 
 interface Suggestion { type: string; id: string; name: string; sub: string | null }
 export type ImportState = "idle" | "loading" | "error";
-const SRC_KIND: Record<SourceTag, string> = { api: "api", derived: "estimate", user: "calc", unavailable: "" };
 
 export function PlayerPanel({ t, numLocale, imp, state, error, onSelect, skillsSlot }: { skillsSlot?: ReactNode; t: BuilderMessages; numLocale: string; imp: ImportVM | null; state: ImportState; error: string | null; onSelect: (id: string) => void }) {
   const [q, setQ] = useState("");
@@ -33,7 +33,7 @@ export function PlayerPanel({ t, numLocale, imp, state, error, onSelect, skillsS
   }, [q]);
 
   const p = t.player;
-  const src = (s: SourceTag) => <span className="src" data-kind={SRC_KIND[s] || undefined}>{p.source[s]}</span>;
+  const missingOf = (i: ImportVM): string[] => [i.provenance.level === "unavailable" ? p.fLevel : "", i.provenance.skills === "unavailable" ? p.fSkills : "", i.provenance.rank === "unavailable" ? p.fRank : "", i.provenance.companies === "unavailable" ? p.fCompanies : "", i.market.loaded ? "" : p.fMarket, i.offers ? "" : p.fOffers].filter(Boolean);
   return (
     <section className="bo-step panel" aria-labelledby="bo-step-player">
       <h2 id="bo-step-player"><span className="bo-num-badge">1</span>{p.title}</h2>
@@ -65,9 +65,11 @@ export function PlayerPanel({ t, numLocale, imp, state, error, onSelect, skillsS
             <div className="metric"><dt>{p.level}</dt><dd>{fmt(imp.player.level, numLocale)}</dd></div>
             <div className="metric"><dt>{p.rank}</dt><dd>{imp.player.rankName ? (t.ranks[imp.player.rankName as keyof typeof t.ranks] ?? imp.player.rankName) : "—"}</dd><dd className="metric-sub">{imp.player.rankBonusPct !== null ? `+${imp.player.rankBonusPct}% ${p.attack}` : ""}</dd></div>
             <div className="metric"><dt>{p.lifetimeDamage}</dt><dd>{imp.player.damageTotal !== null ? fmt(Number(imp.player.damageTotal), numLocale) : "—"}</dd></div>
-            <div className="metric"><dt>{p.companies}</dt><dd>{fmt(imp.companies.count, numLocale)}</dd><dd className="metric-sub">{imp.companies.products.map((c) => `${c.code}×${c.count}`).join(" · ")}</dd></div>
+            <div className="metric"><dt>{p.companies}</dt><dd>{fmt(imp.companies.count, numLocale)}</dd></div>
           </dl>
 
+          <CompanyStrip t={t} numLocale={numLocale} imp={imp} />
+          {missingOf(imp).length ? <Notice tone="info">{t.data.goalReadMissing.replace("{list}", missingOf(imp).join(", "))}</Notice> : null}
           <div className="bo-two">
             <section className="card" aria-labelledby="bo-pts">
               <h2 id="bo-pts"><Icon name="trend" size={18} />{p.pointsTitle}</h2>
@@ -78,20 +80,6 @@ export function PlayerPanel({ t, numLocale, imp, state, error, onSelect, skillsS
               </tbody></table>
               <p className="note">{imp.points.consistent === false ? p.ledgerConflict : imp.points.exact ? p.ledgerExact : p.ledgerLower}</p>
               {imp.points.impliedMinPrestige ? <p className="note">{p.impliedPrestige.replace("{n}", String(imp.points.impliedMinPrestige))}</p> : null}
-            </section>
-            <section className="card" aria-labelledby="bo-avail">
-              <h2 id="bo-avail"><Icon name="contract" size={18} />{p.availabilityTitle}</h2>
-              <table className="table bo-kv"><tbody>
-                <tr><th scope="row">{p.fLevel}</th><td>{src(imp.provenance.level)}</td></tr>
-                <tr><th scope="row">{p.fSkills}</th><td>{src(imp.provenance.skills)}</td></tr>
-                <tr><th scope="row">{p.fRank}</th><td>{src(imp.provenance.rank)}</td></tr>
-                <tr><th scope="row">{p.fCompanies}</th><td>{src(imp.provenance.companies)}</td></tr>
-                <tr><th scope="row">{p.fMarket}</th><td>{imp.market.loaded ? <span className="src" data-kind="api">{fmt(imp.market.items, numLocale)}</span> : <span className="src">{p.source.unavailable}</span>}</td></tr>
-                <tr><th scope="row">{p.fOffers}</th><td>{imp.offers ? <span className="src" data-kind="api">{fmt(imp.offers.total, numLocale)}</span> : <span className="src">{p.source.unavailable}</span>}</td></tr>
-                <tr><th scope="row">{p.fGear}</th><td><span className="src">{p.needsInput}</span></td></tr>
-                <tr><th scope="row">{p.fPill}</th><td><span className="src">{p.needsInput}</span></td></tr>
-                <tr><th scope="row">{p.fStocks}</th><td><span className="src">{p.needsInput}</span></td></tr>
-              </tbody></table>
             </section>
           </div>
 

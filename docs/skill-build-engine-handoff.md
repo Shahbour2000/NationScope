@@ -1,6 +1,6 @@
 # Skill Build Engine — Handoff (current state)
 
-Last updated: 2026-11-10, after batch 1. Baseline ZIP: `NationScope-main (2).zip` (no git metadata; earlier proposed changes are not assumed integrated).
+Last updated: 2026-11-10, after batch 2 (batch 1 reported merged into GitHub by the owner; batch 2 was built on the local copy that includes batch 1, not on a fresh download of the repository). Baseline ZIP: `NationScope-main (2).zip` (no git metadata; earlier proposed changes are not assumed integrated).
 
 ## State
 - Roadmap: `docs/skill-build-engine-roadmap.md` (phases A-F). Batch 0 = audit/docs. Batch 1 = Phase E part 1: Skill Builder grid with pins. Engine mechanics, formulas, adapter and API untouched.
@@ -8,11 +8,17 @@ Last updated: 2026-11-10, after batch 1. Baseline ZIP: `NationScope-main (2).zip
 - How pins work: a pin is a mandatory minimum stored as a `min` entry in `form.constraints` (max/exact rules stay in the step-3 rules section and are only flagged in the grid). Max 14 rules per request (api-schema limit) is respected. Verified by test: war, economic and hybrid runs honour pins (economic with an Attack pin of 10 returned Attack 10; hybrid with Armor pin 3 returned 3). Note: in economic goal a combat pin consumes points, i.e. it does change the result.
 - Test status (be precise): 208/208 pass under a STAND-IN describe/it runner (tsx, JSX automatic runtime). This is preliminary and NOT equal to a real Vitest run. Not run: real Vitest, full `tsc` (only the pure-TS files and the en/ar dictionaries were type-checked, with environment-only errors for missing @types/node and @types/react), ESLint, `next build`. No browser/visual check of the new grid (RTL, 360px, 768px, 1280px) was possible.
 
+## Batch 2 (Phase E part 2), UI only
+- New: `ui/GearTiles.tsx`, `ui/ConsumableTiles.tsx`, `ui/CompanyStrip.tsx`, `tests/build-optimizer/batch2-tiles.test.ts`. Modified: `ui/DataPanel.tsx` (tiles replace the checkbox grids; Pill enable checkbox replaced by the Pill tile), `ui/GoalPanel.tsx` (redesign), `ui/PlayerPanel.tsx` (availability card removed, CompanyStrip + "could not be read" notice added, unused source helper removed), `ui/messages.en.ts` / `messages.ar.ts` (new `data.tile*`, `data.companies*`, `data.goal*` keys), `builder.css` (appended).
+- Every tile edits an existing form field (see roadmap Phase E). Not supported by engine/API and therefore NOT built: per-slot gear lock, company count choice, item images, Simplified/Customizable toggle, Economy sub-goals (details in the roadmap).
+- No shared file was touched. Unused message keys (e.g. `player.availabilityTitle`, `data.pillEnable`) were left in the dictionaries on purpose (removal is optional cleanup).
+- Test status: 217/217 under the STAND-IN runner (lucide-react stubbed for rendering); preliminary, not a real Vitest run. Dictionary key parity en/ar and the pure TS files type-check; the TSX components were NOT type-checked (no @types/react here). Not run: real Vitest, full tsc, ESLint, next build, any browser check.
+
 ## Known limitations / unresolved (unchanged)
 - Intermediate skill values are linear interpolation (Estimated); the grid shows exact levels and says stat values between 0 and 10 are estimated. Earned points may be a lower bound (Prestige unknown): the over-budget warning appears only when the earned total is exact.
 - Player level unknown => skills are neither locked nor claimed unlocked.
 - Everything in `docs/build-optimizer-audit.md` still applies.
 
-## Exact next task (Batch 2)
-1. On a machine with dependencies: `npm ci`, real Vitest, `tsc --noEmit`, ESLint, `next build`; fix anything the real tools report for batch 1 files; look at the grid in a browser (LTR/RTL, phone width).
-2. Then Phase E part 2: gear and consumable tiles (weapon, helmet, gloves, chest, legs, boots, ammo, food, pill) that drive the existing `form.gear` / `ammo` / `food` / `pill` state (all already supported by `OptimizeInput`); confirm each control's effect before adding it.
+## Exact next task (Batch 3)
+1. On a machine with dependencies: `npm ci`, real Vitest, `tsc --noEmit`, ESLint, `next build`; fix anything the real tools report for batch 1-2 files (the new TSX files are the most likely to need a type fix); look at skill grid, tiles and goal step in a browser (LTR/RTL, 360/768/1280px) and send findings.
+2. Then Phase E part 3: results as build cards with before/after comparison (read `ResultsPanel.tsx` first; map only fields the engine already returns).
