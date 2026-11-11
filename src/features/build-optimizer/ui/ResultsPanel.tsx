@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import type { BuildVM, CurrentVM, ResultOk, ResultVM, PillVM } from "../view-model";
 import { Ev, Notice } from "./controls";
 import { DASH, fmt, fmtGold, minutesLabel, signed } from "./format";
+import { comparisonMatrix, deltaOf, gearSummary, skillSummary, type Cell, type MetricDef } from "./result-cards";
 import type { BuilderMessages } from "./messages";
 
 type T = BuilderMessages;
@@ -70,12 +70,13 @@ function Cost({ b, t, numLocale }: { b: BuildVM; t: T; numLocale: string }) {
   );
 }
 
-function BuildCard({ b, res, current, t, numLocale }: { b: BuildVM; res: ResultOk; current: CurrentVM | null; t: T; numLocale: string }) {
+function BuildCard({ b, res, current, t, numLocale, open }: { b: BuildVM; res: ResultOk; current: CurrentVM | null; t: T; numLocale: string; open: boolean }) {
   const r = t.results; const war = b.combat, ses = b.session, eco = b.economy;
   const dmgDelta = current?.damage !== null && current?.damage !== undefined && (war || ses) ? (war?.damage ?? ses!.damage) - current.damage : null;
   const netDelta = current?.economyNet !== null && current?.economyNet !== undefined && eco ? eco.net - current.economyNet : null;
   return (
-    <article className="bo-build" aria-live="polite">
+    <article className="bo-build bo-rcard" data-role={b.role} aria-labelledby={`bo-rc-${b.role}`}>
+      <header className="bo-rcard-head"><h3 id={`bo-rc-${b.role}`}>{r.roles[b.role]}</h3></header>
       <dl className="metrics">
         {war && res.kind === "war" ? <>
           <Metric label={r.expectedDamage.replace("{n}", fmt(war.hits, numLocale))} value={fmt(war.damage, numLocale)} sub={war.damageLow !== null ? `${fmt(war.damageLow, numLocale)} – ${fmt(war.damageHigh, numLocale)} (${r.estimateBadge})` : dmgDelta !== null ? `${signed(dmgDelta, numLocale)} ${r.vsCurrent}` : undefined} tone={dmgDelta !== null && dmgDelta > 0 ? "good" : undefined} />
@@ -97,7 +98,9 @@ function BuildCard({ b, res, current, t, numLocale }: { b: BuildVM; res: ResultO
         </> : null}
         {res.kind === "hybrid" && war ? <Metric label={r.perHit} value={fmt(war.perHit, numLocale, 1)} sub={current?.perHit != null ? `${signed(war.perHit - current.perHit, numLocale, 1)} ${r.vsCurrent}` : r.perHitNote} /> : null}
       </dl>
-
+      <Changes b={b} t={t} numLocale={numLocale} />
+      <details className="bo-more" open={open}>
+      <summary>{r.detailsTitle}</summary>
       <h3>{r.skillsTitle}</h3>
       <p className="hint">{r.pointsLine.replace("{spent}", fmt(b.pointsSpent, numLocale)).replace("{left}", fmt(b.pointsRemaining, numLocale)).replace("{total}", fmt(res.totalPoints, numLocale))}{!res.pointsExact ? ` ${r.pointsLowerBound}` : ""}</p>
       {b.reset.required ? <Notice tone="warn" title={r.resetTitle}>{r.resetBody.replace("{cost}", b.reset.costGold === null ? DASH : fmtGold(b.reset.costGold, numLocale))}</Notice> : <p className="hint">{r.noReset}</p>}
@@ -110,24 +113,65 @@ function BuildCard({ b, res, current, t, numLocale }: { b: BuildVM; res: ResultO
       {ses ? <p className="bo-line"><strong>{r.survival}:</strong> {r.sessionLine.replace("{loss}", fmt(ses.lossPerHit, numLocale, 2)).replace("{meals}", fmt(ses.mealsTotal, numLocale)).replace("{left}", fmt(ses.hungerLeft, numLocale))}</p> : null}
       {b.cost ? <><h3>{r.costTitle}</h3><Cost b={b} t={t} numLocale={numLocale} /></> : null}
       {b.preserved.length ? <p className="hint">{r.preserved}: {b.preserved.join(", ")}</p> : null}
+      </details>
     </article>
   );
 }
 
+function Changes({ b, t, numLocale }: { b: BuildVM; t: T; numLocale: string }) {
+  const r = t.results; const sk = skillSummary(b), gs = gearSummary(b);
+  return (
+    <div className="bo-changes">
+      <h4>{r.changesTitle}</h4>
+      <ul className="bo-chiplist">
+        <li className="badge" data-tone={sk.changed.length ? "good" : undefined}>{sk.changed.length ? r.skillsChangedN.replace("{n}", fmt(sk.changed.length, numLocale)) : r.noSkillChange}</li>
+        {sk.unchanged ? <li className="badge">{r.skillsUnchangedN.replace("{n}", fmt(sk.unchanged, numLocale))}</li> : null}
+        {sk.unknownCurrent ? <li className="badge" data-tone="warn">{r.skillsUnknownN.replace("{n}", fmt(sk.unknownCurrent, numLocale))}</li> : null}
+        {b.reset.required ? <li className="badge" data-tone="warn">{r.resetChip}</li> : null}
+        {gs && gs.toBuy ? <li className="badge" data-tone="warn">{r.gearBuyN.replace("{n}", fmt(gs.toBuy, numLocale))}</li> : null}
+        {gs && gs.owned ? <li className="badge" data-tone="good">{r.gearOwnedN.replace("{n}", fmt(gs.owned, numLocale))}</li> : null}
+        {gs && gs.empty ? <li className="badge">{r.gearEmptyN.replace("{n}", fmt(gs.empty, numLocale))}</li> : null}
+      </ul>
+      {sk.changed.length ? (
+        <ul className="bo-changelist">
+          {sk.changed.map((c) => <li key={c.id} data-dir={c.to > c.from ? "up" : "down"}><span>{t.skills[c.id]}</span><b dir="ltr">{fmt(c.from, numLocale)} → {fmt(c.to, numLocale)}</b></li>)}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function fmtCell(def: MetricDef, c: Cell, numLocale: string): string {
+  if (c.value === null) return DASH; const s = def.money ? fmtGold(c.value, numLocale) : fmt(c.value, numLocale, def.digits); return c.lowerBound ? `≥ ${s}` : s;
+}
+
 function Compare({ res, t, numLocale }: { res: ResultOk; t: T; numLocale: string }) {
-  const r = t.results; const cur = res.current;
-  if (res.builds.length < 2 && !cur) return null;
-  const val = (b: BuildVM) => b.combat?.damage ?? b.session?.damage ?? null;
+  const r = t.results; const rows = comparisonMatrix(res);
+  if (!rows.length) return null;
+  const missing = res.current?.missing ?? [];
   return (
     <section className="card" aria-labelledby="bo-compare">
-      <h2 id="bo-compare"><Icon name="scale" size={18} />{r.compareTitle}</h2>
-      <div className="tablewrap"><table className="table">
-        <thead><tr><th>{r.build}</th><th>{res.kind === "economic" || res.kind === "hybrid" ? r.dailyNet : r.damage}</th><th>{r.totalCost}</th><th>{r.points}</th></tr></thead>
-        <tbody>
-          {cur ? <tr><th scope="row">{r.currentBuild}</th><td>{res.kind === "economic" || res.kind === "hybrid" ? fmtGold(cur.economyNet, numLocale) : fmt(cur.damage, numLocale)}</td><td>{DASH}</td><td>—</td></tr> : null}
-          {res.builds.map((b, i) => <tr key={i}><th scope="row">{r.roles[b.role]}</th><td>{res.kind === "economic" || res.kind === "hybrid" ? fmtGold(b.economy?.net ?? null, numLocale) : fmt(val(b), numLocale)}</td><td>{b.cost ? `${b.cost.lowerBound ? "≥ " : ""}${fmtGold(b.cost.total, numLocale)}` : DASH}</td><td>{fmt(b.pointsSpent, numLocale)}</td></tr>)}
-        </tbody>
+      <h2 id="bo-compare"><Icon name="scale" size={18} />{r.beforeAfterTitle}</h2>
+      <div className="tablewrap"><table className="table bo-matrix">
+        <thead><tr><th>{r.compareTitle}</th><th>{r.colCurrent}</th>{res.builds.map((b, i) => <th key={i}>{r.roles[b.role]}</th>)}</tr></thead>
+        <tbody>{rows.map((row) => (
+          <tr key={row.def.id}>
+            <th scope="row">{r.metric[row.def.id]}</th>
+            <td>{row.before.value === null ? <span className="hint" title={r.currentUnknown}>{DASH}</span> : fmtCell(row.def, row.before, numLocale)}</td>
+            {row.after.map((c, i) => {
+              const d = deltaOf(row.def, row.before.value, c.value);
+              return (
+                <td key={i} data-best={row.bestIndex === i ? "true" : undefined}>
+                  <span className="bo-cellval">{fmtCell(row.def, c, numLocale)}</span>
+                  {row.bestIndex === i ? <span className="badge" data-tone="good">{r.bestBadge}</span> : null}
+                  {d ? <span className="bo-delta" data-tone={d.tone}>{d.tone === "neutral" ? r.noChange : `${signed(d.delta, numLocale, row.def.digits)}${d.pct !== null ? ` (${signed(d.pct, numLocale, 1)}%)` : ""}`}</span> : null}
+                </td>
+              );
+            })}
+          </tr>))}</tbody>
       </table></div>
+      {!res.current ? <p className="hint">{r.noCurrent}</p> : <p className="hint">{r.basisNote}</p>}
+      {missing.length ? <p className="hint">{r.currentMissing} {missing.join(", ")}</p> : null}
     </section>
   );
 }
@@ -153,7 +197,6 @@ function Pill({ pill, t, numLocale }: { pill: PillVM; t: T; numLocale: string })
 }
 
 export function ResultsPanel({ result, t, numLocale }: { result: ResultVM; t: T; numLocale: string }) {
-  const [tab, setTab] = useState(0);
   const r = t.results;
   if (!result.ok) {
     return (
@@ -166,7 +209,6 @@ export function ResultsPanel({ result, t, numLocale }: { result: ResultVM; t: T;
       </section>
     );
   }
-  const b = result.builds[Math.min(tab, result.builds.length - 1)]!;
   return (
     <section className="bo-step" aria-labelledby="bo-step-res">
       <h2 id="bo-step-res" className="bo-step-title"><span className="bo-num-badge">5</span>{r.title}</h2>
@@ -178,15 +220,13 @@ export function ResultsPanel({ result, t, numLocale }: { result: ResultVM; t: T;
       {result.estimatedGear ? <Notice tone="warn" title={r.estimatedGearTitle}>{r.estimatedGearBody}</Notice> : null}
       {result.notes.length ? <Notice tone="info"><ul>{result.notes.map((n) => <li key={n}>{n}</li>)}</ul></Notice> : null}
 
-      <div className="panel">
-        {result.builds.length > 1 ? (
-          <div className="bo-tabs" role="tablist" aria-label={r.title}>
-            {result.builds.map((x, i) => <button key={i} type="button" role="tab" aria-selected={i === tab} data-active={i === tab ? "true" : undefined} onClick={() => setTab(i)}>{r.roles[x.role]}</button>)}
-          </div>
-        ) : null}
-        <BuildCard b={b} res={result} current={result.current} t={t} numLocale={numLocale} />
-        <section className="bo-why"><h3>{r.whyTitle}</h3><p>{r.why[result.objective as keyof typeof r.why] ?? r.why.default}</p></section>
-      </div>
+      <section aria-labelledby="bo-cards-title">
+        <h3 id="bo-cards-title" className="bo-cards-title">{r.cardsTitle}</h3>
+        <div className="bo-rcards" data-count={result.builds.length}>
+          {result.builds.map((x, i) => <div key={i} className="panel"><BuildCard b={x} res={result} current={result.current} t={t} numLocale={numLocale} open={result.builds.length === 1} /></div>)}
+        </div>
+      </section>
+      <section className="bo-why panel"><h3>{r.whyTitle}</h3><p>{r.why[result.objective as keyof typeof r.why] ?? r.why.default}</p></section>
 
       <Compare res={result} t={t} numLocale={numLocale} />
       {result.pill ? <Pill pill={result.pill} t={t} numLocale={numLocale} /> : null}

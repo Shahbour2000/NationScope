@@ -166,3 +166,26 @@ span.bo-seg10 { cursor: default; }
 .bo-goal-summary { display: grid; gap: 0.3rem; margin-block-start: 1rem; padding-block-start: 0.75rem; border-block-start: 1px solid var(--line); }
 .bo-goal-summary h3 { margin: 0; font-size: 0.85rem; color: var(--muted); }
 .bo-chiplist { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+/* Batch 3: result cards and Before / After matrix. Logical properties only (RTL-safe). */
+.bo-cards-title { margin-block: 0.25rem 0.5rem; }
+.bo-rcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: 0.75rem; align-items: start; }
+.bo-rcards > .panel { min-inline-size: 0; }
+.bo-rcard-head h3 { margin: 0 0 0.4rem; }
+.bo-rcard[data-role="primary"] .bo-rcard-head h3 { color: var(--cyan); }
+.bo-changes { display: grid; gap: 0.4rem; margin-block: 0.6rem; padding-block-start: 0.6rem; border-block-start: 1px solid var(--line); }
+.bo-changes h4 { margin: 0; font-size: 0.85rem; color: var(--muted); }
+.bo-changelist { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; font-size: 0.9rem; }
+.bo-changelist li { display: flex; justify-content: space-between; gap: 0.75rem; }
+.bo-changelist li[data-dir="up"] b { color: #5eead4; }
+.bo-changelist li[data-dir="down"] b { color: #fda4af; }
+.bo-more { margin-block-start: 0.5rem; }
+.bo-more > summary { cursor: pointer; font-weight: 600; min-block-size: 2.25rem; display: flex; align-items: center; }
+.bo-more > summary:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 6px; }
+.bo-matrix td, .bo-matrix th { vertical-align: top; }
+.bo-matrix td { font-variant-numeric: tabular-nums; }
+.bo-matrix td[data-best="true"] { background: rgba(34, 211, 238, 0.07); }
+.bo-cellval { display: block; font-weight: 600; }
+.bo-delta { display: block; font-size: 0.78rem; color: var(--muted); }
+.bo-delta[data-tone="good"] { color: #5eead4; }
+.bo-delta[data-tone="bad"] { color: #fda4af; }

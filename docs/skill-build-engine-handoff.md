@@ -1,6 +1,6 @@
 # Skill Build Engine — Handoff (current state)
 
-Last updated: 2026-11-10, after batch 2 (batch 1 reported merged into GitHub by the owner; batch 2 was built on the local copy that includes batch 1, not on a fresh download of the repository). Baseline ZIP: `NationScope-main (2).zip` (no git metadata; earlier proposed changes are not assumed integrated).
+Last updated: 2026-11-11, after batch 3 (batch 2 reported merged; batch 3 built on my local copy that equals batches 1-2, not on a fresh download of the repository). Earlier: after batch 2 (batch 1 reported merged into GitHub by the owner; batch 2 was built on the local copy that includes batch 1, not on a fresh download of the repository). Baseline ZIP: `NationScope-main (2).zip` (no git metadata; earlier proposed changes are not assumed integrated).
 
 ## State
 - Roadmap: `docs/skill-build-engine-roadmap.md` (phases A-F). Batch 0 = audit/docs. Batch 1 = Phase E part 1: Skill Builder grid with pins. Engine mechanics, formulas, adapter and API untouched.
@@ -14,11 +14,16 @@ Last updated: 2026-11-10, after batch 2 (batch 1 reported merged into GitHub by 
 - No shared file was touched. Unused message keys (e.g. `player.availabilityTitle`, `data.pillEnable`) were left in the dictionaries on purpose (removal is optional cleanup).
 - Test status: 217/217 under the STAND-IN runner (lucide-react stubbed for rendering); preliminary, not a real Vitest run. Dictionary key parity en/ar and the pure TS files type-check; the TSX components were NOT type-checked (no @types/react here). Not run: real Vitest, full tsc, ESLint, next build, any browser check.
 
+## Batch 3 (Phase E part 3), UI only
+- New: `ui/result-cards.ts` (pure mapping: Before/After matrix, deltas, skill and gear summaries), `tests/build-optimizer/batch3-results.test.ts`. Modified: `ui/ResultsPanel.tsx` (cards grid replaces tabs; `Changes` block; `Compare` replaced by the Before and after table; all old detail sections kept inside "Full details"), `ui/messages.en.ts` / `messages.ar.ts` (new `results.*` keys incl. `metric`), `builder.css` (appended).
+- Data rules: Before values come only from `ResultOk.current` (engine-computed for current skills + gear); points-before is derived from current skill levels; anything the engine does not return (current cost, gear, food, economy parts, hybrid damage) has no Before value and is shown as an em dash or omitted. Percentages only for a positive base. "Best" badge only for a strict winner.
+- Test status: 228/228 under the STAND-IN runner (preliminary; not a real Vitest run). Dictionary parity and `result-cards.ts` type-check; the TSX (ResultsPanel) was NOT type-checked. Not run: real Vitest, full tsc, ESLint, next build, browser.
+
 ## Known limitations / unresolved (unchanged)
 - Intermediate skill values are linear interpolation (Estimated); the grid shows exact levels and says stat values between 0 and 10 are estimated. Earned points may be a lower bound (Prestige unknown): the over-budget warning appears only when the earned total is exact.
 - Player level unknown => skills are neither locked nor claimed unlocked.
 - Everything in `docs/build-optimizer-audit.md` still applies.
 
-## Exact next task (Batch 3)
-1. On a machine with dependencies: `npm ci`, real Vitest, `tsc --noEmit`, ESLint, `next build`; fix anything the real tools report for batch 1-2 files (the new TSX files are the most likely to need a type fix); look at skill grid, tiles and goal step in a browser (LTR/RTL, 360/768/1280px) and send findings.
-2. Then Phase E part 3: results as build cards with before/after comparison (read `ResultsPanel.tsx` first; map only fields the engine already returns).
+## Exact next task (Batch 4)
+1. On a machine with dependencies: `npm ci`, real Vitest, `tsc --noEmit`, ESLint, `next build`; fix whatever they report for batches 1-3 (new/changed TSX files are the likeliest); check skill grid, tiles, goal step and result cards in a browser (LTR/RTL, 360/768/1280px) and report findings.
+2. Then Phase B/A verification work (no UI): randomized optimizer-vs-exhaustive equivalence test, Wiki line-by-line formula audit (see roadmap), keeping the registry evidence labels honest.
