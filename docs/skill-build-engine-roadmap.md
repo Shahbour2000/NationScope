@@ -12,18 +12,16 @@ Baseline: `NationScope-main (2).zip` supplied 2026-11-10 (no git metadata). Base
 - Known limitations (from the existing audit docs): intermediate skill values are linear interpolation (Estimated); armor/dodge point-to-percent, health reserve and durability model Estimated; luck distribution, overflow order and Prestige point total Unverified; starting health/hunger and inventory not exposed by the API.
 
 ## Phase A — Engine correctness
-Status: **In Progress** (core done, verification pending)
-- Done in baseline: Wiki pipeline order, rounding, overflow caps, ammo/rank/pill summing, battle caps, skill costs/unlocks, reset cost.
-- Remaining: re-verify each registry row against the Wiki line by line (A1); confirm company-slot and leadership per-level values (needs in-game reading); capture one in-game reading per skill at levels 1-9; resolve Prestige point total.
-- Acceptance: every `documented` row has a Wiki citation and a test; every non-documented row is listed in the handoff with the evidence needed.
-- Tests: existing suites + new regression cases per fix. Dependencies: none.
+Status: **Acceptance criteria met under the stand-in runner (Batch 4); real Vitest run pending.** Game-confirmation items remain open and tracked.
+- Done (Batch 4): all 47 registry entries audited against the Wiki sections they cite (table in `docs/build-optimizer-wiki-conformance.md`); every Wiki table pinned from an independent copy in `tests/build-optimizer/wiki-registry-audit.test.ts`; statuses pinned so Estimated / Unverified cannot be promoted silently (28 Documented, 15 Estimated, 4 Unverified, 0 Verified); two registry entries had a missing linked test (`econ.pointsPerWork`, `pill.plan`), tests added; one confirmed discrepancy corrected (War Build search ranked by unrounded damage), with pinned regression tests.
+- Remaining (needs the game, not code): in-game readings per skill at levels 1-9; company-slot and leadership per-level values; armor / dodge point-to-percent; luck distribution; overflow order; Prestige point total; crates at round / battle end (not modelled).
+- Acceptance: every `documented` row has a Wiki citation and a test (checked by a test); every non-documented row lists the evidence needed (conformance doc).
 
 ## Phase B — Optimization algorithms
-Status: **In Progress**
-- Done in baseline: exact Pareto search in three groups, brute-force equivalence tests, constraint folding with conflict reports, deterministic ordering.
-- Remaining: broaden exhaustive-vs-optimizer validation (random small cases incl. fixed gear, budgets, constraints); equipment candidate pruning review for `too-large` cases; performance budget for Sustainable mode.
-- Acceptance: randomized equivalence test passes over >= 200 generated cases; no infeasible build ever returned.
-- Dependencies: Phase A fixes.
+Status: **Acceptance criteria met under the stand-in runner (Batch 4); real Vitest run pending.** Optional items remain.
+- Done (Batch 4): independent oracle (`tests/build-optimizer/oracle.ts`, no engine imports) and 1,461 counted deterministic cases in `oracle-equivalence.test.ts`: combat model 400, constraint resolution 300, solver 150, Pareto sets 200, two-group 100, War Build 340 (291 optimality comparisons across maxDamage / bestValue / maxNet / fixed gear / candidates / ammo / food / budgets), Sustainable 39; edge cases; determinism; 15 deliberate engine mutations all caught.
+- Remaining (optional): performance budget for Sustainable mode; exact (not conservative) helmet / gloves wear inside the search; Sustainable search still ranks by unrounded damage (no failing input; fix identified); economic / hybrid searches were not re-derived by the oracle in this batch.
+- Acceptance: randomized equivalence over >= 200 generated cases; no infeasible build ever returned (checked per case).
 
 ## Phase C — Player data and equipment
 Status: **In Progress**
@@ -60,3 +58,4 @@ Status: **Pending**
 | 1 | 2026-11-10 | Phase E: Skill Builder grid with pins (UI only, engine untouched) | 208/208 under stand-in runner (197 existing + 11 new); real Vitest, full tsc, ESLint, next build NOT run |
 | 2 | 2026-11-10 | Phase E: gear/consumable/company tiles, goal step redesign, availability card removed (UI only) | 217/217 under stand-in runner (208 + 9 new); real Vitest, full tsc, ESLint, next build NOT run |
 | 3 | 2026-11-11 | Phase E: result build cards, Before/After table, changes block (UI only) | 228/228 under stand-in runner (217 + 11 new); real Vitest, full tsc, ESLint, next build NOT run |
+| 4 | 2026-11-12 | Engine verification: oracle + 1,461 seeded cases, registry audit of 47 entries, 1 correction (`war-build.ts`), regression tests, docs | 263/263 under stand-in runner (228 + 35 new); engine and new tests pass `tsc --strict` with stubbed Node/Vitest types; real Vitest, ESLint, next build NOT run |

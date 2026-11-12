@@ -195,7 +195,7 @@ export function optimizeWarBuild(req: WarBuildRequest): WarBuildResult {
             const A = (V.attack[a]! + (active ? ws!.attack : 0) + 3 * accEx) * pm;
             const cdTot = V.critDamage[cd]! + hCd + 3 * ccEx;
             const cm = conv.critMultiplier === 'onePlus' ? 1 + cdTot / 100 : cdTot / 100;
-            const E = battleMult * A * ((1 - p) * 0.5 + p * ((1 - c) + c * cm));
+            const E = (1 - p) * Math.max(1, Math.floor(0.5 * A * battleMult)) + p * (1 - c) * Math.max(1, Math.floor(A * battleMult)) + p * c * Math.max(1, Math.floor(A * cm * battleMult)); // same round-down / minimum-1 outcomes as computeHit (03-war §1.6 step 7)
             const prev = bestE.get(pts);
             if (!prev || E > prev.val) bestE.set(pts, { pts, cost, val: E, lv: [a, ac, cc, cd], w, h, g, ammo });
           } } } }

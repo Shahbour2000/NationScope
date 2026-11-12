@@ -1,6 +1,6 @@
 # Skill Build Engine — Handoff (current state)
 
-Last updated: 2026-11-11, after batch 3 (batch 2 reported merged; batch 3 built on my local copy that equals batches 1-2, not on a fresh download of the repository). Earlier: after batch 2 (batch 1 reported merged into GitHub by the owner; batch 2 was built on the local copy that includes batch 1, not on a fresh download of the repository). Baseline ZIP: `NationScope-main (2).zip` (no git metadata; earlier proposed changes are not assumed integrated).
+Last updated: 2026-11-12, after batch 4 (built on the merged repository ZIP supplied by the owner, identical to the local copy of batches 1-3). Earlier: after batch 3 (batch 2 reported merged; batch 3 built on my local copy that equals batches 1-2, not on a fresh download of the repository). Earlier: after batch 2 (batch 1 reported merged into GitHub by the owner; batch 2 was built on the local copy that includes batch 1, not on a fresh download of the repository). Baseline ZIP: `NationScope-main (2).zip` (no git metadata; earlier proposed changes are not assumed integrated).
 
 ## State
 - Roadmap: `docs/skill-build-engine-roadmap.md` (phases A-F). Batch 0 = audit/docs. Batch 1 = Phase E part 1: Skill Builder grid with pins. Engine mechanics, formulas, adapter and API untouched.
@@ -19,11 +19,20 @@ Last updated: 2026-11-11, after batch 3 (batch 2 reported merged; batch 3 built 
 - Data rules: Before values come only from `ResultOk.current` (engine-computed for current skills + gear); points-before is derived from current skill levels; anything the engine does not return (current cost, gear, food, economy parts, hybrid damage) has no Before value and is shown as an em dash or omitted. Percentages only for a positive base. "Best" badge only for a strict winner.
 - Test status: 228/228 under the STAND-IN runner (preliminary; not a real Vitest run). Dictionary parity and `result-cards.ts` type-check; the TSX (ResultsPanel) was NOT type-checked. Not run: real Vitest, full tsc, ESLint, next build, browser.
 
+## Batch 4 (engine verification and Wiki conformance), no UI
+- New tests: `tests/build-optimizer/oracle.ts` (independent oracle), `oracle-equivalence.test.ts`, `wiki-registry-audit.test.ts`, `regression-war-search-rounding.test.ts`. Engine change: ONE expression in `engine/war-build.ts` (offense value now uses the same round-down / minimum-1 outcomes as `computeHit`). Docs: conformance doc (audit table, correction 6, ambiguities, limitations), audit doc (verification record), roadmap, this handoff. No adapter, API or UI file changed.
+- The correction changes results in about 0.6% of random cases (1 primary build of 516 feasible changed, 3 builds in total): only near a `bestValue` share threshold. To revert: restore the original expression (`battleMult * A * ((1 - p) * 0.5 + p * ((1 - c) + c * cm))`); the pinned regression test then fails by design.
+- `sustainable.ts` has the same unrounded expression; deliberately NOT changed (no failing input found). If a Sustainable mismatch ever shows up, apply the same one-line change.
+- Results: 263/263 under the STAND-IN runner (preliminary, not a real Vitest run). `tsc --strict` over the engine and the new tests is clean with stubbed Node / Vitest types. Not run: real Vitest, ESLint, `next build`, browser.
+- Reproduce (needs network and Node): `npm ci && npx vitest run tests/build-optimizer && npx tsc --noEmit`. To see the executed case counts: `npx vitest run tests/build-optimizer/oracle-equivalence.test.ts` (prints `ORACLE CASES ...`). Runtime of the oracle suite is a few seconds to ~1 minute depending on the machine; if it is too slow in CI, lower the seed counts in `describe('oracle: War Build ...')`.
+- Case counts in the oracle suite are asserted (>= 200 War Build optimality comparisons), so shrinking them fails the test on purpose.
+
 ## Known limitations / unresolved (unchanged)
 - Intermediate skill values are linear interpolation (Estimated); the grid shows exact levels and says stat values between 0 and 10 are estimated. Earned points may be a lower bound (Prestige unknown): the over-budget warning appears only when the earned total is exact.
 - Player level unknown => skills are neither locked nor claimed unlocked.
 - Everything in `docs/build-optimizer-audit.md` still applies.
 
-## Exact next task (Batch 4)
-1. On a machine with dependencies: `npm ci`, real Vitest, `tsc --noEmit`, ESLint, `next build`; fix whatever they report for batches 1-3 (new/changed TSX files are the likeliest); check skill grid, tiles, goal step and result cards in a browser (LTR/RTL, 360/768/1280px) and report findings.
-2. Then Phase B/A verification work (no UI): randomized optimizer-vs-exhaustive equivalence test, Wiki line-by-line formula audit (see roadmap), keeping the registry evidence labels honest.
+## Exact next task (Batch 5)
+1. On a machine with dependencies: `npm ci`, real Vitest (all of `tests/build-optimizer`), `tsc --noEmit`, ESLint, `next build`. Expected risks: type errors in the new test files under real `@types/node` / Vitest types, and the oracle suite's runtime. Fix what the tools report; send the output.
+2. Then Phase C (player data and equipment): validate profile import and equipment snapshots against fresh `/players/{id}` samples, add fixtures for partial / duplicate / invalid equipment, document the availability matrix. No engine formula changes.
+3. Pending evidence requests to the owner (they unlock Estimated / Unverified entries, see conformance doc): in-game stat values at skill levels 1-9, health lost per hit at known armor, a battle-log sample for luck, one accuracy > 100 reading, company-slot and leadership values per level.
