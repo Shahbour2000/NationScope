@@ -1,0 +1,53 @@
+{
+  "_meta": {
+    "kind": "SYNTHETIC",
+    "warning": "NOT recorded API responses. Hand-built to exercise data-handling edge cases. Field names and shapes follow API/PLAYER_DATA_AUDIT.md (live observation 2026-11-07) and tests/fixtures/real/equipment-offers.json / market.json (captured 2026-10-17). No raw GET /players/{id} or /players/{id}/stats response is stored in the repository; replace the complete-profile case with a captured one when available.",
+    "noLiveAccess": "Batch 5 session had no network access; no fresh samples were taken."
+  },
+  "profiles": {
+    "complete": {
+      "id": "usr_synthetic_complete", "username": "SyntheticComplete", "countryId": "eg", "level": 22, "prestige": 0,
+      "rank": { "code": "captain", "attackBonusPercent": 5, "minDamage": 1500000 },
+      "damage": { "total": "2549826", "day": "0", "week": "10", "month": "20" },
+      "equipment": [
+        { "slot": "weapon", "itemCode": "gun", "rarity": "uncommon", "stats": { "attack": 51, "criticalChance": 8 }, "durability": 82 },
+        { "slot": "helmet", "itemCode": "helmet2", "rarity": "uncommon", "stats": { "criticalDamages": 14 }, "durability": 90 },
+        { "slot": "gloves", "itemCode": "gloves2", "rarity": "uncommon", "stats": { "precision": 7 }, "durability": 100 },
+        { "slot": "chest", "itemCode": "chest2", "rarity": "uncommon", "stats": { "armor": 8 }, "durability": 100 },
+        { "slot": "pants", "itemCode": "pants2", "rarity": "uncommon", "stats": { "armor": 9 }, "durability": 77 },
+        { "slot": "boots", "itemCode": "boots2", "rarity": "uncommon", "stats": { "dodge": 6 }, "durability": 64 }
+      ]
+    },
+    "partial": { "id": "usr_synthetic_partial", "username": "SyntheticPartial" },
+    "nulls": { "id": "usr_synthetic_nulls", "username": "SyntheticNulls", "countryId": null, "level": null, "prestige": null, "rank": null, "damage": null, "skills": null, "equipment": null, "economy": null, "unit": null, "party": null },
+    "equipmentEdgeCases": {
+      "id": "usr_synthetic_edges", "username": "SyntheticEdges", "level": 22,
+      "equipment": [
+        { "slot": "weapon", "itemCode": "gun", "rarity": "uncommon", "stats": { "attack": 51, "criticalChance": 8 }, "durability": 82 },
+        { "slot": "helmet", "itemCode": "helmet2", "rarity": "uncommon", "stats": { "criticalDamages": 14 }, "durability": 90 },
+        { "slot": "helmet", "itemCode": "helmet3", "rarity": "rare", "stats": { "criticalDamages": 30 }, "durability": 90 },
+        { "slot": "gloves", "itemCode": "gloves2", "rarity": "uncommon", "stats": { "precision": 7 }, "durability": 100 },
+        { "slot": "chest", "itemCode": "chest2", "rarity": "uncommon", "stats": { "armor": -4 }, "durability": 100 },
+        { "slot": "pants", "itemCode": "pants2", "rarity": "uncommon", "stats": null, "durability": 77 },
+        { "slot": "cape", "itemCode": "cape1", "rarity": "common", "stats": { "armor": 1 }, "durability": 50 },
+        "not-an-object",
+        { "itemCode": "boots2", "stats": { "dodge": 6 } }
+      ]
+    }
+  },
+  "offers": {
+    "valid": { "offerId": "iof_syn_1", "itemCode": "helmet2", "rarity": "uncommon", "slot": "helmet", "stats": { "criticalDamages": 20 }, "durability": 100, "price": "250000" },
+    "zeroPrice": { "offerId": "iof_syn_zero", "itemCode": "helmet2", "rarity": "uncommon", "slot": "helmet", "stats": { "criticalDamages": 25 }, "durability": 100, "price": "0" },
+    "negativePrice": { "offerId": "iof_syn_neg", "itemCode": "helmet2", "rarity": "uncommon", "slot": "helmet", "stats": { "criticalDamages": 25 }, "durability": 100, "price": "-10000" },
+    "malformedPrice": { "offerId": "iof_syn_bad", "itemCode": "helmet2", "rarity": "uncommon", "slot": "helmet", "stats": { "criticalDamages": 25 }, "durability": 100, "price": "12.5abc" },
+    "negativeStat": { "offerId": "iof_syn_negstat", "itemCode": "chest2", "rarity": "uncommon", "slot": "chest", "stats": { "armor": -3 }, "durability": 100, "price": "100000" },
+    "missingStat": { "offerId": "iof_syn_nostat", "itemCode": "gun", "rarity": "uncommon", "slot": "weapon", "stats": { "attack": 50 }, "durability": 100, "price": "100000" },
+    "nullDurability": { "offerId": "iof_syn_nodur", "itemCode": "boots2", "rarity": "uncommon", "slot": "boots", "stats": { "dodge": 6 }, "durability": null, "price": "100000" },
+    "unknownSlot": { "offerId": "iof_syn_cape", "itemCode": "cape1", "rarity": "common", "slot": "cape", "stats": { "armor": 2 }, "durability": 100, "price": "100000" }
+  },
+  "marketRows": [
+    { "itemCode": "lead", "currency": "money", "bestAsk": "5400", "askQty": 709, "bestBid": "3000", "bidQty": 4491, "last": "3000" },
+    { "itemCode": "bread", "currency": "money", "bestAsk": null, "askQty": 0, "bestBid": null, "bidQty": 0, "last": "1200" },
+    { "itemCode": "steak", "currency": "money", "bestAsk": "0", "askQty": 3, "bestBid": "-5", "bidQty": 1, "last": "abc" }
+  ]
+}

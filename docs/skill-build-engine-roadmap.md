@@ -24,10 +24,13 @@ Status: **Acceptance criteria met under the stand-in runner (Batch 4); real Vite
 - Acceptance: randomized equivalence over >= 200 generated cases; no infeasible build ever returned (checked per case).
 
 ## Phase C — Player data and equipment
-Status: **In Progress**
-- Done in baseline: equipment snapshot integrity (partial vs complete, missing vs empty), durability seeding, owned gear vs market offers.
-- Remaining: re-validate against fresh `/players/{id}` samples; image/slot display data; handling of missing API fields in UI.
-- Acceptance: documented availability matrix matches live samples; fixtures for partial/duplicate/invalid equipment pass.
+Status: **Batch 5 done (adapter validation); real-tool run and fresh live samples Pending**
+- Done (Batch 5): profile / equipment / market adapters audited against the API reference and the recorded 2026-10-17 captures; 7 confirmed data-handling defects fixed with regression tests (unusable level crash, conflicting duplicate skills, negative equipment stats, zero / negative / malformed offer prices, negative offer stats, duplicate offer ids, zero / malformed market prices); result notes now state failed offer slots, unread offer pages, rejected offers and cap-dropped offers; availability matrix in `API/PLAYER_DATA_AUDIT.md`; 34 tests + one synthetic fixture file (`tests/fixtures/synthetic/`).
+- Not available: no network in Batch 5, so **no fresh samples**; the repository holds no raw `/players/{id}` or `/stats` capture (profile cases are synthetic and labelled).
+- Open, approval needed (would change results): the importer reads only the 30 cheapest offers per slot (later pages ignored); `offersToCandidates` caps each slot at the 6 cheapest Pareto-optimal offers (strongest dropped); War Build conservative helmet / gloves durability (Batch 4 limitation).
+- Still not exposed by the API: starting health / hunger, inventory stocks, Pill state, reset cooldown; Prestige-related point totals stay Unverified.
+- Remaining: owner-supplied raw `/players/{id}` and `/players/{id}/stats` captures (one with Prestige > 0, one with an empty equipment slot if the API can show it); decision on the two open candidate-coverage items; image / slot display data; real Vitest / tsc / ESLint / next build.
+- Acceptance: documented availability matrix matches live samples (matrix written; live re-check Pending); fixtures for partial / duplicate / invalid equipment pass (done).
 
 ## Phase D — Economic optimization
 Status: **Pending review** (exists, Estimated)
@@ -59,3 +62,4 @@ Status: **Pending**
 | 2 | 2026-11-10 | Phase E: gear/consumable/company tiles, goal step redesign, availability card removed (UI only) | 217/217 under stand-in runner (208 + 9 new); real Vitest, full tsc, ESLint, next build NOT run |
 | 3 | 2026-11-11 | Phase E: result build cards, Before/After table, changes block (UI only) | 228/228 under stand-in runner (217 + 11 new); real Vitest, full tsc, ESLint, next build NOT run |
 | 4 | 2026-11-12 | Engine verification: oracle + 1,461 seeded cases, registry audit of 47 entries, 1 correction (`war-build.ts`), regression tests, docs | 263/263 under stand-in runner (228 + 35 new); engine and new tests pass `tsc --strict` with stubbed Node/Vitest types; real Vitest, ESLint, next build NOT run |
+| 5 | 2026-11-12 | Phase C: player / equipment / market data validation, 7 adapter fixes, disclosure notes, synthetic fixtures, docs (no engine change, no UI change) | 282 pass + 15 not executable here under the stand-in runner (297 total: 263 existing + 34 new); the 15 are React-render tests that also fail on the untouched baseline because react / react-dom are not installed in this session; changed adapter files and new tests pass a partial `tsc --strict`; real Vitest, full tsc, ESLint, next build NOT run |

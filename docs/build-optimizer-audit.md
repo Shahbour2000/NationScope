@@ -63,3 +63,23 @@ Engine algorithms (search, constraint folding, objective definitions) are marked
 - Mutation check (engine deliberately broken, oracle must fail): 15 mutations (food reserve, armor threshold, solver tie-break, Pareto equality, best-value share, maxPoints bound, dominance rule, ammo stock, overflow x3 in two places, graze share, Pill debuff, unlock level, rank bonus, silent status promotion) - all caught. A first run missed the crit-overflow mutation (unreachable with Wiki ranges); a direct computeHit fuzz with out-of-range stats was added.
 - Extra hunts (not committed): 600 + 900 seeded War Build cases (3 mismatches before Correction 6, 0 after), 261 Sustainable cases against the old expression (0 mismatches), offense-allocation scan (no ordering difference).
 - Real Vitest, the real full `tsc`, ESLint and `next build` were NOT run (no dependencies, no network). Results above come from a stand-in describe/it runner; the engine and the new test files type-check under `tsc --strict` with stubbed Node / Vitest types.
+
+## Batch 5 - player data and equipment validation record (2026-11-12)
+Scope: adapters only (`adapter/player-state.ts`, `adapter/market.ts`, `adapter/equipment-snapshot.ts`, `adapter/import.ts`, notes in `run.ts`). No engine formula or mechanic changed. Evidence: recorded market / offer captures (2026-10-17) and **synthetic** profile cases (no raw `/players/{id}` capture exists in the repository; see `API/PLAYER_DATA_AUDIT.md`).
+
+| # | Problem (confirmed by a failing case on the original code) | Fix | Regression test |
+|---|---|---|---|
+| 1 | Profile `level` 0 / negative: `buildPlayerState` threw `RangeError`, so the whole import failed; level 1.5 gave fractional point totals | unusable level -> unavailable + warning, never clamped; level > 50 warns | `REGRESSION: unusable profile level ...` (5 cases + override + max) |
+| 2 | Same skill code twice with different levels: the first row won silently | conflicting rows make that skill unknown (user may supply it); identical rows silent | `REGRESSION: duplicate skill rows` |
+| 3 | Profile equipment row with a negative stat became a usable item | slot `invalid` (`invalid-stats`), never used or clamped | `a negative gear stat is invalid ...` |
+| 4 | Offer price `0` made a free item; a malformed price string made `importForBuild` throw (losing the profile too); negative price accepted | invalid / non-positive price -> offer skipped with a reason | `price 0, a negative price and a malformed price ...`, `one malformed offer price no longer makes the whole import throw` |
+| 5 | Offer with a negative stat was a candidate | skipped (`missing stat values`) | `a negative stat is rejected` |
+| 6 | Same `offerId` repeated: both copies were candidates and took cap slots | identical copies = one offer; conflicting copies all rejected | `identical duplicate offer ids ...` |
+| 7 | Market `bestAsk` / `bestBid` / `last` of 0, negative or malformed became a price (zero = free ammo / ingredients, malformed = throw) | such values are unknown (null) | `zero, negative and malformed prices are unknown` |
+
+Disclosure-only changes (behaviour and optimization results unchanged, text added to the result `notes`): offer slots that failed to load; slots where the API reported a further page that was not read; offers rejected as unusable; Pareto-optimal offers dropped by the per-slot cap.
+
+Findings NOT fixed (would change optimization results; approval requested, see handoff): (a) **page limit**: only the 30 cheapest offers per slot are read (`getEquipmentOffers({ limit: 30, sort: "priceAsc" })`, `nextOffset` ignored), so a stronger, dearer item is invisible when 30 cheaper offers exist in that slot; (b) **per-slot cap**: `offersToCandidates` keeps the 6 cheapest Pareto-optimal offers, so with more than 6 the strongest are dropped even when the budget allows them (demonstrated by `FINDING (disclosed, behaviour unchanged)`); (c) War Build still uses conservative helmet / gloves durability and can miss feasible solutions under some gold budgets (unchanged).
+
+Verified without change: the real weapon item code is `gun` (needs ammo); the `knife` code is still unobserved in any capture (Wiki-documented exemption kept, Unverified spelling); all recorded offers have positive prices, durability 1-100, no duplicate ids, no nulls; all 28 market rows are gold (`money`); `bestAsk = null` rows exist (livestock, cookedFish, cocain, case2, coffeeBeans, fuelCell) and stay unknown.
+

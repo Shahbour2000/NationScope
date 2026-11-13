@@ -119,6 +119,17 @@ function warScenario(imp: BuildImport, input: OptimizeInput, maxConfigs?: number
     return { mode: 'owned' };
   };
   let candidates: Candidates | undefined = input.war.useMarketOffers ? imp.candidates?.candidates : undefined;
+  if (input.war.useMarketOffers && input.war.gearMode === 'optimize') {
+    // Say what the market search could NOT see (never silently): slots whose offers failed to load, offers the API listed beyond the pages read, and offers rejected as unusable.
+    const failedSlots = Object.keys(imp.failures).filter((k) => k.startsWith('equipment:')).map((k) => k.slice('equipment:'.length));
+    if (failedSlots.length) notes.push(`Market offers could not be loaded for: ${failedSlots.join(', ')}. Those slots were searched without market offers.`);
+    const partial = Object.entries(imp.offerCoverage ?? {}).filter(([, c]) => c.moreAvailable).map(([slot, c]) => `${slot} (${c.fetched} cheapest read)`);
+    if (partial.length) notes.push(`Only the cheapest market offers were read for: ${partial.join(', ')}. The API lists more, so a stronger but pricier item may exist that this search did not see; the result is not exhaustive over the whole market.`);
+    const capped = Object.entries(imp.candidates?.prunedAway ?? {}).map(([k, n]) => `${k} (${n} dearer)`);
+    if (capped.length) notes.push(`The per-slot candidate cap dropped Pareto-optimal offers that cost more than the ones kept: ${capped.join(', ')}. The strongest items in those slots may not have been considered.`);
+    const rejected = imp.candidates?.skipped.length ?? 0;
+    if (rejected) notes.push(`${rejected} market offer(s) were ignored as unusable (missing or invalid stats, price or durability, or duplicate ids).`);
+  }
   const owned = ownedCandidates(input.war.ownedGear);
   let cand: WarCandidates | undefined = candidates as WarCandidates | undefined;
   if (maxConfigs && input.war.gearMode === 'optimize') {

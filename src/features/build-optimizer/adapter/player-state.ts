@@ -76,14 +76,29 @@ export function buildPlayerState(inp: ImportInputs): PlayerState {
   const missing: string[] = [], warnings: string[] = [];
 
   // level
-  const level: Field<number> = user.level !== undefined ? f(user.level, 'user') : p.level != null ? f(p.level, 'api') : f<number>(null, 'unavailable');
+  // A level the game cannot have (0, negative, fractional, non-finite) is unusable data: report it, never clamp it or let it reach the point ledger (which throws below level 1).
+  const validLevel = (v: number) => Number.isInteger(v) && v >= 1;
+  let level: Field<number>;
+  if (user.level !== undefined && validLevel(user.level)) level = f(user.level, 'user');
+  else if (user.level === undefined && p.level != null && validLevel(p.level)) level = f(p.level, 'api');
+  else {
+    const bad = user.level !== undefined ? user.level : p.level;
+    if (bad != null) warnings.push(`Player level ${String(bad)} is not a whole number of at least 1; it was ignored, not corrected.`);
+    level = f<number>(null, 'unavailable', bad != null ? `unusable level ${String(bad)}` : undefined);
+  }
   if (level.value === null) missing.push('level');
+  else if (level.value > 50) warnings.push(`Player level ${level.value} is above the documented maximum of 50 (Wiki 01-basics §2.1); kept as reported.`);
 
   // skills (GET /players/{id} -> skills[{code, level, maxLevel}])
   const mapped: Partial<Levels> = {}; const unmapped: string[] = [], oddMax: string[] = [], inferred: string[] = [];
+  // The same skill code reported twice: identical rows are harmless; rows that disagree make that skill UNKNOWN (neither value is silently preferred).
+  const firstByCode = new Map<string, { level: number; maxLevel: number }>(); const conflicting = new Set<string>();
+  for (const s of p.skills) { const first = firstByCode.get(s.code); if (!first) firstByCode.set(s.code, { level: s.level, maxLevel: s.maxLevel }); else if (first.level !== s.level) conflicting.add(s.code); }
+  if (conflicting.size) warnings.push(`Skill code(s) reported with different levels: ${[...conflicting].join(', ')}. Those skills are treated as unknown; no value was chosen.`);
   const seen = new Set<string>();
   for (const s of p.skills) {
     if (seen.has(s.code)) continue; seen.add(s.code);
+    if (conflicting.has(s.code)) continue;
     const m = API_SKILL_CODES[s.code];
     if (!m) { unmapped.push(s.code); continue; }
     if (m.id === null) continue;

@@ -74,6 +74,8 @@ function itemFromEntry(slot: EquipmentApiSlot, entry: PlayerEquipmentLike): { it
   const s = entry.stats;
   const missing = SLOT_STAT_KEYS[slot].filter((k) => !s || !finite(s[k]));
   if (missing.length) return { item: null, problems: missing.map((k) => `missing-stat:${k}` as const) };
+  // A negative gear stat cannot exist (Wiki 01-basics §3.3 ranges start at 1): reported as invalid, never used and never clamped to 0.
+  if (SLOT_STAT_KEYS[slot].some((k) => s![k]! < 0)) return { item: null, problems: ['invalid-stats'] };
   const st = s as Record<string, number>;
   switch (slot) {
     case 'weapon': return { item: { kind: 'item', stats: { attack: st.attack!, critChance: st.criticalChance!, usesAmmo: !AMMO_EXEMPT_ITEM_CODES.includes(entry.itemCode) } }, problems: [] };
@@ -128,7 +130,7 @@ export function buildEquipmentSnapshot(entries: readonly PlayerEquipmentLike[] |
     for (const slot of EQUIPMENT_API_SLOTS) {
       const st = slots[slot];
       if (st.status === 'duplicate') warnings.push(`Slot ${slot} was reported more than once; none of its rows is used.`);
-      if (st.status === 'invalid' && st.problems.some((p) => p.startsWith('missing-stat:'))) warnings.push(`Slot ${slot} has no usable stats (${st.problems.join(', ')}).`);
+      if (st.status === 'invalid' && st.problems.some((p) => p.startsWith('missing-stat:') || p === 'invalid-stats')) warnings.push(`Slot ${slot} has no usable stats (${st.problems.join(', ')}).`);
       const d = st.durability;
       if (d !== null && (d < DOCUMENTED_DURABILITY_RANGE.min || d > DOCUMENTED_DURABILITY_RANGE.max)) warnings.push(`Slot ${slot} durability ${d} is outside the documented ${DOCUMENTED_DURABILITY_RANGE.min}-${DOCUMENTED_DURABILITY_RANGE.max} range; kept as reported.`);
     }

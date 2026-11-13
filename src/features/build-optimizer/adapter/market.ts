@@ -14,8 +14,13 @@ export function goldFromMoney(v: string | bigint): number {
   return Number(b / MONEY_SCALE) + Number(b % MONEY_SCALE) / Number(MONEY_SCALE);
 }
 export interface MarketSnapshot { ask: Record<string, number | null>; bid: Record<string, number | null>; last: Record<string, number | null> }
+/** A usable gold price: a well-formed money string that is strictly positive. Zero, negative or malformed values are UNKNOWN (null), never a free price. */
+function positiveGold(v: string | null | undefined): number | null {
+  if (v == null) return null;
+  try { const g = goldFromMoney(v); return g > 0 ? g : null; } catch { return null; }
+}
 export function buildMarketSnapshot(rows: readonly MarketRowLike[]): MarketSnapshot {
-  const g = (v: string | null | undefined) => (v == null ? null : goldFromMoney(v));
+  const g = positiveGold;
   const s: MarketSnapshot = { ask: {}, bid: {}, last: {} };
   for (const r of rows) { s.ask[r.itemCode] = g(r.bestAsk); s.bid[r.itemCode] = g(r.bestBid); s.last[r.itemCode] = g(r.last); }
   return s;
@@ -35,7 +40,8 @@ export function economyPrices(m: MarketSnapshot, sellBasis: SellBasis = 'bid'): 
 
 const STAT_KEYS = { weapon: ['attack', 'criticalChance'], helmet: ['criticalDamages'], gloves: ['precision'], chest: ['armor'], legs: ['armor'], boots: ['dodge'] } as const;
 export interface CandidateOptions { maxPerSlot?: number; minDurability?: number }
-export interface CandidateBuild { candidates: Candidates; skipped: { offerId: string; reason: string }[]; assumptions: string[] }
+/** `prunedAway[slot]` = Pareto-optimal offers dropped only because the per-slot cap (`maxPerSlot`) was reached. The cap keeps the CHEAPEST, so the dropped ones are the pricier, stronger items. */
+export interface CandidateBuild { candidates: Candidates; skipped: { offerId: string; reason: string }[]; assumptions: string[]; prunedAway: Record<string, number> }
 
 /**
  * Real market offers -> loadout candidates, pruned to the Pareto front per slot (cheaper, stronger, more durable never lose).
@@ -45,13 +51,22 @@ export function offersToCandidates(offers: readonly OfferLike[], o: CandidateOpt
   const skipped: CandidateBuild['skipped'] = [];
   const assumptions = ['Offers are priced at their listed gold price and treated as not owned.'];
   const bySlot = new Map<string, { item: AnyItem; vec: number[]; price: number }[]>();
+  // The same offerId more than once: byte-identical copies are one offer (kept once); copies that disagree cannot be trusted, so none is used.
+  const sig = (x: OfferLike) => JSON.stringify([x.itemCode, x.slot ?? null, x.price, x.durability ?? null, x.stats ? Object.entries(x.stats).sort(([a], [b]) => a.localeCompare(b)) : null]);
+  const seenOffers = new Map<string, string>(); const conflicting = new Set<string>();
+  for (const f of offers) { const prev = seenOffers.get(f.offerId); if (prev === undefined) seenOffers.set(f.offerId, sig(f)); else if (prev !== sig(f)) conflicting.add(f.offerId); }
+  const emitted = new Set<string>();
   for (const f of offers) {
+    if (conflicting.has(f.offerId)) { skipped.push({ offerId: f.offerId, reason: 'offer id reported more than once with different data' }); continue; }
+    if (emitted.has(f.offerId)) { skipped.push({ offerId: f.offerId, reason: 'duplicate offer (identical copy ignored)' }); continue; }
+    emitted.add(f.offerId);
     const gear = SLOT_STAT[f.slot ?? '']?.gear;
     if (!gear) { skipped.push({ offerId: f.offerId, reason: `unknown slot ${f.slot}` }); continue; }
     const keys = STAT_KEYS[gear]; const st = f.stats ?? {};
-    if (keys.some((k) => typeof st[k] !== 'number')) { skipped.push({ offerId: f.offerId, reason: 'missing stat values' }); continue; }
-    if (f.durability == null || f.durability < (o.minDurability ?? 1)) { skipped.push({ offerId: f.offerId, reason: 'durability unknown or too low' }); continue; }
-    const price = goldFromMoney(f.price);
+    if (keys.some((k) => typeof st[k] !== 'number' || !Number.isFinite(st[k]!) || st[k]! < 0)) { skipped.push({ offerId: f.offerId, reason: 'missing stat values' }); continue; }
+    if (f.durability == null || !Number.isFinite(f.durability) || f.durability < (o.minDurability ?? 1)) { skipped.push({ offerId: f.offerId, reason: 'durability unknown or too low' }); continue; }
+    const price = positiveGold(f.price);
+    if (price === null) { skipped.push({ offerId: f.offerId, reason: 'invalid price (not a positive money value)' }); continue; }
     let stats: unknown;
     if (gear === 'weapon') { const usesAmmo = !AMMO_EXEMPT_ITEM_CODES.includes(f.itemCode); stats = { attack: st.attack!, critChance: st.criticalChance!, usesAmmo } satisfies WeaponStats; }
     else if (gear === 'helmet') stats = { critDamage: st.criticalDamages! };
@@ -64,16 +79,21 @@ export function offersToCandidates(offers: readonly OfferLike[], o: CandidateOpt
     (bySlot.get(gear) ?? bySlot.set(gear, []).get(gear)!).push({ item, vec, price });
   }
   assumptions.push('Weapons are assumed to need ammo unless the item code is "knife" (knife code assumed).');
-  const front = (xs: { item: AnyItem; vec: number[]; price: number }[]) => {
+  const prunedAway: Record<string, number> = {};
+  const front = (slot: string, xs: { item: AnyItem; vec: number[]; price: number }[]) => {
     const kept = xs.filter((a) => !xs.some((b) => b !== a && b.price <= a.price && b.vec.every((v, i) => v >= a.vec[i]!) && (b.price < a.price || b.vec.some((v, i) => v > a.vec[i]!))));
     kept.sort((a, b) => a.price - b.price || a.item.id.localeCompare(b.item.id));
-    return kept.slice(0, o.maxPerSlot ?? 6).map((x) => x.item);
+    const cap = o.maxPerSlot ?? 6;
+    if (kept.length > cap) prunedAway[slot] = kept.length - cap;
+    return kept.slice(0, cap).map((x) => x.item);
   };
-  const c: Candidates = { weapons: front(bySlot.get('weapon') ?? []) as Candidates['weapons'] };
-  if (bySlot.has('helmet')) c.helmets = front(bySlot.get('helmet')!) as Candidates['helmets'];
-  if (bySlot.has('gloves')) c.gloves = front(bySlot.get('gloves')!) as Candidates['gloves'];
-  if (bySlot.has('chest')) c.chests = front(bySlot.get('chest')!) as Candidates['chests'];
-  if (bySlot.has('legs')) c.legs = front(bySlot.get('legs')!) as Candidates['legs'];
-  if (bySlot.has('boots')) c.boots = front(bySlot.get('boots')!) as Candidates['boots'];
-  return { candidates: c, skipped, assumptions };
+  const c: Candidates = { weapons: front('weapons', bySlot.get('weapon') ?? []) as Candidates['weapons'] };
+  if (bySlot.has('helmet')) c.helmets = front('helmets', bySlot.get('helmet')!) as Candidates['helmets'];
+  if (bySlot.has('gloves')) c.gloves = front('gloves', bySlot.get('gloves')!) as Candidates['gloves'];
+  if (bySlot.has('chest')) c.chests = front('chests', bySlot.get('chest')!) as Candidates['chests'];
+  if (bySlot.has('legs')) c.legs = front('legs', bySlot.get('legs')!) as Candidates['legs'];
+  if (bySlot.has('boots')) c.boots = front('boots', bySlot.get('boots')!) as Candidates['boots'];
+  const cut = Object.entries(prunedAway);
+  if (cut.length) assumptions.push(`Per-slot cap reached: ${cut.map(([k, n]) => `${k} (${n} dearer Pareto-optimal offer(s) not considered)`).join(', ')}. The cap keeps the cheapest offers, so the strongest items in those slots may be missing from the search.`);
+  return { candidates: c, skipped, assumptions, prunedAway };
 }

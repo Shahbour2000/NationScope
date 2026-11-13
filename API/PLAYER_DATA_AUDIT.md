@@ -22,6 +22,10 @@ Relevant nested fields observed:
 
 The `/players/{userId}/stats` response separately exposed `id`, `username`, `countryId`, `level`, `xp`, `prestige`, `rank`, `damage`, `work`, `trade`, `companies`, `joinedAt`, and `serverTime` in the tested response.
 
+## Status update (Batch 5, 2026-11-12)
+
+The sections "What `parsePlayer` retains", "Fields ignored by `parsePlayer`" and "What reaches Build Optimizer today" below describe the code **as audited on 2026-11-07** and are **stale**: `parsePlayer` now keeps `prestige`, `rank.code/attackBonusPercent/minDamage`, `economy` and the `equipment` rows (row-by-row validation, rejected rows kept as issues), and the adapter consumes them (`src/lib/domain/player.ts`, `adapter/player-state.ts`, `adapter/equipment-snapshot.ts`). They are kept for history. The current behaviour and the validation done in Batch 5 are in the final section of this file.
+
 ## What `parsePlayer` retains
 
 Implementation: [`src/lib/domain/player.ts`](../src/lib/domain/player.ts).
@@ -80,3 +84,26 @@ Current behavior downstream:
 - Are player `economy` aggregates cumulative, rolling, stale-cache-sensitive, and currency-normalized? Which are useful to the optimizer's intended objective?
 
 No code or domain types were changed during this audit phase.
+
+## Batch 5 validation (2026-11-12): availability matrix and data-handling record
+
+**Evidence limits (read first).** No network access in this session, so nothing was re-captured. The repository contains **no raw `GET /players/{id}` or `/players/{id}/stats` response**: the only profile-shaped fixture is `tests/fixtures/real/player-skills.json`, which says in its own `note` that it is hand-transcribed (not verbatim) with assumed `maxLevel` values. The profile field shapes used by the tests come from the 2026-11-07 observation recorded above and are **synthetic** (`tests/fixtures/synthetic/player-equipment-market-cases.json`, `_meta.kind = "SYNTHETIC"`). Market and offer cases use the recorded 2026-10-17 captures (`tests/fixtures/real/market.json`, `equipment-offers.json`, `equipment-floor.json`).
+
+| Data | API provides | Adapter behaviour (verified by test) | Status |
+|---|---|---|---|
+| Identity (`id`, `username`, `countryId`) | yes | read; `countryId` null stays null | observed |
+| `level` | yes (number) | whole number >= 1 used; 0 / negative / fractional / non-finite -> **unavailable + warning** (was: crash); > 50 kept with a warning | fixed Batch 5 |
+| `skills[{code,level,maxLevel}]` | yes, 15 rows in one capture | mapped; out-of-range level -> not used; **conflicting duplicate codes -> that skill unknown** (was: first row won silently); identical duplicates silent; unknown codes warned | fixed Batch 5 |
+| `prestige` | yes (0 in the capture) | shown, **not** used for the point ledger (post-Prestige total unverified); null stays null | Unverified rule |
+| Skill points (earned / available) | **no** | derived lower bound unless the user supplies a total or the available points; never assumed exact | not exposed |
+| `rank.code`, `attackBonusPercent`, `minDamage` | yes | API bonus used when it matches the Wiki table for lifetime damage; otherwise the Wiki value with a warning | observed |
+| `damage.total/day/week/month` | yes (digit strings) | kept as strings; null stays null | observed |
+| `equipment[]` | yes, 5 rows in one capture | six-slot snapshot: present / missing (unknown, never empty) / invalid / duplicate; negative stats **invalid** (was: accepted); unknown slot names kept, not mapped; only a complete six-slot snapshot becomes a loadout | meaning (equipped vs owned) still Unverified |
+| Equipment durability | yes (per row) | kept as reported; 0 is not used by Sustainable; outside 0-100 warns | observed |
+| Current health / hunger, Pill state, reset cooldown | **no** | unavailable; optimizer assumptions stated | not exposed |
+| Inventory stocks (bullets, food, lead) | **no** | user input only | not exposed |
+| `economy` | yes | retained as history, not a forecast input | observed |
+| `/players/{id}/stats` | yes | flattened raw; **no fixture and no typed schema** | uncaptured |
+| Market rows (`/market`) | yes | `bestAsk`/`bestBid`/`last` -> gold; null, zero, negative or malformed -> **unknown, never a free price** (was: 0 became a free price); all 28 recorded rows have `currency = "money"` and the importer only requests the global market | fixed Batch 5 |
+| Equipment offers (`/equipment`) | yes, paged (`nextOffset`) | the importer reads the **30 cheapest offers per slot** and ignores later pages: coverage is now recorded and stated in the result notes | limitation, disclosed |
+
