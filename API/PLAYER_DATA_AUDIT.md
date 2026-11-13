@@ -105,5 +105,5 @@ No code or domain types were changed during this audit phase.
 | `economy` | yes | retained as history, not a forecast input | observed |
 | `/players/{id}/stats` | yes | flattened raw; **no fixture and no typed schema** | uncaptured |
 | Market rows (`/market`) | yes | `bestAsk`/`bestBid`/`last` -> gold; null, zero, negative or malformed -> **unknown, never a free price** (was: 0 became a free price); all 28 recorded rows have `currency = "money"` and the importer only requests the global market | fixed Batch 5 |
-| Equipment offers (`/equipment`) | yes, paged (`nextOffset`) | the importer reads the **30 cheapest offers per slot** and ignores later pages: coverage is now recorded and stated in the result notes | limitation, disclosed |
+| Equipment offers (`/equipment`) | yes, paged (`nextOffset`) | Batch 6: the importer follows `nextOffset` (60 per page, at most 3 pages = the 180 cheapest per slot); coverage (`fetched`, `pages`, `moreAvailable`) is recorded and stated in the result notes. `nextOffset` is seen in one capture only; last-page behaviour inferred | bounded, disclosed |
 

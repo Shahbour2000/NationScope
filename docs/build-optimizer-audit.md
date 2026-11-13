@@ -83,3 +83,18 @@ Findings NOT fixed (would change optimization results; approval requested, see h
 
 Verified without change: the real weapon item code is `gun` (needs ammo); the `knife` code is still unobserved in any capture (Wiki-documented exemption kept, Unverified spelling); all recorded offers have positive prices, durability 1-100, no duplicate ids, no nulls; all 28 market rows are gold (`money`); `bestAsk = null` rows exist (livestock, cookedFish, cocain, case2, coffeeBeans, fuelCell) and stay unknown.
 
+## Batch 6 - market-coverage fixes and Phase D review (2026-11-13)
+Baseline: the repository after Batches 1-5. The user's own run of that state: real Vitest 297/297, `tsc --noEmit` 1 error (typing of `counts.verified` in `wiki-registry-audit.test.ts`, fixed here), ESLint 16 errors + 2 warnings (all in test files, untouched), `next build` passed.
+
+### Approved fix 1 - offer pagination (`adapter/import.ts`, `src/lib/data/build-import.ts`)
+Contract used: `GET /equipment` takes `limit` 1-60 and `offset` 0-10000 (`src/lib/api/endpoints.ts`) and returns `nextOffset`. Only one recorded capture shows it (`nextOffset: 30` with 30 rows, 2026-10-17); "no `nextOffset` on the last page" is inferred, not recorded. The importer now follows `nextOffset` per slot with page size 60 and at most 3 pages (the 180 cheapest offers per slot), stops on an empty page or an offset that does not advance, keeps rows already read when a later page fails, and records `{ fetched, pages, moreAvailable }` per slot; whenever `moreAvailable` the result notes say the search is not exhaustive.
+Cost: first page unchanged in kind; worst case 18 offer requests per import instead of 6 (22 with profile, companies, stats, market) against the client limiter (default 40 / minute, API limit 60 / minute per IP). Offer pages are identical URLs for every player, so repeat imports are served from the client cache; a rate-limit failure on a later page degrades to a recorded partial read. Not measured on the live API.
+Residual: a 4th page or a strong offer priced above the 180th cheapest is still not seen (stated in the notes). A rarity-aware fetch (e.g. `sort=priceDesc` page or the floor endpoint) was not added: no documented guarantee that price tracks strength.
+
+### Approved fix 2 - per-slot cap (`adapter/market.ts`)
+Old: the 6 cheapest Pareto offers (the strongest were always dropped). New: `spreadByPrice` keeps the cheapest, the dearest and evenly spaced ranks between (default cap still 6, so search size and speed are unchanged). Properties tested independently: exactly `cap` entries, ascending, deterministic, dearest kept, rank regret per budget <= gap - 1 and never worse than cheapest-N (120 seeded cases). Not a guarantee for every budget or in stat units; dropped counts remain in `prunedAway` and the result notes. Batch 5's test that pinned the old behaviour was rewritten to the new, approved behaviour.
+
+### Phase D result
+No confirmed economic bug. Details, classifications, not-modelled list and findings F1-F3: `docs/build-optimizer-wiki-conformance.md`, section "Batch 6". New tests: `phase-d-economy.test.ts` (20), `batch6-market-coverage.test.ts` (14), oracle `oracle-economy.ts`. Mutation check (done by hand, not committed): 8 deliberate defects in `economy.ts` (market tax dropped, regeneration 0.25, leadership cap ignored, bonus ignored in group choice, income tax dropped, missing price skipped, slot check removed, wage ignored) each fail at least one new test.
+Also: the Batch 5 findings (a) page limit and (b) per-slot cap are resolved above; (c) the War Build conservative helmet / gloves durability limit is unchanged.
+

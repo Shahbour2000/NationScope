@@ -184,13 +184,14 @@ describe('market offers -> candidates', () => {
     const c = offersToCandidates([offer({ offerId: 'w', durability: 0 }), offer({ offerId: 'ok2' })]);
     assert.deepEqual(c.candidates.helmets!.map((h) => h.id), ['ok2']);
   });
-  it('FINDING (disclosed, behaviour unchanged): the per-slot cap keeps the cheapest, so the strongest Pareto offers can be dropped', () => {
+  it('Batch 6 (approved change; Batch 5 pinned the old behaviour): above the cap the cheapest AND the dearest Pareto offers survive, and the loss is stated', () => {
     const many = Array.from({ length: 9 }, (_, i) => offer({ offerId: `h${i}`, stats: { criticalDamages: 10 + i }, price: String((i + 1) * 100000) }));
     const c = offersToCandidates(many);
     assert.equal(c.candidates.helmets!.length, 6);
-    assert.ok(!c.candidates.helmets!.some((h) => h.id === 'h8'), 'the strongest (dearest) helmet is not a candidate');
+    assert.ok(c.candidates.helmets!.some((h) => h.id === 'h8'), 'the strongest (dearest) helmet is now a candidate');
+    assert.ok(c.candidates.helmets!.some((h) => h.id === 'h0'), 'and so is the cheapest');
     assert.equal(c.prunedAway['helmets'], 3);
-    assert.ok(c.assumptions.some((a) => a.includes('helmets') && a.includes('3')), 'and the loss is stated');
+    assert.ok(c.assumptions.some((a) => a.includes('helmets') && a.includes('3')), 'the loss is stated');
     assert.equal(offersToCandidates(many, { maxPerSlot: 9 }).candidates.helmets!.some((h) => h.id === 'h8'), true);
     assert.deepEqual(offersToCandidates(many.slice(0, 4)).prunedAway, {});
   });
@@ -202,10 +203,14 @@ describe('importer: coverage and partial failures are recorded, never hidden', (
     offers: async (slot) => ({ rows: [offer({ offerId: `${slot}-1`, slot, stats: slot === 'weapon' ? { attack: 50, criticalChance: 8 } : slot === 'gloves' ? { precision: 4 } : slot === 'helmet' ? { criticalDamages: 5 } : slot === 'boots' ? { dodge: 3 } : { armor: 3 } }) ] }),
     ...over,
   });
-  it('a reported next page is recorded as "more available"; no next page is not', async () => {
-    const imp = await importForBuild('usr_1', deps({ offers: async (slot) => ({ rows: [offer({ offerId: `${slot}-1`, slot, stats: { criticalDamages: 5 } })], nextOffset: slot === 'helmet' ? 30 : null }) }));
-    assert.equal(imp!.offerCoverage!['helmet']!.moreAvailable, true); assert.equal(imp!.offerCoverage!['helmet']!.fetched, 1);
-    assert.equal(imp!.offerCoverage!['boots']!.moreAvailable, false);
+  it('a reported next page is followed; coverage records pages and whether more remain (page cap or no more pages)', async () => {
+    const pagedHelmets = async (slot: string, offset?: number) => {
+      const o = offset ?? 0;
+      return { rows: [offer({ offerId: `${slot}-${o}`, slot, stats: { criticalDamages: 5 } })], nextOffset: slot === 'helmet' ? o + 60 : null };
+    };
+    const imp = await importForBuild('usr_1', deps({ offers: pagedHelmets }));
+    assert.equal(imp!.offerCoverage!['helmet']!.moreAvailable, true); assert.equal(imp!.offerCoverage!['helmet']!.fetched, 3); assert.equal(imp!.offerCoverage!['helmet']!.pages, 3);
+    assert.equal(imp!.offerCoverage!['boots']!.moreAvailable, false); assert.equal(imp!.offerCoverage!['boots']!.pages, 1);
   });
   it('a slot whose offers fail to load is a recorded failure with no coverage entry; the rest of the import survives', async () => {
     const imp = await importForBuild('usr_1', deps({ offers: async (slot) => { if (slot === 'weapon') throw new Error('boom'); return { rows: [] }; } }));
@@ -231,7 +236,7 @@ describe('optimization run: what the market search could not see is stated in th
     market: async () => ({ rows: real('market.json') as MarketRowLike[] }),
     offers: async (slot) => {
       if (slot === 'helmet') throw new Error('timeout');
-      if (slot === 'weapon') return { rows: [...weapons, syn.offers.malformedPrice], nextOffset: 30 };
+      if (slot === 'weapon') return { rows: [...weapons, syn.offers.malformedPrice], nextOffset: 30 }; // constant nextOffset: the 2nd request does not advance, so reading stops and says so
       return { rows: [] };
     },
   };
@@ -240,9 +245,9 @@ describe('optimization run: what the market search could not see is stated in th
     const res = runOptimization(imp!, inp); assert.ok(res.ok, JSON.stringify(res));
     const notes = (res as { notes: string[] }).notes.join(' | ');
     assert.ok(notes.includes('could not be loaded for: helmet'), notes);
-    assert.ok(notes.includes('Only the cheapest market offers were read for: weapon (10 cheapest read)') || notes.includes('weapon (10 cheapest read)'), notes);
-    assert.ok(notes.includes('per-slot candidate cap') && notes.includes('weapons (3 dearer)'), notes);
-    assert.ok(notes.includes('1 market offer(s) were ignored'), notes);
+    assert.ok(notes.includes('Only the cheapest market offers were read for: weapon (20 cheapest read in 2 page(s))'), notes);
+    assert.ok(notes.includes('per-slot candidate cap') && notes.includes('weapons (3 dropped)'), notes);
+    assert.ok(notes.includes('market offer(s) were ignored'), notes);
   });
   it('a clean, complete import adds none of those notes', async () => {
     const clean: ImportDeps = { ...deps, offers: async (slot) => ({ rows: slot === 'weapon' ? weapons.slice(0, 3) : [], nextOffset: null }) };

@@ -123,10 +123,10 @@ function warScenario(imp: BuildImport, input: OptimizeInput, maxConfigs?: number
     // Say what the market search could NOT see (never silently): slots whose offers failed to load, offers the API listed beyond the pages read, and offers rejected as unusable.
     const failedSlots = Object.keys(imp.failures).filter((k) => k.startsWith('equipment:')).map((k) => k.slice('equipment:'.length));
     if (failedSlots.length) notes.push(`Market offers could not be loaded for: ${failedSlots.join(', ')}. Those slots were searched without market offers.`);
-    const partial = Object.entries(imp.offerCoverage ?? {}).filter(([, c]) => c.moreAvailable).map(([slot, c]) => `${slot} (${c.fetched} cheapest read)`);
-    if (partial.length) notes.push(`Only the cheapest market offers were read for: ${partial.join(', ')}. The API lists more, so a stronger but pricier item may exist that this search did not see; the result is not exhaustive over the whole market.`);
-    const capped = Object.entries(imp.candidates?.prunedAway ?? {}).map(([k, n]) => `${k} (${n} dearer)`);
-    if (capped.length) notes.push(`The per-slot candidate cap dropped Pareto-optimal offers that cost more than the ones kept: ${capped.join(', ')}. The strongest items in those slots may not have been considered.`);
+    const partial = Object.entries(imp.offerCoverage ?? {}).filter(([, c]) => c.moreAvailable).map(([slot, c]) => `${slot} (${c.fetched} cheapest read in ${c.pages} page(s))`);
+    if (partial.length) notes.push(`Only the cheapest market offers were read for: ${partial.join(', ')} (page limit, a stalled or failed page). The API lists more, so a stronger but pricier item may exist that this search did not see; the result is not exhaustive over the whole market.`);
+    const capped = Object.entries(imp.candidates?.prunedAway ?? {}).map(([k, n]) => `${k} (${n} dropped)`);
+    if (capped.length) notes.push(`The per-slot candidate cap dropped Pareto-optimal offers: ${capped.join(', ')}. The cheapest, the dearest and evenly spaced offers were kept; a dropped item could still have been the best for a particular budget.`);
     const rejected = imp.candidates?.skipped.length ?? 0;
     if (rejected) notes.push(`${rejected} market offer(s) were ignored as unusable (missing or invalid stats, price or durability, or duplicate ids).`);
   }

@@ -39,8 +39,24 @@ export function economyPrices(m: MarketSnapshot, sellBasis: SellBasis = 'bid'): 
 }
 
 const STAT_KEYS = { weapon: ['attack', 'criticalChance'], helmet: ['criticalDamages'], gloves: ['precision'], chest: ['armor'], legs: ['armor'], boots: ['dodge'] } as const;
+/**
+ * Keep at most `cap` entries of a price-ascending list. Within the cap everything is kept; above it the selection is the CHEAPEST, the DEARIEST and
+ * evenly spaced ranks in between (deterministic). A strong, dear item and a budget-friendly one therefore both survive, which "the cheapest N" did not
+ * (it always dropped the strongest). Not a guarantee of optimality for every budget: dropped entries are counted and disclosed by the caller.
+ */
+export function spreadByPrice<T>(sortedByPrice: readonly T[], cap: number): T[] {
+  const n = sortedByPrice.length;
+  if (cap < 1) return [];
+  if (n <= cap) return [...sortedByPrice];
+  if (cap === 1) return [sortedByPrice[0]!];
+  const idx = new Set<number>();
+  for (let k = 0; k < cap; k++) idx.add(Math.round((k * (n - 1)) / (cap - 1)));
+  // rounding can collide for tiny gaps when cap is close to n: fill from the cheapest unused rank so exactly `cap` entries are kept
+  for (let i = 0; idx.size < cap && i < n; i++) idx.add(i);
+  return [...idx].sort((a, b) => a - b).map((i) => sortedByPrice[i]!);
+}
 export interface CandidateOptions { maxPerSlot?: number; minDurability?: number }
-/** `prunedAway[slot]` = Pareto-optimal offers dropped only because the per-slot cap (`maxPerSlot`) was reached. The cap keeps the CHEAPEST, so the dropped ones are the pricier, stronger items. */
+/** `prunedAway[slot]` = Pareto-optimal offers dropped only because the per-slot cap (`maxPerSlot`) was reached (cheapest, dearest and evenly spaced offers are kept). */
 export interface CandidateBuild { candidates: Candidates; skipped: { offerId: string; reason: string }[]; assumptions: string[]; prunedAway: Record<string, number> }
 
 /**
@@ -85,7 +101,7 @@ export function offersToCandidates(offers: readonly OfferLike[], o: CandidateOpt
     kept.sort((a, b) => a.price - b.price || a.item.id.localeCompare(b.item.id));
     const cap = o.maxPerSlot ?? 6;
     if (kept.length > cap) prunedAway[slot] = kept.length - cap;
-    return kept.slice(0, cap).map((x) => x.item);
+    return spreadByPrice(kept, cap).map((x) => x.item);
   };
   const c: Candidates = { weapons: front('weapons', bySlot.get('weapon') ?? []) as Candidates['weapons'] };
   if (bySlot.has('helmet')) c.helmets = front('helmets', bySlot.get('helmet')!) as Candidates['helmets'];
@@ -94,6 +110,6 @@ export function offersToCandidates(offers: readonly OfferLike[], o: CandidateOpt
   if (bySlot.has('legs')) c.legs = front('legs', bySlot.get('legs')!) as Candidates['legs'];
   if (bySlot.has('boots')) c.boots = front('boots', bySlot.get('boots')!) as Candidates['boots'];
   const cut = Object.entries(prunedAway);
-  if (cut.length) assumptions.push(`Per-slot cap reached: ${cut.map(([k, n]) => `${k} (${n} dearer Pareto-optimal offer(s) not considered)`).join(', ')}. The cap keeps the cheapest offers, so the strongest items in those slots may be missing from the search.`);
+  if (cut.length) assumptions.push(`Per-slot cap reached: ${cut.map(([k, n]) => `${k} (${n} Pareto-optimal offer(s) not considered)`).join(', ')}. The cheapest, the dearest and evenly spaced offers in between were kept; an item that was dropped may still have been the best for a particular budget.`);
   return { candidates: c, skipped, assumptions, prunedAway };
 }

@@ -64,17 +64,17 @@ Method: each entry was read against the Wiki sections named in its `source`; con
 | 13 | `combat.sustain` | estimated | 01-basics §2.2/§2.4; 03-war §1.5 | Documented parts match (10 health per hit, armor reduces it, minimum 1, thresholds 45 / 36 at 50%). Estimated part: 1 armor / dodge point = 1 percentage point. | Needs an in-game reading of health lost per hit at known armor. |
 | 14 | `combat.weaponAmmo` | documented | 01-basics §3.5 | Match: a firearm without ammo adds nothing and does not wear; the knife needs none. Oracle edge cases. | - |
 | 15 | `constraints.resolve` | documented | project requirement (spec §2.2, §3.4) | Implementation correctness: agrees with exhaustive per-level filtering on 300 seeded cases (feasible and contradictory) plus invalid-input edge cases. | - |
-| 16 | `econ.barRegen` | documented | 01-basics §1.3/§2.2; 02-economy §1.5/§2.2 | Match: 10% of max per hour, work costs 10, steady state 0.24 x max works per day. | - |
-| 17 | `econ.dailyNet` | estimated | 02-economy §1.5/§1.9/§2.2/§2.4 | Engine composition of documented parts; storage caps, upgrade amortisation and shipping not modelled. Existing tests only. | - |
+| 16 | `econ.barRegen` | documented | 01-basics §1.3/§2.2; 02-economy §1.5/§2.2 | Match: 10% of max per hour, work costs 10, steady state 0.24 x max works per day. Batch 6: oracle `oWorks` (10% x 24 h / 10 per work) agrees on 400 seeded cases. | - |
+| 17 | `econ.dailyNet` | estimated | 02-economy §1.5/§1.9/§2.2/§2.4 | Engine composition of documented parts; storage caps, upgrade amortisation and shipping not modelled. Batch 6: matches an independent oracle on 400 seeded cases (missing / zero prices, taxes, bonuses, workers over the leadership cap, job income, slot limits); 8 of 8 deliberate mutants are caught. Status NOT upgraded: agreement with an oracle built from the same registry text is not game verification. | - |
 | 18 | `econ.pointsPerWork` | estimated | 02-economy §1.4/§1.6 | Production skill value x (1 + bonuses): matches; the Wiki says bonuses accumulate but not whether they add or multiply (summed = estimate). Linked test was MISSING; added. | Needs one in-game company with two bonuses. |
-| 19 | `econ.unitValue` | estimated | 02-economy §1.2/§2.5/§4.4 | Engine formula; production-tax carry fractions ignored. Existing test. | - |
+| 19 | `econ.unitValue` | estimated | 02-economy §1.2/§2.5/§4.4 | Engine formula; production-tax carry fractions ignored (long-run average). Batch 6: matches the oracle; market tax paid by the seller and production tax paid in goods are Wiki-documented (02-economy §2.5, §4.4), buying at the ask and selling at the bid is an engine choice. | - |
 | 20 | `gear.rarityRanges` | documented | 01-basics §3.3; project owner 2026-10-31 | Match: all 36 range cells compared with a table typed from the Wiki. | - |
 | 21 | `loadout.durability` | estimated | 01-basics §3.4/§3.5 | Documented parts match (100 durability, 1 per hit, only the weapon wears on a dodge, none without ammo). Replacement counting / pricing is an engine policy. Oracle compares replacement costs. | Helmet / gloves wear is searched conservatively (see Limitations). |
 | 22 | `loadout.food` | estimated | 01-basics §2.3 | Restore percentages match (12 / 18 / 25% of max health). Meal count formula, 10-health reserve and food choice are engine design. Oracle re-implements them independently. | Whether a hit needs full health is not stated. |
 | 23 | `loadout.search` | documented | engine design | Implementation correctness: equals full enumeration (oracle, War Build cases). | - |
 | 24 | `objective.hybrid` | estimated | engine design | Not re-audited in this batch (existing tests). | - |
 | 25 | `objective.maxDamagePerHit` | estimated | engine design on combat.* | Per-hit objective uses computeHit (rounded); consistent with the oracle. | - |
-| 26 | `objective.maxEconomy` | estimated | engine design on econ.* | Not re-audited in this batch (existing tests). | - |
+| 26 | `objective.maxEconomy` | estimated | engine design on econ.* | Batch 6: the engine's best `maxEconomy` build equals an exhaustive oracle search on 240 seeded cases (status conflict / infeasible / ok, best daily net, budget, unlock levels, pins, caps, owned-company slots, no-reset floors). | Loss-making production is modelled as forced work (see Batch 6 finding F1). |
 | 27 | `objective.maxNetValue` | estimated | engine design | Net = gold per damage x damage + crate value - cost; oracle equals engine on 80 maxNet cases (after Correction 6). | - |
 | 28 | `pill.plan` | estimated | engine design | Plan damage equals an independent phase-weighted sum (new test). Linked test was MISSING; added. Hits assumed uniform over the battle window. | - |
 | 29 | `pill.timeline` | documented | 01-basics §3.6; 03-war §1.6 step 2 | Match: 360 min +50%, 720 min -50%, no new Pill until both phases end. Constants pinned. | - |
@@ -117,3 +117,33 @@ Method: each entry was read against the Wiki sections named in its `source`; con
 - The War Build search values helmet and gloves wear conservatively (1 durability per hit) while reported costs use dodge-adjusted wear; with a gold budget and low helmet / gloves durability the search can miss a build that is feasible with exact wear. It never returns an infeasible build. Randomized tests keep helmet / gloves durability high; chest, legs, boots and weapon replacements are compared exactly.
 - `solver.twoGroup` guarantees the best result only; second and third alternatives from pruned fronts may be missing.
 - The Sustainable search still ranks by unrounded expected damage (same expression as the corrected War Build one); no failing input exists; one-line fix identified if one appears.
+
+## Batch 6 - Phase D economic review (2026-11-13)
+Method: every economic mechanic traced to its Wiki source (`02-economy`, `01-basics`), compared with the engine, and checked against an independent oracle (`tests/build-optimizer/oracle-economy.ts`, imports nothing from the engine; Wiki constants typed in separately). Classification words are the project's: **Documented** (stated in the Wiki), **Estimated** (engine choice or interpolation), **Unverified** (needs an in-game or live reading), **Verified** (confirmed in game / live data; none of the economic items is). Tests passing never upgraded a class.
+
+| Mechanic | Wiki source | Engine | Class | Check |
+|---|---|---|---|---|
+| Bar regeneration, work costs 10, works per day = 0.24 x max | 01 §1.3, §2.2; 02 §1.5, §2.2 | `worksPerDay` | Documented | Match (oracle) |
+| Production points per work: skill 10 (level 0) to 50 (level 10) | 01 §2.4; 02 §1.4 | `skillValue('production')` | Documented endpoints; levels 1-9 Estimated (linear) | Match |
+| Several production bonuses at once (deposit +10-30%, specialization, party, loyalty +1%/point up to 10) | 02 §1.6 | caller-supplied bonus per group, summed | Estimated (add vs multiply not stated); imported bonuses = 0% (disclosed) | Match |
+| Recipes: points and ingredients of the 13 manufactured goods; raw points (cattle 20, fish 40, uranium 10, others 1) | 02 §1.2 | `RECIPES`, `RAW_POINTS` | Documented | Pinned cell by cell to an independent copy |
+| Market item codes for products (`livestock`, `cocain`, `espresso`, `ammo`, `lightAmmo`, `heavyAmmo`) | not stated in the Wiki | `MARKET_CODE` | Unverified mapping (every code exists in the recorded market; its meaning is inferred) | Existence checked |
+| Value per point = (sell x (1 - market tax) x (1 - production tax) - ingredients) / points | 02 §2.5, §4.4 | `unitValuePerPoint` | Documented taxes; Estimated carry fractions ignored; bid / ask basis is an engine choice | Match |
+| Unknown price -> unknown result, never 0 | project rule | `null` + `missing` | Documented (project rule) | Match; mutant "skip missing price" caught |
+| Own works go to the best group (bonus included) | not stated | `dailyEconomy` | Estimated | Match |
+| Workers: owner pays the posted wage per point; leadership caps all workers (4 to 34) | 02 §1.9; 01 §2.4 | `workerMargin` | Documented wage rule and endpoints; Estimated: levels 1-9, all workers valued at the best group | Match |
+| Employer job: gross wage x points x (1 - income tax); tax <= 45% | 02 §2.2, §2.4 | `jobIncome` | Documented; loyalty bonus not modelled (conservative) | Match |
+| Company slots 2 to 12 and owned companies reserve slots | 01 §2.4; 02 §1.1 | `slotsOk`, `cap:companies` | Documented endpoints; Estimated levels 1-9 | Match |
+| Unmodelled product (`jet`, weapons) | 02 §1.3 | keeps its slot, adds no income, disclosed | Estimated (recipes of armour missing in the Wiki) | Tested on the recorded companies |
+| Budget feasibility: points = cumulative skill cost, mandatory pins / caps / floors | 01 §2.4 | `resolveConstraints` | Documented | 240 oracle cases incl. exact boundary |
+| Hybrid constrained: minimum daily net | engine design | `objective.hybrid` | Estimated | Infeasible above the oracle maximum, met at it |
+
+**Not modelled (no formula invented):** storage capacity 200-1,400 points and the "full storage blocks work" rule (02 §1.4, §1.7); auto-engine 24-168 points/day (02 §1.7); upgrade and company founding costs and their pay-back (02 §1.1, §1.7); the **third company upgrade `breakRoomLevel` that the live API reports but the Wiki never describes**; coffee (+10 energy, 3 a day), fuel cell (+25% for 24 h); deposits, country specialization and ruling-party bonuses per company (not imported); export / import taxes and shipping; the 30% cross-border split of income tax (does not change the worker's net wage); daily hiring limits (the Wiki says none).
+
+**Findings (not changed, need a decision):**
+- F1. Loss-making production is modelled as forced work: when value per point is negative, net is negative and the search prefers LOWER production / business skill, whereas a player can simply not work (net 0). The registry text specifies the current behaviour, so this is a modelling question, not an implementation bug. Pinned by a test named `FINDING`.
+- F2. Worker margin is also forced when the wage exceeds the point value.
+- F3. The Wiki gives no way to confirm whether bonuses add or multiply; the estimate stays.
+
+**Confirmed economic bugs: none.** 400 + 240 seeded oracle cases, the Wiki tables, the recorded market and company captures all agree with the engine.
+

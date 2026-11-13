@@ -74,7 +74,7 @@ describe('wiki audit: registry integrity (no silent promotion of Estimated / Unv
   it('the registry has exactly the pinned entries with the pinned statuses; nothing is "verified" (that needs in-game confirmation)', () => {
     const live = Object.fromEntries(listFormulas().map((f) => [f.id, f.status])); assert.deepEqual(live, PINNED);
     const counts: Record<string, number> = {}; for (const s of Object.values(PINNED)) counts[s] = (counts[s] ?? 0) + 1;
-    assert.deepEqual(counts, { documented: 28, estimated: 15, unverified: 4 }); assert.equal(counts.verified ?? 0, 0);
+    assert.deepEqual(counts, { documented: 28, estimated: 15, unverified: 4 }); assert.equal((counts as Record<string, number>).verified ?? 0, 0);
   });
   it('every entry has a summary, a source and at least one linked test whose title exists in tests/build-optimizer; documented mechanics cite the Wiki, the owner or the API', () => {
     const titles: string[] = []; for (const f of readdirSync('tests/build-optimizer').filter((x: string) => x.endsWith('.test.ts'))) for (const m of readFileSync(`tests/build-optimizer/${f}`, 'utf8').matchAll(/\bit\(\s*(['"`])((?:\\.|(?!\1).)*)\1/g)) titles.push(m[2]!.toLowerCase());
