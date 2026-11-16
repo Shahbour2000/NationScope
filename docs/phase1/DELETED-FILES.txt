@@ -1,0 +1,10 @@
+Files to delete after extracting the package (relative to the project root):
+
+src/app/contracts/contracts.module.css
+    Moved to src/features/wars/contracts.module.css (shared by /contracts and the battle contracts page).
+
+Optional (NOT required, NOT done by the package): dead, unimported stylesheet copies
+src/app/companies/globals.css
+src/app/diagnostics/globals.css
+src/app/economy/globals.css
+src/app/search/globals.css

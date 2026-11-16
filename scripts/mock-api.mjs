@@ -11,6 +11,9 @@ const samplesDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..",
 const port = Number(process.argv[2] ?? 4060);
 // Real captured responses from API/samples take precedence where they exist (they are the newest captures). [regex on the path, sample file]
 const sampleRoutes = [
+  [/^\/elections\/elc_congress[^/]*$/, "elections/Election details(congress_eg).txt"], [/^\/elections\/elc_[^/]+$/, "elections/Election details(_presidential_eg).txt"],
+  [/^\/companies\/cmp_[^/]+$/, "companies/Company details.txt"],
+  [/^\/regions\/[^/]+\/companies$/, "regions/Regional companies.txt"], [/^\/regions\/[^/]+\/campaign$/, "regions/Regional campaign battles.txt"], [/^\/regions\/[^/]+$/, "regions/Region details.txt"], [/^\/battles\/[^/]+\/contracts$/, "battles/Battle contracts.txt"],
   [/^\/alliances$/, "alliances/All alliances.txt"], [/^\/alliances\/[^/]+\/laws$/, "alliances/Alliance laws.txt"], [/^\/alliances\/[^/]+$/, "alliances/Alliance details.txt"],
   [/^\/parties\/[^/]+$/, "parties/Party details.txt"], [/^\/countries\/eg\/parties$/, "politics/Country parties.txt"], [/^\/countries\/eg\/revolution$/, "politics/Revolution status.txt"],
   [/^\/laws\/law_[^/]+$/, "politics/Law proposal details.txt"], [/^\/countries\/eg\/history$/, "countries/Country history.txt"], [/^\/countries\/eg\/units$/, "countries/Country units.txt"],
@@ -48,6 +51,14 @@ http.createServer((req, res) => {
   const u = req.url.split("?")[0].replace("/api/v1", "");
   const pm = /^\/players\/(usr_[A-Za-z0-9_-]+)$/.exec(u);
   if (pm) { res.setHeader("x-mock", "synthetic"); return res.end(JSON.stringify(syntheticPlayer(pm[1]))); }
+  // Offline UI testing only: real company rows served for any player id (the rows are not that player's).
+  if (/^\/players\/usr_[A-Za-z0-9_-]+\/companies$/.test(u)) {
+    const all = JSON.parse(fs.readFileSync(path.join(dir, "companies.json"), "utf8")).companies.slice(0, 5);
+    res.setHeader("x-mock", "real-rows-any-player"); return res.end(JSON.stringify({ total: all.length, limit: 100, offset: 0, companies: all }));
+  }
+  // Offline UI testing only: the real global trade rows filtered by item. Orders and history are NOT served (never captured), so those pages show their error state.
+  const tm = /^\/market\/([A-Za-z0-9_-]+)\/trades$/.exec(u);
+  if (tm) { const rows = JSON.parse(fs.readFileSync(path.join(dir, "market-trades.json"), "utf8")).filter((x) => x.itemCode === tm[1]); res.setHeader("x-mock", "real-rows-filtered"); return res.end(JSON.stringify(rows)); }
   const sample = sampleFor(u);
   if (sample) { res.setHeader("x-mock", "real-sample"); return res.end(sample); }
   const hit = routes.find(([p]) => p === u);

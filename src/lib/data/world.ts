@@ -79,7 +79,7 @@ export async function getGameLeaderboards() {
   return { ...parseRows(asRecord(data).leaderboards, leaderboardSchema), meta };
 }
 
-export async function getRanking(board: string, o: { period?: "all" | "daily" | "weekly" | "monthly" | "current"; limit?: number }) {
+export async function getRanking(board: string, o: { period?: "all" | "daily" | "weekly" | "monthly" | "current"; periodKey?: string; limit?: number }) {
   const { data, meta } = await get(endpoints.ranking(board, o));
   const rec = asRecord(data);
   return { ...parseRows(rec.rows, rankingRowSchema), board: asRecord(rec.board), period: typeof rec.period === "string" ? rec.period : null, meta };

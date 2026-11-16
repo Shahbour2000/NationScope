@@ -13,7 +13,7 @@ const Block = ({ h = "9rem" }: { h?: string }) => <div className="skeleton" styl
 export default async function OverviewPage() {
   const m = getMessages(await getLocale());
   try { getConfig(); } catch (error) {
-    if (error instanceof ConfigError) return <StateMessage tone="error" title="Configuration problem" detail={error.message} />;
+    if (error instanceof ConfigError) return <StateMessage tone="error" title={m.errors.config.title} detail={error.message} />;
     throw error;
   }
   const d = await getDisplay();

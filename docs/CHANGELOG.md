@@ -1,5 +1,26 @@
 # Changelog
 
+## Phase 1, session 3: laws, elections, articles, newspapers, game rules, mercenary auctions, error localisation
+- New dedicated pages: `laws/[id]`, `elections/[id]`, `articles/[id]`, `newspapers/[id]`, `game` (live rule tables), mercenary lists on `/contracts` and battle contracts.
+- All API error messages are now localised (English/Arabic); real 404s read "Not found" everywhere (module-identity bug in `instanceof ApiError` fixed).
+- Arabic leaderboard names; the archive page asks only boards that `GET /game` marks as archived.
+- Fixed tablet-width overflow on the unit members table.
+- Real-browser audit: 69 pages x en/ar x mobile/tablet/desktop, no overflow, no console errors. The hydration error #418 noted in earlier sessions was caused by the test browser's flags, not by the app.
+- 50 new tests (596 total); `scripts/smoke-crawl.mjs` visits every page type in both languages.
+
+## Phase 1, session 2: companies, markets, players, rankings archive, id discovery
+- New dedicated pages: `companies/[id]`, `players/[id]/companies`, `players/[id]/stats`, `market/[id]/orders|history|trades` (with `/market/[id]` redirecting to orders), `rankings/[board]/archive` (the board page now opens archived periods through `?period&periodKey`).
+- Responses never captured before are read by convention and shown as returned when unrecognised (market orders/history, player stats, ranking archive).
+- Automatic entity-id discovery for diagnostics: `/diagnostics?ids=1` (paged).
+- 38 new tests; mock API serves more routes from real fixtures.
+
+## Phase 1, session 1: region and battle-contract pages
+- New dedicated pages replacing the generic data viewer: `regions/[id]` (facts, resistance, deposit, buildings, neighbours), `regions/[id]/companies` (storage fill, product filter, sort), `regions/[id]/campaign` (battle history with summary), `battles/[id]/contracts` (bounties with the battle's sides, empty/disabled states, auctions shown as returned).
+- `/contracts` now uses the shared `BountyCard` (`src/features/wars/`); its stylesheet moved with it.
+- 30 new tests (`tests/region-pages.test.ts`); `scripts/mock-api.mjs` serves the new routes from saved samples.
+- Roadmap added: `docs/PROJECT-ROADMAP.md`. It also corrects the earlier audit: parties, `/contracts` and every country sub-tab already had dedicated pages.
+- Not verified: live API, browser/visual rendering.
+
 ## Active battles, percentage-based builds, richer player page
 - Overview: Active Wars KPI removed; one Active Battles section (live count + up to 6 ongoing battles) sits under the hero; the lower duplicate is gone. "Ongoing" = status `active`, no `endedAt`, no `winner`, round not finished (`src/features/wars/state.ts`, also used by the Battles page and Wars table). Score text no longer wraps (`white-space: nowrap`).
 - Build classification rewritten: War / Eco / Hybrid by capacity-normalised share of combat vs economy skill investment, 70% threshold (inclusive). "Unclassified" removed everywhere; missing data is a separate state. Group counts now report classified / pending / unavailable. See `docs/build-classification.md`.

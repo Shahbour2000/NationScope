@@ -5,7 +5,7 @@ import { DiscordButton } from "@/components/DiscordButton";
 import { Icon } from "@/components/Icon";
 import { Provenance } from "@/components/Provenance";
 import { Tabs } from "@/components/Tabs";
-import { ApiError } from "@/lib/api/errors";
+import { ApiError, isApiError } from "@/lib/api/errors";
 import { LineChart } from "@/features/charts/charts";
 import { Suspense } from "react";
 import { BuildMixSkeleton, OrgBuildMix } from "@/features/builds/BuildMix";
@@ -30,7 +30,7 @@ export default async function CountryPage({ params }: { params: Promise<{ id: st
   const m = getMessages(await getLocale());
   let res;
   try { res = await getCountrySummary(id); } catch (e) {
-    if (e instanceof ApiError && e.kind === "http" && e.status === 404) notFound();
+    if (isApiError(e) && e.kind === "http" && e.status === 404) notFound();
     return <ApiErrorState error={e} retryLabel={m.common.retry} />;
   }
   if (!res.summary) return <ApiErrorState error={new ApiError("validation", "Unexpected response")} retryLabel={m.common.retry} />;

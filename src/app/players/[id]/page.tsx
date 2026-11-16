@@ -138,7 +138,7 @@ export default async function PlayerPage({ params }: { params: Promise<{ id: str
 
       {companies && companies.rows.length > 0 ? (
         <section className="panel" aria-label={pp.companies}>
-          <header><h2><Icon name="factory" size={18} /> {pp.companies}{companies.total !== null ? <span className="count-pill">{nf.format(companies.total)}</span> : null}</h2></header>
+          <header><h2><Icon name="factory" size={18} /> {pp.companies}{companies.total !== null ? <span className="count-pill">{nf.format(companies.total)}</span> : null}</h2>{companies.total !== null && companies.total > companies.rows.length ? <Link className="btn-ghost" href={`/players/${encodeURIComponent(p.id)}/companies`}>{m.playerCompaniesPage.viewAll}</Link> : null}</header>
           <ul className="complist">
             {companies.rows.map((c) => (
               <li key={c.id}>

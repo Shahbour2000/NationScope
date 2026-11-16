@@ -61,3 +61,10 @@
   .side-nav::-webkit-scrollbar-thumb, .tabs::-webkit-scrollbar-thumb { background: rgba(25, 200, 255, 0.38); border: 1px solid transparent; background-clip: padding-box; }
   .side-nav::-webkit-scrollbar-thumb:hover, .tabs::-webkit-scrollbar-thumb:hover { background: rgba(25, 200, 255, 0.6); background-clip: padding-box; }
 }
+
+/* Player profile timeline panel header. This rule only existed in an unimported stray copy (src/app/economy/globals.css), so the header was unstyled. */
+.ctl-panel > header { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+
+/* Table scroll containers must be the containing block of absolutely positioned content. Without this, the visually-hidden status labels
+   (.sr-only, position:absolute) inside a scrolled table escaped the clip and stretched the whole page sideways at tablet width (unit members table). */
+.tablewrap { position: relative; }

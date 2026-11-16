@@ -42,6 +42,13 @@ export async function getPlayerCompanies(playerId: string, o: { limit?: number }
   return { ...parseRows(rec.companies, companySchema), total: typeof rec.total === "number" ? rec.total : null, meta };
 }
 
+/** All companies of a player for the dedicated page (GET /players/{id}/companies). A player owns at most 12, so one page of 100 is the whole list. */
+export async function getPlayerCompaniesAll(playerId: string, o: { sort?: "invested" | "workers" | "level" | "newest" } = {}) {
+  const { data, meta } = await get(endpoints.playerCompanies(playerId, { sort: o.sort, limit: 100 }));
+  const rec = asRecord(data);
+  return { ...parseRows(rec.companies, companySchema), total: typeof rec.total === "number" ? rec.total : null, meta };
+}
+
 export async function getCompanyStats(countryId?: string) {
   const { data, meta } = await get(endpoints.companyStats({ countryId }));
   const rec = asRecord(data);

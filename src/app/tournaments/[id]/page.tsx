@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApiErrorState } from "@/components/ApiErrorState";
 import { Icon } from "@/components/Icon";
-import { ApiError } from "@/lib/api/errors";
+import { isApiError } from "@/lib/api/errors";
 import { Provenance } from "@/components/Provenance";
 import { countryName } from "@/features/entities/display";
 import { getDisplay } from "@/features/entities/display.server";
@@ -25,7 +25,7 @@ export default async function TournamentDetailPage({ params }: { params: Promise
   if (!detail.edition) {
     // Only a genuine 404 (or no error at all) means "not found"; a rate limit, timeout or network failure must be reported as such.
     const e = detail.error;
-    const isMissing = !e || (e instanceof ApiError && e.kind === "http" && e.status === 404);
+    const isMissing = !e || (isApiError(e) && e.kind === "http" && e.status === 404);
     if (!isMissing) return <><nav className={s.back}><Link href="/tournaments">← {t.back}</Link></nav><ApiErrorState error={e} retryLabel={m.common.retry} /></>;
     return <><nav className={s.back}><Link href="/tournaments">← {t.back}</Link></nav><p className={s.empty}>{t.notFound}</p></>;
   }

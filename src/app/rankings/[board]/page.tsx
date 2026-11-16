@@ -5,6 +5,7 @@ import { PageHero } from "@/components/PageHero";
 import { Provenance } from "@/components/Provenance";
 import { Avatar, CountryBadge } from "@/features/entities/entities";
 import { getDisplay } from "@/features/entities/display.server";
+import { boardLabel } from "@/features/rankings/boardLabels";
 import { getLocale, getMessages } from "@/i18n";
 import { getGameLeaderboards, getRanking } from "@/lib/data/world";
 
@@ -12,18 +13,19 @@ export const dynamic = "force-dynamic";
 const PERIODS = ["all", "monthly", "weekly", "daily"] as const;
 const link = (t: string, id: string) => (t === "user" ? `/players/${id}` : t === "mu" ? `/units/${id}` : t === "country" ? `/countries/${id}` : t === "alliance" ? `/alliances/${id}` : null);
 
-export default async function RankingPage({ params, searchParams }: { params: Promise<{ board: string }>; searchParams: Promise<{ period?: string }> }) {
+export default async function RankingPage({ params, searchParams }: { params: Promise<{ board: string }>; searchParams: Promise<{ period?: string; periodKey?: string }> }) {
   const { board } = await params;
   const sp = await searchParams;
   const m = getMessages(await getLocale());
   const r = m.rankingsPage, u = m.pagesUi;
   const period = (PERIODS as readonly string[]).includes(sp.period ?? "") ? (sp.period as (typeof PERIODS)[number]) : "all";
+  const periodKey = period !== "all" && typeof sp.periodKey === "string" && /^[A-Za-z0-9-]{1,20}$/.test(sp.periodKey) ? sp.periodKey : undefined;
   let res;
-  try { res = await getRanking(board, { period, limit: 100 }); } catch (e) { return <ApiErrorState error={e} retryLabel={m.common.retry} />; }
+  try { res = await getRanking(board, { period, periodKey, limit: 100 }); } catch (e) { return <ApiErrorState error={e} retryLabel={m.common.retry} />; }
   const boards = await getGameLeaderboards().then((b) => b.rows).catch(() => []);
   const d = await getDisplay();
   const nf = new Intl.NumberFormat(d.nl);
-  const label = typeof res.board.label === "string" ? res.board.label : board;
+  const label = boardLabel(board, typeof res.board.label === "string" ? res.board.label : null, d.locale);
   const grain = typeof res.board.grain === "string" ? res.board.grain : null;
   const isNum = (v: string) => /^\d+$/.test(v);
   const num = (v: string) => (isNum(v) ? nf.format(BigInt(v)) : v);
@@ -39,8 +41,9 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
         kpis={res.rows[0] ? [{ icon: "trophy", label: u.leader, value: <span dir="auto">{res.rows[0].name}</span>, tone: "gold" }, { icon: "flame", label: r.value, value: num(res.rows[0].value), tone: "purple" }, { icon: "users", label: u.entries, value: nf.format(res.rows.length) }] : undefined} />
 
       <ScrollNav className="seg seg-scroll" label={r.boards}>
-        {boards.map((b) => <Link key={b.id} href={`/rankings/${encodeURIComponent(b.id)}`} aria-current={b.id === board ? "page" : undefined}>{b.label}</Link>)}
+        {boards.map((b) => <Link key={b.id} href={`/rankings/${encodeURIComponent(b.id)}`} aria-current={b.id === board ? "page" : undefined}>{boardLabel(b.id, b.label, d.locale)}</Link>)}
       </ScrollNav>
+      {periodKey ? <p className="res-note">{m.rankingArchive.viewing.replace("{key}", periodKey)} <Link href={`/rankings/${encodeURIComponent(board)}/archive`}>{m.rankingArchive.backToArchive}</Link></p> : null}
       <div><nav className="seg" aria-label={r.period}>
         {PERIODS.map((p) => <Link key={p} href={`/rankings/${encodeURIComponent(board)}${p === "all" ? "" : `?period=${p}`}`} aria-current={p === period ? "page" : undefined}>{r.periods[p]}</Link>)}
       </nav></div>
