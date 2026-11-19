@@ -1,0 +1,25 @@
+.stack { display: grid; gap: 1rem; min-inline-size: 0; }
+.form { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: flex-end; }
+.form label { display: grid; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); flex: 1 1 14rem; min-inline-size: 0; }
+.input { min-block-size: var(--tap); padding: 0 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink); font: inherit; inline-size: 100%; }
+.btn { min-block-size: var(--tap); padding: 0 1.1rem; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); background: var(--surface-3); color: var(--ink); font: inherit; cursor: pointer; }
+.btn[aria-pressed="true"], .btn:hover { border-color: var(--brand-cyan); }
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chip { font-size: 0.78rem; padding: 0.15rem 0.6rem; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); }
+.live, .cached, .wiki, .user { border-color: #1f7a4d; color: #7ee2a8; }
+.inferred, .stale { border-color: #8a6b1f; color: var(--warn-ink); }
+.assumption, .bad { border-color: #8a2f45; color: var(--err-ink); }
+.tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
+.ctl { display: grid; gap: 0.25rem; font-size: 0.85rem; color: var(--muted); min-inline-size: 0; }
+.ctl output { color: var(--ink); font-variant-numeric: tabular-nums; }
+.range { inline-size: 100%; accent-color: var(--brand-cyan); min-block-size: var(--tap); }
+.tbl th, .tbl td { text-align: start; padding: 0.45rem 0.7rem; border-block-end: 1px solid var(--line); vertical-align: top; }
+.tbl td.num, .tbl th.num { text-align: end; font-variant-numeric: tabular-nums; }
+.tbl { inline-size: 100%; border-collapse: collapse; font-size: 0.9rem; min-inline-size: 34rem; }
+.pos { color: #7ee2a8; } .neg { color: var(--err-ink); }
+.why { margin: 0.2rem 0 0; padding-inline-start: 1.1rem; color: var(--muted); font-size: 0.82rem; }
+.note { color: var(--muted); font-size: 0.85rem; margin: 0.3rem 0; }
+.warn { background: var(--warn-bg); color: var(--warn-ink); border-radius: var(--radius-sm); padding: 0.5rem 0.75rem; font-size: 0.88rem; }
+.err { background: var(--err-bg); color: var(--err-ink); border-radius: var(--radius-sm); padding: 0.5rem 0.75rem; font-size: 0.88rem; }
+@media (max-width: 40rem) { .tbl th, .tbl td { padding: 0.4rem 0.5rem; } }
