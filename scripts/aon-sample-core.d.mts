@@ -1,0 +1,6 @@
+export type RequestResult = { kind: "ok"; status: number; data: unknown } | { kind: "missing"; status: 404 } | { kind: "rate_limited"; status: 429; retryAfter: number | null } | { kind: "timeout" } | { kind: "network"; message: string } | { kind: "http"; status: number } | { kind: "bad_json"; status: number };
+export function request(fetchFn: (url: string, init: unknown) => Promise<unknown>, url: string, o?: { timeoutMs?: number; retries?: number; sleep?: (ms: number) => Promise<void>; maxWaitMs?: number }): Promise<RequestResult>;
+export function anonymize(value: unknown, o: { username?: string; ids?: (string | undefined)[] }): unknown;
+export function itemCodesOf(market: unknown): string[];
+export interface Manifest { capturedAt: string; base: string; anonymized: boolean; files: { file: string; endpoint: string; result: string; status: number | null }[]; problems: string[]; stopped?: string; skillsFound?: boolean; items?: string[] }
+export function sample(o: { fetchFn: (url: string, init: unknown) => Promise<unknown>; base: string; player: string; maxCompanies?: number; extraItems?: string[]; anonymizeOut?: boolean; write: (name: string, data: unknown) => void; log?: (m: string) => void; sleep?: (ms: number) => Promise<void>; minGapMs?: number }): Promise<Manifest>;

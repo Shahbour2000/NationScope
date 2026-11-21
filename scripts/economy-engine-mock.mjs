@@ -1,6 +1,7 @@
 // Offline test aid for the Economy Engine page. SYNTHETIC extras on top of scripts/mock-api.mjs (which serves real captured responses):
 //   /players/by-name/*  -> a made-up profile (skills from the hand-transcribed fixture), id usr_mockeng
 //   /market/{item}/orders -> a made-up two-level book around the real best bid/ask (orders were never captured)
+//   /market/{item}/history -> a made-up 7-day series around the real last price (the real shape was never captured)
 // Usage: node scripts/mock-api.mjs 4060 & node scripts/economy-engine-mock.mjs 4061 ; AOW_MAIN_API_ORIGIN=http://127.0.0.1:4061 npm start
 import fs from "node:fs";
 import http from "node:http";
@@ -21,6 +22,13 @@ http.createServer(async (req, res) => {
     if (!r) { res.statusCode = 404; return res.end("{}"); }
     const bid = BigInt(r.bestBid ?? "0"), ask = BigInt(r.bestAsk ?? "0");
     return res.end(JSON.stringify({ buys: bid > 0n ? [{ price: String(bid), qty: r.bidQty ?? 0 }, { price: String(bid * 9n / 10n), qty: 500 }] : [], sells: ask > 0n ? [{ price: String(ask), qty: r.askQty ?? 0 }] : [] }));
+  }
+  const hm = /^\/market\/([A-Za-z0-9_-]+)\/history$/.exec(u);
+  if (hm) {
+    const r = market.find((x) => x.itemCode === hm[1]); res.setHeader("x-mock", "synthetic");
+    if (!r || !r.last) { res.statusCode = 404; return res.end("{}"); }
+    const base = Number(r.last), now = Date.now();
+    return res.end(JSON.stringify({ points: Array.from({ length: 56 }, (_, k) => ({ time: new Date(now - (55 - k) * 3 * 3600e3).toISOString(), price: String(Math.round(base * (1 + 0.08 * Math.sin(k / 6)))), volume: 20 + (k % 9) })) }));
   }
   try { const r = await fetch(upstream + req.url); res.statusCode = r.status; return res.end(await r.text()); } catch { res.statusCode = 502; return res.end("{}"); }
 }).listen(port, "127.0.0.1", () => console.log(`economy-engine mock on ${port}`));

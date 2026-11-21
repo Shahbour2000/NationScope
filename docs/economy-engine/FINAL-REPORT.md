@@ -1,45 +1,39 @@
-# Economy Engine: final development report (Session 2)
+# Economy Engine: implementation report (Session 3)
 
-## Delivered
-Page `/economy/engine?player=<name>` (EN/AR, RTL, responsive) backed by a pure, exact-arithmetic TypeScript engine.
-- **Product ranking** by value per production point (instant vs patient), with thin-book and inferred-mapping flags.
-- **Company analysis** for every company of the player (found automatically): break-even wage, three approved wage scenarios (25th/50th/75th percentile of competing NET wages, capped at 60/75/90 % of break-even; caps adjustable), profit, margin, break-even price, worker income per shift/day, reasons in plain language, order-book-based revenue and unsold-unit warnings.
-- **What-if**: workers, own PP, sell model, market share, output price change, caps, custom wage, capital.
-- **Market facts**: 7-day VWAP (from the trade sample), units/day, supply state, volatility, trend.
-- **Upgrade returns**: automation payback from exact next-level costs; storage cost and whether the store is actually filling.
-- **Agents**: pure formulas, gated, no UI.
-- Every figure family carries an evidence tag (Live, Cached, Stale cache, Your input, Wiki rule, Inferred, Assumption); overall confidence is the weakest critical input.
+## Delivered this session
+- **Repository reconciliation** (roadmap section 0): uploaded ZIP identical to the Session 2 delivery; no `.git`, so no branch/SHA; protected hashes unchanged.
+- **Test-count correction:** baseline 399; Session 2 added 78 (not 101); this delivery adds 42 more = 120 new, **519 total (512 pass, 7 skipped)**.
+- **Opportunity detector** (`domain/opportunities.ts`): ranks every recipe by gold earnable from visible demand at the going wage (value per point minus median allowed wage, times PP the best bid can absorb, capped by your capacity); signals for thin/no buyers, wide spread, no recent trades, wage above value, inferred recipe; start cost and affordability from capital.
+- **Recommendations** (`domain/recommendations.ts`): offer wage, not profitable, switch product, automation payback, storage binding, unsold units, capital shortfall, no capacity.
+- **Market analysis:** all-items activity from one `/market/trades` request; per-item history parsed (unverified) and charted with trades as fallback; VWAP, units/day, trend, volatility, supply state kept (supply thresholds labelled as rules of thumb).
+- **Company/capital:** production tax now read from the player's country; capacity from the player's own skills (workers x shifts x PP); capital-limited PP; profit-by-wage curve.
+- **Live sampling script** + tests with a fake fetch (429/timeouts/404 semantics, discovery, anonymisation) + skipped-until-captured parsing tests.
+- **UI/UX redesign** (see `UX-REPORT.md`).
+- **Agents:** re-investigated repo, API reference, fixtures, wiki: still no base output per hour and no endpoint. Stays gated; nothing invented.
 
-## Architecture decisions
-- New code in `src/features/economy-engine/{domain,data,ui}` plus `view.ts`. Domain is framework-free and uses bigint gold and basis points; floats are used only for analytics (volatility, trend, supply days).
-- **No `src/app/api/economy/` route was created (change from the plan).** The page loads data on the server and the client what-if re-runs the same pure functions on JSON-safe data, so a proxy API would add requests and code for no benefit. The route folder can be added later if a public endpoint is wanted.
-- The page lives at `/economy/engine` because `/economy` already exists (left untouched).
-- Own EN/AR text file instead of editing the shared message catalogue (only the nav key was added there).
-- Own skills parser, so nothing imports protected files. Existing API client, cache, limiter, error model and market parsers are reused by import.
+## Assumptions reviewed (none upgraded without evidence)
+| Assumption | Status | Reason |
+|---|---|---|
+| PP scale x10,000 | Inferred | capacity 4,000,000 vs storage level 2 = 400 PP; no contradicting data |
+| Skill effect linear between 0 and 10 | Inferred | wiki gives endpoints only |
+| Engine PP bonus-free | Assumed | no evidence either way |
+| Employer pays gross wage | Assumed | API shows gross, tax, net only |
+| Worker loyalty | Not included | worker-specific, not in company data |
+| Selling behaviour | Instant = visible best bid only; patient = best ask capped by an assumed market share | labelled in the UI |
 
-## Verification (all on the final tree)
+## Verification (final tree)
 | Check | Result |
 |---|---|
 | `tsc --noEmit` | clean |
-| `eslint .` | clean |
-| `npm test` | 55 files, **477 tests passed** (baseline 399; +78 new) |
-| `npm run build` | succeeds, no warnings from the engine |
-| Golden tests | wage tax on all 46 real `/jobs` offers; concrete VPP from real `/market` prices (hand-computed); upgrade costs from the real company sample; hand-checked plan (1,000 PP limestone) |
-| Property tests | gross-for-net minimality; profit monotone in wage and equals revenue minus costs; scenario wages ordered and under their cap |
-| Parsing/error/partial | skills duplicates/invalid rows, missing shapes, rate-limit vs 404 vs timeout, one failed company detail, empty portfolios, missing prices |
-| Request budget | <= 2 market/jobs + 3 player + N companies + 2 tax + 2 per distinct item; default 6 companies |
-| EN/AR | key parity, placeholder parity, Arabic coverage test; browser run in Arabic |
-| Browser (puppeteer + Chromium, offline mock) | EN 1280, EN 768, AR 390: no console errors, no horizontal overflow, `dir=rtl` for Arabic, price slider changed profit (-4.40 to 77.83) |
-| Protected hashes | 14 files (player.ts, features/builds, features/planner) identical before/after |
+| `npm run lint` | clean |
+| `npm test` | 58 files, 519 tests: 512 passed, 0 failed, 7 skipped (live fixtures) |
+| `npm run build` | succeeds |
+| Browser | 19 checks x 3 viewports pass (UX-REPORT.md) |
+| Protected hashes | 14/14 identical |
+| ZIP reproduction | applied to the original clean baseline and to the uploaded ZIP: both reproduce the tested tree (see delivery note) |
 
-## Not verified / limits (read before trusting numbers)
-- **No live API access from the build environment.** Fixtures are the repository's real captured responses; the by-name profile, order-book and history shapes were never captured. The browser run used a synthetic mock (`scripts/economy-engine-mock.mjs`) for those three.
-- Inferred rules: PP scale (x10,000), linear skill table, engine PP bonus-free, employer pays gross, no loyalty bonus.
-- A stale `fullAt` forecast bug was found by the browser run and fixed with a test.
-- Agents are not usable until the game documents base output and endpoints.
+## Not done / limits
+Live verification (blocked, see `LIVE-API-VERIFICATION-REPORT.md`); history-based statistics (shape unverified); deep order books per item for the opportunity ranking (only the best bid level is visible for all items); competitor company bonuses; agents UI. Product icons from the game CDN not visually verified.
 
 ## Integration
-1. Unzip over the repository root (paths are repository-relative). Two existing files change: `src/app/layout.tsx`, `src/i18n/messages.ts`. No files are deleted.
-2. `npm ci && npm run typecheck && npm run lint && npm test && npm run build`.
-3. Open `/economy/engine?player=<in-game name>`.
-4. Offline demo: `node scripts/mock-api.mjs 4060 & node scripts/economy-engine-mock.mjs 4061 & AOW_MAIN_API_ORIGIN=http://127.0.0.1:4061 npm run dev`.
+Unzip over the repository root (paths are repository-relative; it also works on a tree that already has the Session 2 engine). No files deleted. Then `npm ci && npx tsc --noEmit && npm run lint && npm test && npm run build`. Run the sampler per `LIVE-SAMPLING.md`.

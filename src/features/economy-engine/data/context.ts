@@ -3,7 +3,7 @@ import { getApiClient } from "@/lib/api/instance";
 import { anyJson } from "@/lib/api/schemas";
 import { isApiError } from "@/lib/api/errors";
 import type { ApiResultMeta } from "@/lib/api/client";
-import { readOrderBook, readTrades } from "@/lib/domain/market-item";
+import { readHistory, readOrderBook, readTrades } from "@/lib/domain/market-item";
 import type { Evidence } from "../domain/evidence";
 import { readCompany } from "../domain/company";
 import { readSkills, type SkillRow } from "../domain/skills";
@@ -43,7 +43,18 @@ export interface MarketRowJson { itemCode: string; bestAsk: string | null; askQt
 export interface JobsJson { offersNet: string[]; offerCount: number; allowed: { min: string; max: string; median: string } | null; energyCost: number | null }
 export interface PlayerJson { id: string; username: string; level: number | null; countryId: string | null; regionId: string | null; skills: SkillRow[]; issues: string[] }
 export interface TaxesJson { marketPct: number | null; incomePct: number | null; productionPct: number | null; locationCountryId: string | null; specializedItem: string | null }
-export interface ItemJson { bids: [string, number][]; asks: [string, number][]; trades: [string, number, number][]; historyPoints: number | null; bookDepthLevels: number }
+/** `history` comes from /market/{item}/history. Its response shape has never been captured, so it is parsed leniently and shown as "unverified". */
+export interface HistoryJson { points: [number, string, number | null][]; rawUnits: boolean }
+export interface ItemJson { bids: [string, number][]; asks: [string, number][]; trades: [string, number, number][]; history: HistoryJson | null; historyPoints: number | null; bookDepthLevels: number }
+/** Latest trades of ALL items (one request): [itemCode, qty, atMs]. */
+export type ActivityJson = [string, number, number][];
+export function mapAllTrades(data: unknown): ActivityJson | null {
+  const list = Array.isArray(data) ? data : Array.isArray(rec(data).trades) ? (rec(data).trades as unknown[]) : null;
+  if (!list) return null;
+  const out: ActivityJson = [];
+  for (const x of list) { const o = rec(x); const code = str(o.itemCode), q = numOrNull(o.qty), at = Date.parse(typeof o.createdAt === "string" ? o.createdAt : ""); if (code && q !== null && q > 0 && Number.isFinite(at)) out.push([code, q, at]); }
+  return out;
+}
 
 const money = (v: unknown): string | null => (typeof v === "string" && /^-?\d+$/.test(v) ? v : null);
 const numOrNull = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
@@ -78,6 +89,7 @@ export function mapTaxes(data: unknown, locationCountryId: string | null): Taxes
 export interface EngineContext {
   market: Slot<MarketRowJson[]>;
   jobs: Slot<JobsJson>;
+  activity: Slot<ActivityJson>;
   player: Slot<PlayerJson> | null;
   /** Raw /companies/{id} bodies (re-read on the client with the same pure parser). */
   companies: Slot<unknown[]> | null;
@@ -95,8 +107,8 @@ export async function loadEngineContext(o: LoadOptions = {}): Promise<EngineCont
   const get: Get = (e) => { requests++; return raw(e); };
   const maxCompanies = Math.min(o.maxCompanies ?? 6, 12);
 
-  const [market, jobs] = await Promise.all([slot(() => get(endpoints.market()), mapMarket), slot(() => get(endpoints.jobs()), mapJobs)]);
-  const ctx: EngineContext = { market, jobs, player: null, companies: null, companyIds: [], taxes: null, items: {}, requests: 0 };
+  const [market, jobs, activity] = await Promise.all([slot(() => get(endpoints.market()), mapMarket), slot(() => get(endpoints.jobs()), mapJobs), slot(() => get(endpoints.allTrades({ limit: 100 })), mapAllTrades)]);
+  const ctx: EngineContext = { market, jobs, activity, player: null, companies: null, companyIds: [], taxes: null, items: {}, requests: 0 };
 
   const name = o.player?.trim();
   if (name) {
@@ -135,9 +147,10 @@ export async function loadEngineContext(o: LoadOptions = {}): Promise<EngineCont
   const wanted = new Set<string>();
   if (ctx.companies?.state === "ok") for (const c of ctx.companies.value) { const s = readCompany(c); if (s) wanted.add(s.itemCode); }
   for (const item of [...wanted].slice(0, 6)) {
-    const [book, trades] = await Promise.all([
+    const [book, trades, hist] = await Promise.all([
       slot(() => get(endpoints.marketOrders(item)), (d) => readOrderBook(d) ?? { buys: [], sells: [], rawUnits: false }),
       slot(() => get(endpoints.marketTrades(item, { limit: 100 })), (d) => readTrades(d)),
+      slot(() => get(endpoints.marketHistory(item, { hours: 168 })), (d) => { const h = readHistory(d); return h ? { points: h.points.map((p): [number, string, number | null] => [Date.parse(p.at), p.price.toString(), p.volume]), rawUnits: h.rawUnits } : null; }),
     ]);
     const bk = book.state === "ok" ? book : null, tr = trades.state === "ok" ? trades : null;
     ctx.items[item] = bk || tr
@@ -145,7 +158,7 @@ export async function loadEngineContext(o: LoadOptions = {}): Promise<EngineCont
           bids: bk ? bk.value.buys.map((l): [string, number] => [l.price.toString(), l.qty]) : [],
           asks: bk ? bk.value.sells.map((l): [string, number] => [l.price.toString(), l.qty]) : [],
           trades: tr ? tr.value.rows.map((t): [string, number, number] => [t.price, t.qty, Date.parse(t.createdAt ?? "") || 0]).filter((t) => t[2] > 0) : [],
-          historyPoints: null, bookDepthLevels: bk ? bk.value.buys.length : 0 } }
+          history: hist.state === "ok" ? hist.value : null, historyPoints: hist.state === "ok" ? hist.value.points.length : null, bookDepthLevels: bk ? bk.value.buys.length : 0 } }
       : { state: book.state === "ok" ? "error" : book.state, reason: book.state === "ok" ? "no-data" : book.reason };
   }
   ctx.requests = requests;

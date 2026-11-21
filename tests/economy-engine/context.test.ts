@@ -18,7 +18,8 @@ function fake(over: Record<string, () => unknown> = {}) {
     [/^\/players\/by-name\//, () => profile], [/^\/players\/usr_a$/, () => profile], [/^\/players\/usr_a\/companies$/, () => ({ companies: [{ id: company.id }] })],
     [/^\/companies\//, () => company], [/^\/regions\//, () => ({ id: "eg-center", countryId: "eg" })],
     [/^\/countries\//, () => fx("country-eg")], [/^\/market\/[^/]+\/orders$/, () => ({ buys: [{ price: "32000", qty: 10 }], sells: [{ price: "41900", qty: 5 }] })],
-    [/^\/market\/[^/]+\/trades$/, () => ({ trades: [] })],
+    [/^\/market\/[^/]+\/trades$/, () => ({ trades: [] })], [/^\/market\/trades$/, () => fx("market-trades")],
+    [/^\/market\/[^/]+\/history$/, () => ({ points: [{ time: "2026-11-10T00:00:00Z", price: "32000", volume: 10 }, { time: "2026-11-11T00:00:00Z", price: "33000", volume: 12 }] })],
   ];
   const get: Get = async (e: Endpoint) => {
     calls.push(e.path);
@@ -35,11 +36,11 @@ describe("automatic discovery chain (no manual ids)", () => {
     expect(ctx.player?.state).toBe("ok");
     if (ctx.player?.state === "ok") expect(levelOf(ctx.player.value.skills, "production")).toBe(4);
     expect(ctx.companies?.state).toBe("ok"); expect(ctx.taxes?.state).toBe("ok");
-    expect(ctx.requests).toBe(f.calls.length); expect(f.calls.length).toBeLessThanOrEqual(10);
+    expect(ctx.requests).toBe(f.calls.length); expect(f.calls.length).toBeLessThanOrEqual(11);
   });
-  it("without a player name it only loads market and jobs (2 requests)", async () => {
+  it("without a player name it only loads market, jobs and the all-items trade sample (3 requests)", async () => {
     const f = fake(); const ctx = await loadEngineContext({ get: f.get });
-    expect(f.calls).toHaveLength(2); expect(ctx.player).toBeNull(); expect(ctx.market.state).toBe("ok");
+    expect(f.calls).toHaveLength(3); expect(ctx.player).toBeNull(); expect(ctx.market.state).toBe("ok");
   });
   it("requests the profile by id when the by-name body has no skills", async () => {
     const f = fake({ "^/players/by-name/": () => ({ id: "usr_a", username: "Alice" }), "^/players/usr_a$": () => profile });
@@ -94,11 +95,11 @@ describe("parsers", () => {
 });
 
 describe("request budget", () => {
-  it("never exceeds 2 + 3 (player) + companies + 2 (tax) + 2 per item, and shares one fetch per entity", async () => {
+  it("never exceeds 3 + 3 (player) + companies + 2 (tax) + 3 per item, and shares one fetch per entity", async () => {
     const many = Array.from({ length: 12 }, (_, k) => ({ id: `cmp_${k}` }));
     const f = fake({ "^/players/usr_a/companies$": () => ({ companies: many }) });
     const ctx = await loadEngineContext({ player: "Alice", maxCompanies: 6, get: f.get });
-    expect(ctx.requests).toBeLessThanOrEqual(2 + 3 + 6 + 2 + 2 * 1); // every company here is the same item -> one book + one trade list
-    expect(new Set(f.calls).size).toBe(Object.keys(ctx.items).length * 2 + new Set(f.calls.filter((c) => !c.startsWith("/market/"))).size);
+    expect(ctx.requests).toBeLessThanOrEqual(3 + 3 + 6 + 2 + 3 * 1); // every company here is the same item -> one book + one trade list
+    expect(new Set(f.calls).size).toBe(Object.keys(ctx.items).length * 3 + new Set(f.calls.filter((c) => !/^\/market\/[^/]+\/(orders|trades|history)$/.test(c))).size);
   });
 });

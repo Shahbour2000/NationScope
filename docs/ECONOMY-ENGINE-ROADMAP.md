@@ -1,39 +1,58 @@
 # NationScope Economy Engine: Roadmap (authoritative)
 
-Last updated: 2026-11-17 (Session 2). Status words: **Completed** = implemented AND tested/verified; **Partial**; **Not started**; **Blocked**.
+Last updated: 2026-11-17 (Session 3). Status words: **Completed** = implemented AND tested/verified; **Partial**; **Not started**; **Blocked**.
 Evidence labels: **[wiki]** stated in the game wiki, **[live]** seen in a real captured API response, **[inferred]** follows from several sources, **[assumption]** unverified default.
+
+## 0. Repository state (Session 3 reconciliation)
+
+- The uploaded `NationScope-main (4).zip` has **no `.git` folder**, so branch and commit SHA could not be read. No GitHub URL was provided, so GitHub itself was not inspected; the uploaded ZIP was treated as the latest state.
+- That ZIP is **byte-identical** to the previous delivery applied on the original baseline (`diff -r` empty). So: all Economy Engine files were present, and there were **no newer changes** to merge.
+- The Build Optimizer paths are still **absent** from this tree (only `src/lib/domain/player.ts` exists of the protected list). 14 files (player.ts + `src/features/builds` + `src/features/planner`) hash-verified identical before and after this session (`docs/economy-engine/protected-hashes-baseline.txt`, report in `docs/economy-engine/PROTECTED-HASH-REPORT.md`).
+- If newer work exists on GitHub, it did not reach this session: re-send the ZIP with `.git` or the repo URL and diff against this delivery.
 
 ## 1. Where things stand
 
 | Area | Status | Verification |
 |---|---|---|
-| Phase 0 audit (repo, baseline, ID discovery, skills endpoint) | Completed (live sampling Blocked) | see §3 |
-| Pure math core (`domain/`) | Completed | 78 tests, golden values hand-checked against real fixtures |
-| Data layer (`data/context.ts`) | Completed | 12 tests incl. discovery chain, failure semantics, request budget |
-| View model (`view.ts`) + EN/AR text | Completed | 11 tests incl. EN/AR parity |
-| Page `/economy/engine` + what-if UI | Completed against fixtures/synthetic mock | real-browser check EN desktop, EN tablet, AR phone: no console errors, no horizontal overflow, RTL, slider changes profit |
-| Live API verification | **Blocked** | the build sandbox cannot reach app.ageofnations.world (see §7) |
-| Agents | Partial: pure model + tests, UI **gated** (`AGENTS_ENABLED=false`) | needs base PP/hour and API endpoints |
-| History endpoint (7-day candles) | Not started | response shape never captured |
-| Opportunity detector across all products / alerts | Not started | |
+| Phase 0 audit | Completed | previous session + section 0 |
+| Pure math core (`domain/`) | Completed | exact bigint; golden + property tests |
+| Data layer (`data/context.ts`) | Completed | discovery chain, failure semantics, request budget |
+| Opportunity detector (cross-product) | Completed | 19 tests on real market and trade fixtures |
+| Recommendations (actionable) | Completed | unit tests on every rule |
+| UI redesign (tabs, cards, charts, details) | Completed on fixtures and a synthetic mock | scripted real-browser check: 19 checks x 3 viewports pass |
+| Live sampling script (Windows-ready) | Completed (script + tests with a fake fetch) | **not run against the real game** |
+| Live API verification | **Blocked** | needs a run of the script from a machine that can reach the game |
+| 7-day history | Partial: wired and charted, shape **unverified** | `readHistory` is tolerant; labelled "not yet verified" in the UI |
+| Agents | Partial: formulas only, **gated** | still no base PP/hour and no endpoint (section 6) |
 
 ## 2. Task table
 
-| # | Task | Status | Priority | Files | Depends on | Remaining / notes |
-|---|---|---|---|---|---|---|
-| 1 | Product ranking by value per PP | Completed | P1 | `domain/engine.ts` (`rankProducts`), `ui/EngineView.tsx` | recipes, `/market` | uses best bid (instant) and best ask/last (patient); ingredients at best ask |
-| 2 | Company profitability + break-even | Completed | P1 | `domain/economics.ts`, `domain/engine.ts` | company detail, skills | per-day plan from workers x shifts x PP |
-| 3 | Salary scenarios (25/60, 50/75, 75/90) + adjustable cap | Completed | P1 | `domain/salary.ts` | `/jobs` | anchors on NET wages; explanation codes localised |
-| 4 | What-if simulator | Completed | P1 | `ui/EngineView.tsx`, `view.ts` | 1-3 | workers, own PP, sell model, absorption share, output price shift, cap sliders, custom wage, capital |
-| 5 | Absorption, supply, oversupply | Partial | P2 | `domain/market.ts` | trades | per loaded company item only (not whole ranking); based on the last <=100 trades |
-| 6 | Automation / storage ROI | Completed | P2 | `domain/upgrades.ts` | company detail `upgrades[].next` | storage ROI is informational by design |
-| 7 | Trend, volatility | Partial | P3 | `domain/market.ts` | trades | no market-opportunity detector yet |
-| 8 | Capital-aware recommendations | Partial | P3 | `domain/engine.ts` (`affordablePP`) | user input | wallets are private, capital is typed by the user |
-| 9 | Agents | Partial / gated | P4 | `domain/agents.ts` | game release | see §6 |
-| 10 | 7-day history (candles) | Not started | P3 | | shape of `/market/{item}/history` | VWAP currently uses recent trades only |
-| 11 | Live fixtures for orders/history | Blocked | P2 | | network access | |
+| # | Task | Status | Priority | Key files | Notes |
+|---|---|---|---|---|---|
+| 1 | Product ranking / value per PP | Completed | P1 | `domain/engine.ts`, `domain/opportunities.ts` | |
+| 2 | Company profitability + break-even | Completed | P1 | `domain/economics.ts`, `view.ts` | |
+| 3 | Salary scenarios (25/60, 50/75, 75/90, adjustable caps) | Completed | P1 | `domain/salary.ts` | |
+| 4 | What-if simulator | Completed | P1 | `ui/CompaniesTab.tsx` | workers, price change, own wage primary; rest under "More options" |
+| 5 | Cross-product opportunity detector | Completed | P1 | `domain/opportunities.ts` | visible best-bid depth only; ranking by earnable gold |
+| 6 | Recommendations incl. capital, capacity, upgrades | Completed | P1 | `domain/recommendations.ts` | rule-of-thumb limits (30-day payback, 10% switch gain) labelled as such |
+| 7 | Market analysis: VWAP, volume, volatility, trend, supply | Completed (trade-sample based) | P2 | `domain/market.ts` | last <=100 trades; all-items activity from one request |
+| 8 | 7-day history chart | Partial | P2 | `data/context.ts`, `view.ts` | shape unverified; trades are the fallback; no number is computed from history |
+| 9 | Automation / storage ROI | Completed | P2 | `domain/upgrades.ts` | |
+| 10 | Live sampling script | Completed (unrun) | P1 | `scripts/aon-sample*.mjs`, `docs/economy-engine/LIVE-SAMPLING.md` | |
+| 11 | Parsing tests on real captures | Blocked | P1 | `tests/economy-engine/live-fixtures.test.ts` | 7 tests are skipped until captures exist |
+| 12 | Agents | Partial / gated | P4 | `domain/agents.ts` | |
 
-## 3. Phase 0 findings (evidence)
+## 3. Test counts (verified by running the suite, not copied from reports)
+
+| | Files | Tests |
+|---|---|---|
+| Original baseline (clean ZIP) | 52 | **399** |
+| Previous delivery (Session 2) | 55 | 477 = 399 + **78** new (domain 55, data layer 12, view model/localisation 11) |
+| This delivery | 58 | **519** = 399 + **120** new; 512 pass, **7 skipped** (live fixtures) |
+
+**Discrepancy resolved:** the Session 2 roadmap said "78 domain + 12 data + 11 view = 101". That was wrong: 78 was the **total** of the three engine files (55 + 12 + 11). The total 477 was correct. New in Session 3: opportunities 19, sampler 11, live fixtures 7 (skipped), view model +5 = 42 (78 + 42 = 120).
+
+## 4. Phase 0 findings (evidence)
 
 - Repo baseline: Next.js app, 399 tests, typecheck, lint, production build all green before any change.
 - **Protected files in this ZIP:** of the paths you listed only `src/lib/domain/player.ts` exists. `src/features/build-optimizer/`, `src/app/api/build-optimizer/`, `src/app/tools/build-optimizer/`, `tests/build-optimizer/`, `src/lib/data/build-import.ts`, `docs/build-optimizer-*.md`, `API/BUILD_OPTIMIZER_AUDIT.md` are **not present** (the ZIP is a baseline without the other session's work). `src/app/layout.tsx` already links `/tools/build-optimizer`. SHA-256 of `player.ts` plus every file in `src/features/builds` and `src/features/planner` (14 files) were recorded before changes (`docs/economy-engine/protected-hashes-baseline.txt`) and verified unchanged at delivery.
@@ -43,7 +62,7 @@ Evidence labels: **[wiki]** stated in the game wiki, **[live]** seen in a real c
 - **Resolved wiki questions:** daily hiring and worker limits are 1,000,000 in the sample (no practical cap). The third upgrade is the **break room** (effect undocumented, not modelled). Company bonuses are additive in the API's own total.
 - **Inferred:** points in the API are scaled by 10,000 (capacity 4,000,000 vs storage level 2 = 400 PP); production per shift is linear between level 0 (10) and level 10 (50).
 
-## 4. Formulas (all gold in 1/10,000, exact bigint)
+## 5. Formulas (all gold in 1/10,000, exact bigint)
 
 1. `VPP = ( P x (1 - t_prod) x (1 - t_market) - inputs per unit ) / PP per unit` (break-even gross wage per PP).
 2. `units = floor(PP / ppu)`; after production tax `floor(units x (1 - t_prod))` (fraction carry ignored, noted).
@@ -54,7 +73,11 @@ Evidence labels: **[wiki]** stated in the game wiki, **[live]** seen in a real c
 7. Automation payback = `(steel x ask + construction x ask) / (extra PP/day x VPP)`.
 8. Affordable PP = `capital x ppu / (wage x ppu + inputs per unit)`.
 
-## 5. Known limits and open questions
+9. **Opportunity:** `headroom = VPP(instant) - median allowed wage`; `absorbable PP = best-bid units x PP/unit`; `plan PP = min(capacity, absorbable)`; `daily profit = headroom x plan PP` (0 when headroom <= 0); `start cost = wage x plan PP + plan PP x inputs / PP-per-unit`. Only the best bid level is visible for all items, so revenue beyond it is deliberately not counted.
+10. **Market activity:** one `/market/trades` sample (latest <=100 trades of all items) gives units/day per item only when it has >=20 trades spanning >=1 h; otherwise "unknown".
+11. **Recommendations:** offer the balanced wage if profitable (else first profitable scenario, else "not profitable"); warn on unsold units, capital shortfall (`affordable PP < planned PP`), binding storage; suggest another product only if its value/PP is >=10% higher; automation is "quick" at <=30 days payback (both NationScope rules of thumb).
+
+## 6. Known limits and open questions
 
 - Bonus effect on engine PP and own-work PP is unverified (engine PP assumed bonus-free).
 - Employer assumed to pay the gross wage (the API only shows gross and net).
@@ -64,18 +87,21 @@ Evidence labels: **[wiki]** stated in the game wiki, **[live]** seen in a real c
 - Equipment is not modelled (random stats, separate market, exempt from production tax).
 - Supply thresholds (7 days / 1 day) are NationScope heuristics, labelled as such.
 
-## 6. Agents (gated)
+## 7. Agents (gated)
 
-Documented: unlock level 5, slots 6/9/12, skill 1-10 with +10% output per level, specialist 100/60/40 % vs all-rounder 70 %, wage per hour, hirer pays per working hour, country agent tax (default 10 %), 24 h deposit, 3 unpaid hours end the contract, agent places 2/4/6 by company level.
+Re-checked in Session 3 (repo, API reference, fixtures, wiki): **no** base PP/hour, **no** agent endpoint, no agent tax law in the law catalogue. Documented: unlock level 5, slots 6/9/12, skill 1-10 with +10% output per level, specialist 100/60/40 % vs all-rounder 70 %, wage per hour, hirer pays per working hour, country agent tax (default 10 %), 24 h deposit, 3 unpaid hours end the contract, agent places 2/4/6 by company level.
 **Not documented:** base PP per hour, bonus/storage interaction, the agent-tax law in the law catalogue, any API endpoint. `domain/agents.ts` implements the formulas with base output as an explicit input and `AGENTS_ENABLED = false`; there is no UI yet. Activation needs: base output, endpoints, then a UI panel reusing `maxHourlyWage`, `wagePerPP`, `hourlyNet`.
 
-## 7. Blockers and decisions for you
+## 8. Blockers and decisions for you
 
-1. **Live verification (blocked):** run the game API sampling from a machine that can reach `app.ageofnations.world`: `/players/by-name/{name}` (confirm `skills`), `/market/{item}/orders`, `/market/{item}/history`, `/companies/{id}` with a posted job offer (`offer` shape). Save them to `tests/fixtures/real/` and add parsing tests. Until then all ranges marked Inferred stay.
-2. Decide whether to treat competitor company bonuses (needs one `/companies/{id}` per offer) as worth the request budget.
-3. Provide agent base output when known.
+1. **Run the live sampler** (needs a machine that can reach the game): `node scripts\aon-sample.mjs --player "YourName" --anonymize` (Windows: `docs/economy-engine/LIVE-SAMPLING.md`), then `npm test`. Until it runs, orders/history/by-name/offer shapes are **unverified**, the 7 live tests stay skipped, and no live-verification claim is made.
+2. Send the repo with `.git` or its URL if newer GitHub work exists.
+3. Agents: needs base output and endpoints from the game.
+4. Decide whether competitor company bonuses (one `/companies/{id}` per offer) are worth the request budget.
 
-## 8. Session log
+## 9. Session log
 
 **Session 1 (2026-11-16):** documents-only research, first roadmap.
-**Session 2 (2026-11-17):** repo received. Done: Phase 0 audit; baseline (399 tests); hashes; domain, data, view, UI, text, tests (78 + 12 + 11 new = 101 new tests; 477 total); real-browser check with offline mock; shared-file edits (2 lines in 2 files); reports. Partial: agents (no UI), absorption only for loaded items. Blocked: live sampling. Next steps: (1) run live sampling and add fixtures, (2) wire `/market/{item}/history`, (3) cross-product opportunity detector, (4) activate agents when documented.
+**Session 2 (2026-11-17):** Phase 0, domain, data layer, first UI, 78 tests, cumulative ZIP.
+**Session 3 (2026-11-17):** repo reconciliation (identical to Session 2, no .git); test-count correction; opportunity detector, recommendations, series helpers; all-items trades and history wired into the data layer; Windows-ready sampling script with fake-fetch tests; UI redesigned (two tabs, product cards with icons, wage cards, profit-by-wage chart, price sparkline, expandable details); scripted browser verification (19 checks x EN desktop, EN tablet, AR phone); reports; cumulative ZIP verified on a clean baseline and on the uploaded ZIP.
+Remaining: live verification, history shape, agents, optional competitor-bonus adjustment, per-item deep order books for the opportunity list.

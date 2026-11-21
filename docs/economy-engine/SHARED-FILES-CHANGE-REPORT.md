@@ -1,16 +1,15 @@
-# Shared files changed by the Economy Engine
+# Shared files changed by the Economy Engine (cumulative)
 
-Only two existing files were modified. Everything else is new and lives under `src/features/economy-engine/`, `src/app/economy/engine/`, `tests/economy-engine/`, `scripts/economy-engine-mock.mjs`, `tests/fixtures/real/company-detail.json`, `docs/`.
+Only two existing files were ever modified (both in Session 2, unchanged in Session 3):
 
 ## 1. `src/app/layout.tsx` (+1 line)
-- **Why:** the new page needs a sidebar entry.
-- **Change:** after the `/economy` item, added `{ href: "/economy/engine", label: n.economyEngine, icon: "chart" },`.
-- **Side effects:** one more link in the Economy group. Depends on key (2). If the other branch changes this nav list, re-add the line. The existing `/tools/build-optimizer` entry is untouched.
+- **Why:** sidebar entry. **Change:** after the `/economy` item, `{ href: "/economy/engine", label: n.economyEngine, icon: "chart" },`.
+- **Side effects:** one more link in the Economy group. If the other branch edits this list, re-add the line. The existing `/tools/build-optimizer` entry is untouched.
 
 ## 2. `src/i18n/messages.ts` (+2 inline additions)
-- **Why:** nav labels live in the typed message catalogue (EN and AR must match).
-- **Change:** added `economyEngine: "Economy Engine"` and `economyEngine: "محرك الاقتصاد"` next to `economyOverview` in the English and Arabic nav objects.
-- **Side effects:** none at runtime. Merge note: both additions are on the same line as `economyOverview`, so a conflicting edit there will need a manual merge.
+- **Why:** typed nav labels. **Change:** `economyEngine: "Economy Engine"` (EN) and `economyEngine: "محرك الاقتصاد"` (AR) next to `economyOverview`.
+- **Side effects:** none at runtime; a conflicting edit on that same line needs a manual merge.
 
-## Not touched
-`src/lib/domain/player.ts`, `src/features/builds/**`, `src/features/planner/**` (SHA-256 verified identical), the API client/cache/limiter, `src/app/economy/page.tsx`, all i18n except the two keys, all CSS in `globals.css`. The engine reuses `@/lib/api/*` and `@/lib/domain/market-item` by import only. Engine text lives in its own file (`ui/text.ts`) to avoid growing the shared catalogue.
+## Session 3
+No shared file was modified. `src/app/economy/engine/page.tsx` (new in Session 2) now **imports** `getDisplay` / `itemName` (entities display helpers) to pass localised product names; `ui/parts.tsx` imports `RemoteImage`, `itemIconSrc`, `Icon`. Imports only.
+New non-shared files: `scripts/aon-sample.mjs`, `scripts/aon-sample-core.mjs`, `scripts/aon-sample-core.d.mts`, `scripts/economy-engine-browser-check.mjs`, `scripts/economy-engine-mock.mjs` (extended).

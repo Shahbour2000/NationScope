@@ -5,7 +5,10 @@ import { affordablePP, analyzeCompany, type Analysis, type MarketRowIn, type Sel
 import type { Evidence } from "./domain/evidence";
 import { parseGoldDecimal, pctToBp, roundDiv } from "./domain/fixed";
 import { dailyAbsorption, instantSale, patientSale, supplyState, tradeWindow, trendPct, volatilityPct, type Level, type SupplyState, type Trade } from "./domain/market";
-import { recipeOf } from "./domain/recipes";
+import { RECIPES, recipeOf } from "./domain/recipes";
+import { activityFromTrades, findOpportunities, type Opportunity } from "./domain/opportunities";
+import { recommend, type Rec } from "./domain/recommendations";
+import { bucketSeries, type SeriesPoint } from "./domain/series";
 import type { ScenarioId } from "./domain/salary";
 import { levelOf, maxEnergy, productionPerShift, sustainedShiftsPerDay } from "./domain/skills";
 import { upgradeRoi, type UpgradeRoi } from "./domain/upgrades";
@@ -44,9 +47,13 @@ export interface CompanyView {
   taxes: Taxes & { marketEvidence: Evidence };
   affordablePP: bigint | null;
   nearFull: boolean | null;
+  /** Profit per day for a range of gross wages (what-if chart). */
+  curve: { wage: bigint; profit: bigint }[];
+  spark: SeriesPoint[]; sparkSource: "history" | "trades" | null;
+  recs: Rec[];
 }
 
-export function companyView(ctx: EngineContext, raw: unknown, c: Controls, nowMs: number): CompanyView | null {
+export function companyView(ctx: EngineContext, raw: unknown, c: Controls, nowMs: number, best: Opportunity | null = null): CompanyView | null {
   const st = readCompany(raw); if (!st) return null;
   const recipe = recipeOf(st.itemCode);
   const ppPerUnit = st.ppPerUnit ?? recipe?.ppPerUnit ?? null;
@@ -108,11 +115,55 @@ export function companyView(ctx: EngineContext, raw: unknown, c: Controls, nowMs
   const bal = analysis.outcomes.find((x) => x.rec.id === "balanced");
   const aff = capital !== null && bal && analysis.ingredientPerUnit !== null ? affordablePP(capital, bal.rec.wage, ppPerUnit, analysis.ingredientPerUnit) : null;
 
+  // Profit-vs-wage curve (same sale model and inputs as the scenarios, 25 steps up to the legal maximum or 3x the break-even wage).
+  const curve: CompanyView["curve"] = [];
+  if (analysis.ok && analysis.vpp !== null) {
+    const rowsOut = rows.get(st.itemCode);
+    const bidLevels: Level[] = bids ?? (rowsOut?.bestBid != null && (rowsOut.bidQty ?? 0) > 0 ? [{ price: rowsOut.bestBid, qty: rowsOut.bidQty ?? 0 }] : []);
+    const cap = abs.unitsPerDay === null ? null : (abs.unitsPerDay * c.absorbSharePct) / 100;
+    const sell = c.sellMode === "instant" ? instantSale(bidLevels) : patientSale(rowsOut?.bestAsk ?? rowsOut?.last ?? null, cap);
+    const top = allowed ? allowed.max : analysis.vpp > 0n ? analysis.vpp * 2n : 1000n;
+    for (let k = 0; k <= 24; k++) { const w = (top * BigInt(k)) / 24n; curve.push({ wage: w, profit: evaluatePlan({ ppHired: hired, ppOwn: BigInt(Math.max(0, Math.floor(c.ownPPPerDay))), wage: w, ppPerUnit, ingredientCostPerUnit: analysis.ingredientPerUnit ?? 0n, taxes, sell }).profit }); }
+  }
+  // Price picture: the 7-day history when its (unverified) shape parsed, otherwise the latest trades of this item.
+  const shiftN = (p: string) => Number(shiftPrice(BigInt(p), c.priceShiftPct) ?? 0n);
+  const histPts = item?.history && item.history.points.length >= 2 ? bucketSeries(item.history.points.map(([at, p]) => ({ at, price: shiftN(p) }))) : [];
+  const tradePts = bucketSeries(trades.map((t) => ({ at: t.at, price: Number(t.price) })));
+  const spark = histPts.length >= 2 ? histPts : tradePts.length >= 2 ? tradePts : [];
+  const sparkSource: CompanyView["sparkSource"] = histPts.length >= 2 ? "history" : tradePts.length >= 2 ? "trades" : null;
+  const neededPP = hired + BigInt(Math.max(0, Math.floor(c.ownPPPerDay)));
+  const recs = recommend({ analysis, upgrades, currentItem: st.itemCode, currentVpp: analysis.vpp, best, affordablePP: aff, neededPP });
+
   return {
-    state: st, analysis, custom, upgrades, nearFull: near, affordablePP: aff,
+    state: st, analysis, custom, upgrades, nearFull: near, affordablePP: aff, curve, spark, sparkSource, recs,
     market: { vwap7d: win.vwap, tradeCount: win.count, unitsPerDay: abs.unitsPerDay, spanHours: abs.spanHours, supply: sup.state, daysOfSupply: sup.daysOfSupply, volatilityPct: volatilityPct(trades), trendPct: trendPct(trades), askQty: rows.get(st.itemCode)?.askQty ?? null, bidQty: rows.get(st.itemCode)?.bidQty ?? null, bookLevels: item?.bookDepthLevels ?? 0, bookEvidence: itemSlot?.state === "ok" ? itemSlot.evidence : null },
     workers: { count: workers, shiftsPerDay: shifts, ppPerShift: ppShift, ppPerShiftWithBonus: ppShiftBonus, hiredPPPerDay: hired, skillLevel, skillEvidence, energyLevel },
     taxes: { ...taxes, marketEvidence: marketPct === null ? "assumption" : weak(taxSlot?.evidence) },
   };
 }
 export { valuePerPP };
+
+export interface OverviewInput { capacityPP: bigint | null; capital: bigint | null }
+export interface Overview { opps: Opportunity[]; referenceWage: bigint | null; marketPct: number | null; productionPct: number | null; activitySpanHours: number | null }
+/** Cross-product opportunities from the market snapshot. Production tax is the player's location country rate (an approximation: the real rate is the company's region). */
+export function overview(ctx: EngineContext, o: OverviewInput, nowMs: number): Overview {
+  const tax = ctx.taxes?.state === "ok" ? ctx.taxes.value : null;
+  const marketPct = tax?.marketPct ?? null, productionPct = tax?.productionPct ?? null;
+  const rows = toRows(ctx.market.state === "ok" ? ctx.market.value : []);
+  const act = ctx.activity.state === "ok" ? activityFromTrades(ctx.activity.value.map(([itemCode, qty, at]) => ({ itemCode, qty, at })), nowMs) : null;
+  const jobs = ctx.jobs.state === "ok" ? ctx.jobs.value : null;
+  const opps = rows.size === 0 ? [] : findOpportunities({
+    rows, taxes: { marketBp: marketPct === null ? 0n : pctToBp(marketPct), productionBp: productionPct === null ? 0n : pctToBp(productionPct) }, recipes: RECIPES,
+    referenceWage: jobs?.allowed ? BigInt(jobs.allowed.median) : null, activity: act, capacityPP: o.capacityPP, capital: o.capital,
+  });
+  return { opps, referenceWage: jobs?.allowed ? BigInt(jobs.allowed.median) : null, marketPct, productionPct, activitySpanHours: act ? act.spanHours : null };
+}
+
+/** PP per day the player could supply with `workers` workers at their own skill levels (no company bonus). Null without a player. */
+export function capacityFromPlayer(ctx: EngineContext, workers: number): { pp: bigint; ppShift: number; shifts: number; skillKnown: boolean } | null {
+  if (ctx.player?.state !== "ok") return null;
+  const sk = ctx.player.value.skills;
+  const lvl = levelOf(sk, "production"), en = levelOf(sk, "energy");
+  const ppShift = productionPerShift(lvl ?? 0).value, shifts = sustainedShiftsPerDay(maxEnergy(en ?? 0).value);
+  return { pp: BigInt(Math.max(0, Math.floor(workers)) * ppShift * shifts), ppShift, shifts, skillKnown: lvl !== null };
+}
